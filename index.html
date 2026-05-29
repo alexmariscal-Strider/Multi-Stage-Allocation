@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Stage Funnel WFM Suite v1.0</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  /* IFRAME-SAFE NORMALIZATION */
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  body { background: #0b0f19; color: #e2e8f0; padding: 12px; font-size: 11px; line-height: 1.3; width: 100%; max-width: 100vw; overflow-x: hidden; }
+  
+  /* GRID ARRANGEMENT */
+  .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: start; width: 100%; }
+  .panel { background: #161b22; border-radius: 8px; padding: 12px; border: 1px solid #2d3748; height: 100%; position: relative; overflow-x: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+  .panel h2 { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; border-bottom: 1px solid #2d3748; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; }
+  .full-width { grid-column: span 4; }
+  .span-3 { grid-column: span 3; }
+  .span-1 { grid-column: span 1; }
+
+  /* NARRATIVE BANNER */
+  .insight-banner { background: #111827; border-left: 4px solid #8b5cf6; padding: 14px; border-radius: 6px; margin-bottom: 16px; border-top: 1px solid #374151; border-right: 1px solid #374151; border-bottom: 1px solid #374151; width: 100%; }
+  .insight-banner h3 { font-size: 11px; text-transform: uppercase; color: #c4b5fd; margin-bottom: 6px; letter-spacing: 0.05em; }
+  .insight-banner p { font-size: 12.5px; line-height: 1.5; color: #e2e8f0; }
+  .insight-banner strong { color: #fff; font-weight: 700; }
+
+  /* HEADERS & CONTROLS */
+  .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; width: 100%; }
+  .month-bar { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
+  .month-btn { padding: 5px 12px; border-radius: 4px; border: 1px solid #374151; background: #1f2937; color: #cbd5e1; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.15s; }
+  .month-btn.active { background: #4c1d95; border-color: #8b5cf6; color: #fff; }
+  .btn-horizon { background: transparent; border: 1px dashed #4b5563; color: #9ca3af; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; transition: 0.2s; }
+  .btn-horizon:hover { border-color: #8b5cf6; color: #f3f4f6; background: #1f2937; }
+
+  /* HIGH LEVEL METRICS SUMMARY CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; width: 100%; }
+  .stat-card { background: #1f2937; padding: 12px; border-radius: 6px; border: 1px solid #374151; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #475569; }
+  .stat-card.ps-theme::before { background: #3b82f6; }
+  .stat-card.ev-theme::before { background: #8b5cf6; }
+  .stat-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; font-weight: 700; }
+  .stat-val { font-size: 20px; font-weight: 800; color: #f8fafc; }
+  
+  /* PURE CSS TOOLTIPS */
+  .info-icon { cursor: help; display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; background: #374151; color: #94a3b8; border-radius: 50%; font-size: 9px; font-weight: bold; margin-left: 4px; text-decoration: none; font-style: normal; }
+  .tooltip-container { position: relative; display: inline-flex; align-items: center; }
+  .tooltip-text { visibility: hidden; width: 220px; background-color: #1e293b; color: #e2e8f0; text-align: left; border-radius: 6px; padding: 10px; border: 1px solid #475569; position: absolute; z-index: 1000; bottom: 130%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.2s; font-size: 10px; font-weight: normal; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); pointer-events: none; }
+  .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+  /* TABULAR DATA ARCHITECTURE */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: 10.5px; }
+  th { padding: 6px; color: #94a3b8; border-bottom: 1px solid #374151; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; background: #1f2937; white-space: nowrap; }
+  td { padding: 4px 6px; border-bottom: 1px solid #1f2937; }
+  .hover-row-trace tbody tr:not(.group-header):hover td { background-color: #1e293b !important; }
+  
+  /* HEATMAP COLORS */
+  .status-red { color: #fca5a5; font-weight: 700; }
+  .status-green { color: #86efac; font-weight: 700; }
+  .status-yellow { color: #fde047; font-weight: 700; }
+
+  /* MATRIX BUTTONS */
+  .matrix-btn { width: 100%; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; cursor: pointer; padding: 4px 0; transition: 0.2s; }
+  .matrix-btn-on { background: #059669; color: #ecfdf5; border: 1px solid #34d399; }
+  .matrix-btn-on:hover { background: #047857; }
+  .matrix-btn-off { background: #374151; color: #94a3b8; border: 1px solid #4b5563; }
+  .matrix-btn-off:hover { background: #4b5563; color: #f1f5f9; }
+  .matrix-cell-empty { background: #0f172a; text-align: center; color: #334155; font-size: 10px; }
+
+  /* INPUTS & BUTTONS */
+  input, select { background: #0f172a; border: 1px solid #374151; color: #f8fafc; padding: 4px; border-radius: 4px; text-align: center; font-size: 10px; transition: 0.2s; }
+  input:focus, select:focus { border-color: #8b5cf6; outline: none; }
+  input[type="text"] { text-align: left; padding: 4px 8px; }
+  .btn-action { background: #4f46e5; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; white-space: nowrap; transition: 0.2s; }
+  .btn-action:hover { background: #4338ca; }
+  .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-remove { color: #f87171; background: transparent; border: none; cursor: pointer; font-weight: bold; font-size: 14px; padding: 0 4px; transition: 0.2s; }
+  .btn-remove:hover { color: #ef4444; transform: scale(1.2); }
+
+  /* MODALS */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2,6,23,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); padding: 10px; }
+  .modal-content { background: #111827; padding: 20px; border-radius: 8px; border: 1px solid #374151; width: 100%; max-width: 950px; max-height: 95vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+  .compact-modal-table { border-collapse: collapse; width: 100%; }
+  .compact-modal-table th { padding: 4px 8px; font-size: 9px; background: #1f2937; border-bottom: 1px solid #374151; position: sticky; top: 0; z-index: 2; }
+  .compact-modal-table td { padding: 3px 8px; border-bottom: 1px solid #1f2937; }
+  .compact-modal-table input { width: 55px; padding: 4px; font-size: 10px; background: #0f172a; }
+  
+  /* CUSTOM DIALOG (Alert/Confirm Replacement) */
+  .dialog-box { background: #1e293b; border: 1px solid #475569; border-radius: 8px; padding: 20px; width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+  .dialog-box p { font-size: 13px; margin-bottom: 20px; color: #f8fafc; line-height: 1.5; }
+  .dialog-btns { display: flex; justify-content: center; gap: 10px; }
+
+  /* GROUP HEADERS */
+  .group-header { background: #1e293b; cursor: pointer; transition: 0.2s; }
+  .group-header:hover { background: #334155; }
+  .group-header td { border-bottom: 1px solid #475569; font-weight: 700; color: #94a3b8; font-size: 10px; padding: 8px; }
+  .totals-row { background: #0f172a; font-weight: bold; }
+  .totals-row td { border-top: 2px solid #374151; padding: 8px; }
+
+  .chart-container { height: 180px; width: 100%; margin-bottom: 4px; }
+  
+  /* DUAL CAPACITY BADGES */
+  .badge-ps { display: inline-block; background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid #3b82f6; padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: 700; }
+  .badge-ev { display: inline-block; background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid #8b5cf6; padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: 700; }
+
+</style>
+</head>
+<body>
+
+<div class="header-flex">
+  <div>
+    <h1 style="font-size: 16px; margin: 0; font-weight: 800; color: #f8fafc;">Multi-Stage Funnel Arbitrage Suite <span style="font-weight:400; color:#64748b;">· v1.0</span></h1>
+  </div>
+  
+  <div class="month-bar">
+    <button class="btn-horizon" onclick="archiveEarliestMonth()" title="Archive the oldest tracking period">(-) Archive Past</button>
+    <div id="month-tabs" style="display: inline-flex; gap: 4px; margin: 0 4px;"></div>
+    <button class="btn-horizon" onclick="appendFutureMonth()" title="Append a new month to the projection">(+) Add Future</button>
+  </div>
+  
+  <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL FUNNEL & QUOTA PARAMS</button>
+</div>
+
+<!-- NARRATIVE ENGINE -->
+<div class="insight-banner" id="executive-insight-banner"></div>
+
+<div class="stat-grid" id="top-stats-container"></div>
+
+<div class="dashboard-grid">
+  <!-- FORECAST PROJECTIONS -->
+  <div class="panel span-2">
+    <h2>Phone Screen (PS) Capacity vs Demand</h2>
+    <div class="chart-container"><canvas id="wfmPsChart"></canvas></div>
+  </div>
+  <div class="panel span-2">
+    <h2>Evaluation (EV) Capacity vs Demand</h2>
+    <div class="chart-container"><canvas id="wfmEvChart"></canvas></div>
+  </div>
+
+  <!-- DUAL HEATMAP -->
+  <div class="panel full-width">
+    <h2 id="heat-title">State Cascading Distribution (PS & Evals)</h2>
+    <div style="overflow-y: auto; max-height: 380px;">
+        <table>
+        <thead style="position: sticky; top: 0; background: #161b22; z-index: 10;">
+            <tr>
+            <th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th>
+            <th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Accepted Apps<br><span style="font-size:7px; color:#64748b;">(Top of Funnel)</span></th>
+            <th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #93c5fd; background: rgba(59,130,246,0.05);">📞 PHONE SCREENS (CE ONLY)</th>
+            <th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #c4b5fd; background: rgba(139,92,246,0.05);">📋 EVALUATIONS</th>
+            <th rowspan="2" style="text-align:center;">Licensed CEs</th>
+            </tr>
+            <tr>
+              <th style="background: rgba(59,130,246,0.05); color:#60a5fa;">Demand</th>
+              <th style="background: rgba(59,130,246,0.05); color:#60a5fa;">Coverage</th>
+              <th style="border-right: 1px solid #374151; background: rgba(59,130,246,0.05); color:#60a5fa;">Balance</th>
+              <th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Demand</th>
+              <th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Coverage</th>
+              <th style="border-right: 1px solid #374151; background: rgba(139,92,246,0.05); color:#a78bfa;">Balance</th>
+            </tr>
+        </thead>
+        <tbody id="heatmap-body"></tbody>
+        </table>
+    </div>
+  </div>
+
+  <!-- STATE ALLOCATION GRID (No PFAs) -->
+  <div class="panel span-3">
+    <h2 id="matrix-title-label">Mid-Funnel CE Licensure Matrix</h2>
+    <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">PFAs do not appear here as they pull from the global stateless pool. Toggling a CE 'ON' allocates their proportional time to that state.</p>
+    <div style="overflow-x: auto; width: 100%; max-height: 400px; overflow-y: auto;">
+      <table class="hover-row-trace" id="matrix-licensure-table" style="min-width: 1200px;">
+        <thead><tr id="matrix-head-row"></tr></thead>
+        <tbody id="matrix-body-rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PROFILE MANAGER -->
+  <div class="panel span-1">
+    <h2 id="mix-title" style="align-items: center; display: flex;">
+      <span>CE Profile Manager</span>
+      <button class="btn-action" style="padding: 2px 6px; font-size: 8px; background: #6366f1;" onclick="promptConfirm('Provision all states to all CEs?', addAllStatesToAllProviders)">+ ALL TO ALL</button>
+    </h2>
+    <div id="ce-controls" style="max-height: 380px; overflow-y: auto; padding-right: 5px;"></div>
+  </div>
+
+  <!-- DYNAMIC ROSTER AND PTO ALLOCATION LEDGER -->
+  <div class="panel full-width">
+    <h2>Rolling Capacity & Role Ledger</h2>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px;">
+      <div style="display: flex; gap: 8px; align-items: center;">
+          <span style="font-weight: 700; color: #c4b5fd; font-size: 10px;">+ ONBOARD:</span>
+          <input type="text" id="new-clinician-name" placeholder="Name" style="width: 150px;">
+          <select id="new-clinician-role" style="width: 120px;">
+            <option value="CE">Standard CE</option>
+            <option value="LEAD">Lead CE</option>
+            <option value="PFA">Stateless PFA</option>
+          </select>
+          <button class="btn-action" onclick="addNewClinicianToRoster()">Provision Seat</button>
+      </div>
+      <div style="display: flex; gap: 8px;">
+          <button class="btn-action" id="undo-sync-btn" style="background:#d97706; display:none;" onclick="undoPtoSync()">⏪ UNDO SYNC</button>
+          <button class="btn-action" id="sync-pto-btn" style="background:#059669;" onclick="syncPtoFromGoogleSheets(false)">☁️ CLOUD SYNC PTO FROM SHEETS</button>
+      </div>
+    </div>
+
+    <div style="overflow-x: auto; width: 100%; max-height: 400px; overflow-y: auto;">
+      <table id="pto-ledger-table">
+        <thead id="pto-ledger-head" style="position: sticky; top: 0; z-index: 10; background: #161b22;"></thead>
+        <tbody id="pto-ledger-body"></tbody>
+        <tfoot id="pto-ledger-foot" style="position: sticky; bottom: 0; z-index: 10;"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL PARAMS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-content">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
+        <h2 style="margin:0; border:none; color:#fff; font-size:14px;">Global Architecture Parameters</h2>
+        <button class="btn-action" style="font-size: 11px; padding: 8px 16px;" onclick="saveGlobalModalParams()">COMMIT & RECALCULATE</button>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+      <!-- FUNNEL CONFIG -->
+      <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+        <h2 style="font-size: 10px; color: #c4b5fd; margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">Universal Funnel Engine</h2>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
+          <span style="font-size: 10px; color:#94a3b8;">Apps → PS Scheduling Ratio:</span>
+          <div style="display: flex; align-items: center;"><input type="number" id="mod-global-ps-rate" style="width: 50px;"> <span style="font-size:10px; color:#64748b; margin-left:4px;">%</span></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
+          <span style="font-size: 10px; color:#94a3b8;">PS → Routed to PFA Pool:</span>
+          <div style="display: flex; align-items: center;"><input type="number" id="mod-global-pfa-route" style="width: 50px;"> <span style="font-size:10px; color:#64748b; margin-left:4px;">%</span></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 10px; color:#94a3b8;">Accepted Apps Volume Bump:</span>
+          <div style="display: flex; align-items: center;"><input type="number" id="mod-global-bump" style="width: 50px;"> <span style="font-size:10px; color:#64748b; margin-left:4px;">%</span></div>
+        </div>
+      </div>
+
+      <!-- QUOTA CONFIG -->
+      <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+        <h2 style="font-size: 10px; color: #93c5fd; margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">Daily Capacity Quotas</h2>
+        <table style="width: 100%; border: none;">
+          <tr><th style="background: transparent; border: none;">Role</th><th style="background: transparent; border: none; text-align:center;">PS / Day</th><th style="background: transparent; border: none; text-align:center;">Eval / Day</th></tr>
+          <tr><td style="border:none;">Standard CE</td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ce-ps" style="width:40px;"></td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ce-ev" style="width:40px;"></td></tr>
+          <tr><td style="border:none;">Lead CE</td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ld-ps" style="width:40px;"></td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ld-ev" style="width:40px;"></td></tr>
+          <tr><td style="border:none;">Stateless PFA</td><td style="border:none; text-align:center;"><input type="number" id="mod-q-pf-ps" style="width:40px;"></td><td style="border:none; text-align:center;"><input type="number" id="mod-q-pf-ev" style="width:40px;" disabled></td></tr>
+        </table>
+      </div>
+    </div>
+    
+    <!-- WORKING DAYS -->
+    <div style="margin-bottom: 16px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+        <h2 style="margin-bottom: 8px; font-size: 10px;">Calendar Working Days</h2>
+        <div style="overflow-x: auto;"><table class="compact-modal-table" id="modal-wd-table" style="width: 100%;"></table></div>
+    </div>
+
+    <!-- DOUBLE DEMAND GRID -->
+    <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+        <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+            <h2 style="margin:0; font-size: 10px;">State Demand Vectors (Top & Mid Funnel)</h2>
+            <span style="font-size: 9px; color: #64748b;"><strong>Tip:</strong> Highlight columns in Google Sheets, click first input box, press <strong>CTRL+V</strong></span>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto; overflow-x: auto; border: 1px solid #1e293b; border-radius: 4px;">
+            <table class="compact-modal-table" id="modal-demand-entry-table" style="width: 100%;"></table>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: right;">
+        <button class="btn-action" onclick="promptConfirm('Wipe all local storage and revert to factory codebase settings?', triggerFactoryResetWfm)" style="background:transparent; border: 1px solid #ef4444; color: #ef4444; padding: 6px 12px;">⚠️ HARD FACTORY RESET</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM ALERT/CONFIRM DIALOG -->
+<div class="modal-overlay" id="custom-dialog-overlay" style="z-index: 9999;">
+  <div class="dialog-box">
+    <p id="dialog-message"></p>
+    <div class="dialog-btns">
+      <button class="btn-action" id="dialog-cancel-btn" style="background: #475569;" onclick="closeDialog()">Cancel</button>
+      <button class="btn-action" id="dialog-confirm-btn" style="background: #6366f1;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- UTILITIES ---
+const fmt = (num) => Math.round(num || 0).toLocaleString();
+
+// Custom Dialog System (Replaces alert/confirm)
+let dialogAction = null;
+function promptAlert(message) {
+  document.getElementById('dialog-message').innerText = message;
+  document.getElementById('dialog-cancel-btn').style.display = 'none';
+  document.getElementById('dialog-confirm-btn').innerText = 'OK';
+  document.getElementById('dialog-confirm-btn').onclick = closeDialog;
+  document.getElementById('custom-dialog-overlay').style.display = 'flex';
+}
+function promptConfirm(message, actionFunc) {
+  document.getElementById('dialog-message').innerText = message;
+  document.getElementById('dialog-cancel-btn').style.display = 'block';
+  document.getElementById('dialog-confirm-btn').innerText = 'Confirm';
+  document.getElementById('dialog-confirm-btn').onclick = () => { closeDialog(); actionFunc(); };
+  document.getElementById('custom-dialog-overlay').style.display = 'flex';
+}
+function closeDialog() { document.getElementById('custom-dialog-overlay').style.display = 'none'; }
+
+// --- CONSTANTS ---
+const ALL_KNOWN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DEFAULT_STATE_LIST = ["MA","NJ","NH","CT","NY","PA","RI","ME","VA","OH","TX","IL","DC","FL","NC","GA","SC","MD","DE","WV","MO","WI","NV","AZ","CO","NM","MT","OK"];
+
+// --- INITIAL STATE ---
+let ACTIVE_TIMELINE = [];
+let LEDGER = {};
+let ROSTER = {};
+let FUNNEL = {};
+let MASTER_STATES = [];
+let activeMonthIdx = 0;
+let chartPs = null;
+let chartEv = null;
+
+function bootstrapDataEngine() {
+  try {
+    ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v1_time')) || ["May","June","July","August","September","October","November","December"];
+    LEDGER = JSON.parse(localStorage.getItem('funnel_v1_ledg')) || {};
+    ROSTER = JSON.parse(localStorage.getItem('funnel_v1_rost')) || {};
+    FUNNEL = JSON.parse(localStorage.getItem('funnel_v1_conf')) || {
+        appToPsRate: 95, pfaRouteRate: 30, volBump: 0,
+        qCePs: 4, qCeEv: 3, qLdPs: 3, qLdEv: 3, qPfPs: 10, qPfEv: 0
+    };
+    MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v1_stat')) || [...DEFAULT_STATE_LIST];
+
+    // Hydrate Ledger
+    ACTIVE_TIMELINE.forEach((m) => {
+      if (!LEDGER[m]) {
+        LEDGER[m] = { wd: 21, apps: {}, conv: {} };
+        MASTER_STATES.forEach(s => {
+          LEDGER[m].apps[s] = 0;
+          LEDGER[m].conv[s] = 35; // Default 35% App to Eval
+        });
+      }
+    });
+
+    // Hydrate Mock Roster if empty
+    if (Object.keys(ROSTER).length === 0) {
+        let mockCEs = ["Brian Richter", "Charlotte Lively", "Dina Siegel"];
+        mockCEs.forEach(name => {
+            ROSTER[name] = { role: 'CE', profile: [...MASTER_STATES], pto: {}, mix: {} };
+            ACTIVE_TIMELINE.forEach(m => { ROSTER[name].pto[m] = 0; ROSTER[name].mix[m] = [...MASTER_STATES]; });
+        });
+        ROSTER["PFA Alpha"] = { role: 'PFA', profile: [], pto: {}, mix: {} };
+        ROSTER["Lead Beta"] = { role: 'LEAD', profile: [...MASTER_STATES], pto: {}, mix: {} };
+        ACTIVE_TIMELINE.forEach(m => { 
+            ROSTER["PFA Alpha"].pto[m] = 0; ROSTER["PFA Alpha"].mix[m] = [];
+            ROSTER["Lead Beta"].pto[m] = 0; ROSTER["Lead Beta"].mix[m] = [...MASTER_STATES];
+        });
+    } else {
+        // Safe backfill for existing missing properties
+        Object.keys(ROSTER).forEach(name => {
+            if (!ROSTER[name].profile) ROSTER[name].profile = [];
+            if (!ROSTER[name].pto) ROSTER[name].pto = {};
+            if (!ROSTER[name].mix) ROSTER[name].mix = {};
+            ACTIVE_TIMELINE.forEach(m => {
+                if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
+                if (!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [...ROSTER[name].profile];
+            });
+        });
+    }
+
+    saveState();
+  } catch (err) {
+    console.error("Hydration Failure", err);
+    triggerFactoryResetWfm();
+  }
+}
+
+function saveState() {
+  localStorage.setItem('funnel_v1_time', JSON.stringify(ACTIVE_TIMELINE));
+  localStorage.setItem('funnel_v1_ledg', JSON.stringify(LEDGER));
+  localStorage.setItem('funnel_v1_rost', JSON.stringify(ROSTER));
+  localStorage.setItem('funnel_v1_conf', JSON.stringify(FUNNEL));
+  localStorage.setItem('funnel_v1_stat', JSON.stringify(MASTER_STATES));
+}
+
+function triggerFactoryResetWfm() { localStorage.clear(); location.reload(); }
+
+// --- TIMELINE CONTROLS ---
+function archiveEarliestMonth() {
+  if (ACTIVE_TIMELINE.length <= 1) { promptAlert("Cannot archive last month."); return; }
+  let removed = ACTIVE_TIMELINE.shift();
+  delete LEDGER[removed];
+  Object.keys(ROSTER).forEach(n => { delete ROSTER[n].pto[removed]; delete ROSTER[n].mix[removed]; });
+  activeMonthIdx = 0; saveState(); buildTimelineControls(); recalculateDashboardMetrics();
+}
+
+function appendFutureMonth() {
+  let latest = ACTIVE_TIMELINE[ACTIVE_TIMELINE.length - 1];
+  let cleanName = latest.split('_')[0]; 
+  let nextIdx = (ALL_KNOWN_MONTHS.indexOf(cleanName) + 1) % 12;
+  let nextName = ALL_KNOWN_MONTHS[nextIdx];
+  if (ACTIVE_TIMELINE.some(m => m.startsWith(nextName))) nextName += `_${Date.now().toString().slice(-4)}`;
+
+  ACTIVE_TIMELINE.push(nextName);
+  LEDGER[nextName] = { wd: 21, apps: {}, conv: {} };
+  MASTER_STATES.forEach(s => { LEDGER[nextName].apps[s] = 0; LEDGER[nextName].conv[s] = 35; });
+
+  Object.keys(ROSTER).forEach(n => {
+    ROSTER[n].pto[nextName] = 0;
+    ROSTER[n].mix[nextName] = ROSTER[n].role === 'PFA' ? [] : [...ROSTER[n].profile];
+  });
+  saveState(); buildTimelineControls(); recalculateDashboardMetrics();
+}
+
+function buildTimelineControls() {
+  const container = document.getElementById('month-tabs');
+  container.innerHTML = '';
+  ACTIVE_TIMELINE.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = `month-btn ${i === activeMonthIdx ? 'active' : ''}`;
+    btn.innerText = m.split('_')[0]; 
+    btn.onclick = () => { activeMonthIdx = i; buildTimelineControls(); recalculateDashboardMetrics(); };
+    container.appendChild(btn);
+  });
+}
+
+// --- MODAL CONTROLS ---
+function toggleModal(id) {
+  const modal = document.getElementById(id);
+  if (modal.style.display === 'flex') { modal.style.display = 'none'; } 
+  else { populateGlobalModalViews(); modal.style.display = 'flex'; }
+}
+
+function populateGlobalModalViews() {
+  // Populate Funnel
+  document.getElementById('mod-global-ps-rate').value = FUNNEL.appToPsRate;
+  document.getElementById('mod-global-pfa-route').value = FUNNEL.pfaRouteRate;
+  document.getElementById('mod-global-bump').value = FUNNEL.volBump;
+  document.getElementById('mod-q-ce-ps').value = FUNNEL.qCePs;
+  document.getElementById('mod-q-ce-ev').value = FUNNEL.qCeEv;
+  document.getElementById('mod-q-ld-ps').value = FUNNEL.qLdPs;
+  document.getElementById('mod-q-ld-ev').value = FUNNEL.qLdEv;
+  document.getElementById('mod-q-pf-ps').value = FUNNEL.qPfPs;
+  
+  // Working Days Table
+  const wdTable = document.getElementById('modal-wd-table');
+  let html = `<thead><tr><th style="border-right:1px solid #374151;">Metric</th>${ACTIVE_TIMELINE.map(m => `<th>${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody><tr><td style="border-right:1px solid #374151;"><strong>Working Days</strong></td>`;
+  ACTIVE_TIMELINE.forEach(m => { html += `<td><input type="number" id="mod-wd-field-${m}" value="${LEDGER[m].wd}"></td>`; });
+  wdTable.innerHTML = html + `</tr></tbody>`;
+
+  // Demand Double Grid
+  const demandTable = document.getElementById('modal-demand-entry-table');
+  let dHtml = `<thead><tr><th style="position:sticky; left:0; top:0; background:#1f2937; z-index:3; border-right:1px solid #374151;">Territory</th>`;
+  ACTIVE_TIMELINE.forEach(m => { dHtml += `<th colspan="2" style="position:sticky; top:0; background:#1f2937; z-index:2; text-align:center; border-right:1px solid #374151;">${m.split('_')[0]}</th>`; });
+  dHtml += `</tr><tr><th style="position:sticky; left:0; top:25px; background:#161b22; z-index:3; border-right:1px solid #374151;"></th>`;
+  ACTIVE_TIMELINE.forEach(() => { dHtml += `<th style="position:sticky; top:25px; background:#161b22; z-index:2; color:#93c5fd;">Apps Vol</th><th style="position:sticky; top:25px; background:#161b22; z-index:2; color:#c4b5fd; border-right:1px solid #374151;">App→Ev %</th>`; });
+  dHtml += `</tr></thead><tbody>`;
+  
+  MASTER_STATES.forEach((s, rIdx) => {
+    dHtml += `<tr><td style="position:sticky; left:0; background:#161b22; z-index:1; border-right:1px solid #374151;"><strong>${s}</strong></td>`;
+    ACTIVE_TIMELINE.forEach((m, cIdx) => {
+        dHtml += `<td><input type="number" class="paste-target" data-row="${rIdx}" data-col="${cIdx*2}" id="mod-app-${s}-${m}" value="${LEDGER[m].apps[s]}" style="color:#93c5fd;"></td>`;
+        dHtml += `<td style="border-right:1px solid #374151;"><input type="number" class="paste-target" data-row="${rIdx}" data-col="${(cIdx*2)+1}" id="mod-cnv-${s}-${m}" value="${LEDGER[m].conv[s]}" style="color:#c4b5fd; width:45px;"></td>`;
+    });
+    dHtml += `</tr>`;
+  });
+  demandTable.innerHTML = dHtml + '</tbody>';
+
+  attachPasteListeners();
+}
+
+function attachPasteListeners() {
+  const inputs = document.querySelectorAll('.paste-target');
+  inputs.forEach(input => {
+    input.addEventListener('paste', function(e) {
+       e.preventDefault();
+       const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+       const rows = text.split(/\r\n|\n|\r/);
+       const startR = parseInt(this.dataset.row);
+       const startC = parseInt(this.dataset.col);
+       
+       rows.forEach((rowStr, rOffset) => {
+         if(!rowStr.trim()) return;
+         const cols = rowStr.split('\t');
+         cols.forEach((val, cOffset) => {
+           const targetInput = document.querySelector(`input[data-row="${startR + rOffset}"][data-col="${startC + cOffset}"]`);
+           if(targetInput) {
+             const cleanVal = val.replace(/,|%/g, '').trim();
+             if(cleanVal !== "" && !isNaN(cleanVal)) targetInput.value = parseFloat(cleanVal);
+           }
+         });
+       });
+    });
+  });
+}
+
+function saveGlobalModalParams() {
+  FUNNEL.appToPsRate = parseFloat(document.getElementById('mod-global-ps-rate').value) || 0;
+  FUNNEL.pfaRouteRate = parseFloat(document.getElementById('mod-global-pfa-route').value) || 0;
+  FUNNEL.volBump = parseFloat(document.getElementById('mod-global-bump').value) || 0;
+  FUNNEL.qCePs = parseFloat(document.getElementById('mod-q-ce-ps').value) || 0;
+  FUNNEL.qCeEv = parseFloat(document.getElementById('mod-q-ce-ev').value) || 0;
+  FUNNEL.qLdPs = parseFloat(document.getElementById('mod-q-ld-ps').value) || 0;
+  FUNNEL.qLdEv = parseFloat(document.getElementById('mod-q-ld-ev').value) || 0;
+  FUNNEL.qPfPs = parseFloat(document.getElementById('mod-q-pf-ps').value) || 0;
+
+  ACTIVE_TIMELINE.forEach(m => {
+    LEDGER[m].wd = parseFloat(document.getElementById(`mod-wd-field-${m}`).value) || 0;
+    MASTER_STATES.forEach(s => {
+      LEDGER[m].apps[s] = parseInt(document.getElementById(`mod-app-${s}-${m}`).value) || 0;
+      LEDGER[m].conv[s] = parseFloat(document.getElementById(`mod-cnv-${s}-${m}`).value) || 0;
+    });
+  });
+  saveState(); toggleModal('settings-modal'); recalculateDashboardMetrics();
+}
+
+// --- ROSTER PROVISIONING LOGIC ---
+function addNewClinicianToRoster() {
+  const name = document.getElementById('new-clinician-name').value.trim();
+  const role = document.getElementById('new-clinician-role').value;
+  if (!name) return;
+  if (ROSTER[name]) { promptAlert("Resource already exists."); return; }
+  
+  ROSTER[name] = { role: role, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, mix: {} };
+  ACTIVE_TIMELINE.forEach(m => {
+    ROSTER[name].pto[m] = 0;
+    ROSTER[name].mix[m] = (role === 'PFA' ? [] : [...MASTER_STATES]);
+  });
+  document.getElementById('new-clinician-name').value = '';
+  saveState(); recalculateDashboardMetrics();
+}
+
+function updateMonthlyMixToggle(name, state, action) {
+  let activeM = ACTIVE_TIMELINE[activeMonthIdx];
+  let r = ROSTER[name];
+  if(!r) return;
+  if(!r.mix) r.mix = {};
+  if(!r.profile) r.profile = [];
+  let mix = r.mix[activeM] || [];
+  if (action === "On") {
+    if (!r.profile.includes(state)) r.profile.push(state); 
+    if (!mix.includes(state)) mix.push(state); 
+  } else {
+    mix = mix.filter(s => s !== state);
+  }
+  r.mix[activeM] = mix;
+  saveState(); recalculateDashboardMetrics();
+}
+
+function addAllStatesToAllProviders() {
+  Object.keys(ROSTER).forEach(name => {
+      if(ROSTER[name].role === 'PFA') return;
+      if (!ROSTER[name].profile) ROSTER[name].profile = [];
+      MASTER_STATES.forEach(state => {
+          if (!ROSTER[name].profile.includes(state)) ROSTER[name].profile.push(state);
+          ACTIVE_TIMELINE.forEach(m => {
+              if(!ROSTER[name].mix) ROSTER[name].mix = {};
+              if(!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [];
+              if (!ROSTER[name].mix[m].includes(state)) ROSTER[name].mix[m].push(state);
+          });
+      });
+  });
+  saveState(); recalculateDashboardMetrics();
+}
+
+// --- WFM ENGINE CORE ---
+function recalculateDashboardMetrics() {
+  let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+  if (!activeMonth) return;
+  
+  let wd = LEDGER[activeMonth].wd;
+  let mult = 1 + (FUNNEL.volBump / 100);
+  let psRouteRate = FUNNEL.appToPsRate / 100;
+  let pfaGlobalRate = FUNNEL.pfaRouteRate / 100;
+
+  // 1. Evaluate Gross Demands
+  let sysTotalApps = 0;
+  let sysGrossPsDemand = 0;
+  let sysGrossEvDemand = 0;
+
+  let stateMetrics = {};
+  MASTER_STATES.forEach(s => {
+    let baseApps = (LEDGER[activeMonth].apps[s] || 0) * mult;
+    sysTotalApps += baseApps;
+    
+    let statePsDemandFull = baseApps * psRouteRate;
+    let stateEvDemand = baseApps * ((LEDGER[activeMonth].conv[s] || 0) / 100);
+    
+    sysGrossPsDemand += statePsDemandFull;
+    sysGrossEvDemand += stateEvDemand;
+
+    stateMetrics[s] = {
+      apps: baseApps,
+      psDemandFull: statePsDemandFull,
+      psDemandCE: statePsDemandFull * (1 - pfaGlobalRate), // CEs only take the leftover
+      evDemand: stateEvDemand,
+      psCapCe: 0, evCapCe: 0, assigned: []
+    };
+  });
+
+  // 2. Global PFA Sweep
+  let pfaTotalSupply = 0;
+  let pfaActiveHeadcount = 0;
+  Object.keys(ROSTER).forEach(name => {
+    let r = ROSTER[name];
+    if (r.role === 'PFA') {
+      pfaActiveHeadcount++;
+      let pto = parseFloat(r.pto[activeMonth]) || 0;
+      pfaTotalSupply += Math.max(0, (wd - pto) * FUNNEL.qPfPs);
+    }
+  });
+
+  // 3. State CE/Lead Capacity Assignment
+  let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').map(name => {
+    let r = ROSTER[name];
+    let pto = parseFloat(r.pto[activeMonth]) || 0;
+    let qPs = r.role === 'LEAD' ? FUNNEL.qLdPs : FUNNEL.qCePs;
+    let qEv = r.role === 'LEAD' ? FUNNEL.qLdEv : FUNNEL.qCeEv;
+    
+    let activeSt = r.mix[activeMonth] || [];
+    let loadDenomApps = 0;
+    activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); });
+
+    return {
+      name, activeStates: activeSt, denom: loadDenomApps,
+      psCapTotal: Math.max(0, (wd - pto) * qPs),
+      evCapTotal: Math.max(0, (wd - pto) * qEv)
+    };
+  });
+
+  let ceTotalPsSupply = 0;
+  let ceTotalEvSupply = 0;
+
+  ceAllocations.forEach(ce => {
+    ceTotalPsSupply += ce.psCapTotal;
+    ceTotalEvSupply += ce.evCapTotal;
+    if(ce.denom > 0) {
+      ce.activeStates.forEach(s => {
+        if (stateMetrics[s]) {
+            let weight = stateMetrics[s].apps / ce.denom;
+            stateMetrics[s].psCapCe += (ce.psCapTotal * weight);
+            stateMetrics[s].evCapCe += (ce.evCapTotal * weight);
+            stateMetrics[s].assigned.push(ce.name);
+        }
+      });
+    }
+  });
+
+  let totalSystemPsSupply = pfaTotalSupply + ceTotalPsSupply;
+
+  // 4. Update UI Components
+  document.getElementById('top-stats-container').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Accepted App Vol <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Total top of funnel intake including bump.</span></div></div>
+      <div class="stat-val">${fmt(sysTotalApps)}</div>
+    </div>
+    <div class="stat-card ps-theme">
+      <div class="stat-label">System PS Capacity <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">PFA Global Pool + State CE Allocations</span></div></div>
+      <div class="stat-val" style="color:#93c5fd;">${fmt(totalSystemPsSupply)} <span style="font-size:11px; font-weight:400; color:#64748b;">/ ${fmt(sysGrossPsDemand)} Dem</span></div>
+    </div>
+    <div class="stat-card ev-theme">
+      <div class="stat-label">System Eval Capacity <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Mid-funnel capacity (Licensed CEs only)</span></div></div>
+      <div class="stat-val" style="color:#c4b5fd;">${fmt(ceTotalEvSupply)} <span style="font-size:11px; font-weight:400; color:#64748b;">/ ${fmt(sysGrossEvDemand)} Dem</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Roster PTO <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Sum of all days off across all roles.</span></div></div>
+      <div class="stat-val" style="color:#fca5a5;">${Object.values(ROSTER).reduce((acc, r) => acc + (parseFloat(r.pto[activeMonth])||0), 0)}</div>
+    </div>
+  `;
+
+  renderDualHeatmap(stateMetrics);
+  renderMatrix(ceAllocations, stateMetrics);
+  renderExecutiveBanner(sysGrossPsDemand, totalSystemPsSupply, sysGrossEvDemand, ceTotalEvSupply, activeMonth, stateMetrics);
+  renderCollapsibleLedger(activeMonth);
+  renderDualCharts();
+}
+
+function renderDualHeatmap(metrics) {
+  let countEvBlue=0, countEvGreen=0, countEvYellow=0, countEvRed=0;
+  
+  document.getElementById('heatmap-body').innerHTML = MASTER_STATES.map(s => {
+    let r = metrics[s];
+    
+    // PS
+    let psPct = r.psDemandCE > 0 ? (r.psCapCe / r.psDemandCE) * 100 : 0;
+    let psBal = Math.round(r.psCapCe - r.psDemandCE);
+    let psStr = r.psDemandCE === 0 ? '-' : `${Math.round(psPct)}%`;
+    let psCol = psPct < 80 ? 'status-red' : (psPct < 95 ? 'status-yellow' : 'status-green');
+
+    // EV
+    let evPct = r.evDemand > 0 ? (r.evCapCe / r.evDemand) * 100 : 0;
+    let evBal = Math.round(r.evCapCe - r.evDemand);
+    let evStr = r.evDemand === 0 ? '-' : `${Math.round(evPct)}%`;
+    let evCol = evPct < 80 ? 'status-red' : (evPct < 95 ? 'status-yellow' : 'status-green');
+
+    if(r.evDemand > 0) {
+        if(evPct >= 95) countEvBlue++;
+        else if(evPct >= 80) countEvGreen++;
+        else if(evPct >= 70) countEvYellow++;
+        else countEvRed++;
+    }
+
+    return `
+      <tr>
+        <td style="border-right:1px solid #374151;"><strong>${s}</strong></td>
+        <td style="text-align:center; border-right:1px solid #374151; font-weight:700;">${r.apps === 0 ? '-' : fmt(r.apps)}</td>
+        
+        <td style="background:rgba(59,130,246,0.02); text-align:center;">${r.psDemandCE===0?'-':fmt(r.psDemandCE)}</td>
+        <td style="background:rgba(59,130,246,0.02); text-align:center; font-weight:700; color:#93c5fd;">${r.psDemandCE===0?'-':fmt(r.psCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.psDemandCE>0?psCol:''}">${psStr}</span></td>
+        <td style="background:rgba(59,130,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.psDemandCE===0?'':(psBal<0?'status-red':'status-green')}">${r.psDemandCE===0?'-':(psBal>0?'+':'')+fmt(psBal)}</td>
+        
+        <td style="background:rgba(139,92,246,0.02); text-align:center;">${r.evDemand===0?'-':fmt(r.evDemand)}</td>
+        <td style="background:rgba(139,92,246,0.02); text-align:center; font-weight:700; color:#c4b5fd;">${r.evDemand===0?'-':fmt(r.evCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.evDemand>0?evCol:''}">${evStr}</span></td>
+        <td style="background:rgba(139,92,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.evDemand===0?'':(evBal<0?'status-red':'status-green')}">${r.evDemand===0?'-':(evBal>0?'+':'')+fmt(evBal)}</td>
+        
+        <td style="text-align:center; color:#94a3b8;">${r.assigned.length}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderMatrix(ceAllocations, stateMetrics) {
+  let head = document.getElementById('matrix-head-row');
+  let body = document.getElementById('matrix-body-rows');
+  
+  head.innerHTML = `<th style="position:sticky; left:0; top:0; background:#161b22; z-index:30; border-right:1px solid #374151;">Licensed CEs</th>` + 
+    MASTER_STATES.map(s => `<th style="position:sticky; top:0; background:#161b22; z-index:20; text-align:center;">${s}</th>`).join('');
+
+  body.innerHTML = ceAllocations.map(ce => {
+    let raw = ROSTER[ce.name] || { profile: [] }; // Safe fallback
+    let cells = MASTER_STATES.map(s => {
+      let isMaster = (raw.profile || []).includes(s);
+      if(!isMaster) return `<td class="matrix-cell-empty"></td>`;
+      let isOn = (ce.activeStates || []).includes(s);
+      return `<td style="text-align:center; padding:3px; background:${isOn?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.05)'};"><button class="matrix-btn ${isOn?'matrix-btn-on':'matrix-btn-off'}" onclick="updateMonthlyMixToggle('${ce.name}', '${s}', '${isOn?'Off':'On'}')">${isOn?'ON':'OFF'}</button></td>`;
+    }).join('');
+
+    return `<tr data-ce-row-id="${ce.name}"><td style="position:sticky; left:0; background:#161b22; z-index:10; border-right:1px solid #374151;"><strong>${ce.name}</strong> <span style="font-size:7px; color:#64748b;">Ld:${Math.round(ce.denom)}</span></td>${cells}</tr>`;
+  }).join('');
+}
+
+function renderExecutiveBanner(psDem, psSup, evDem, evSup, m, metrics) {
+  const container = document.getElementById('executive-insight-banner');
+  let psShort = Math.max(0, psDem - psSup);
+  let evShort = Math.max(0, evDem - evSup);
+  
+  let critStates = MASTER_STATES.filter(s => metrics[s].evDemand > 0 && (metrics[s].evCapCe / metrics[s].evDemand) < 0.80);
+  
+  container.innerHTML = `
+    <h3>FRONT/MID FUNNEL ARBITRAGE PULSE: ${m.split('_')[0].toUpperCase()}</h3>
+    <div style="display:flex; gap:20px;">
+        <div style="flex:1;">
+            <p><strong>📞 Phone Screens (Front):</strong> System requires <strong>${fmt(psDem)} slots</strong>. Combined PFA & CE supply yields <strong>${fmt(psSup)}</strong>.</p>
+            ${psShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Shortfall of ${fmt(psShort)} PS slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ PS Pipeline Flow is Stable.</p>`}
+        </div>
+        <div style="flex:1; border-left: 1px solid #374151; padding-left: 20px;">
+            <p><strong>📋 Evaluations (Mid):</strong> System requires <strong>${fmt(evDem)} slots</strong>. Licensed CE supply yields <strong>${fmt(evSup)}</strong>.</p>
+            ${evShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Shortfall of ${fmt(evShort)} EV slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ Eval Queue is Stable.</p>`}
+        </div>
+    </div>
+    ${critStates.length > 0 ? `<div style="margin-top:12px; padding:8px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:4px; color:#fca5a5; font-size:11px;">⚠️ <strong>Major Eval Coverage Concerns (<80%) — ${critStates.length} State(s) Impacted:</strong> ${critStates.join(', ')}</div>` : ''}
+  `;
+}
+
+function toggleGroup(cls) {
+    document.querySelectorAll('.'+cls).forEach(el => {
+        el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+    });
+}
+
+function renderCollapsibleLedger(activeM) {
+  let thead = document.getElementById('pto-ledger-head');
+  let body = document.getElementById('pto-ledger-body');
+
+  let headHtml = `<tr><th rowspan="2" style="position:sticky; left:0; background:#161b22; z-index:2; border-right:1px solid #374151; min-width:160px;">Resource</th>`;
+  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-left:1px solid #374151;">${m.split('_')[0]}</th>`; });
+  headHtml += `</tr><tr>`;
+  ACTIVE_TIMELINE.forEach(() => { headHtml += `<th style="text-align:center; border-left:1px solid #374151; font-size:8px;">PTO</th><th style="text-align:center; font-size:8px;">CAP</th>`; });
+  thead.innerHTML = headHtml + `</tr>`;
+
+  // Group Roster
+  let groups = { 'LEAD': [], 'CE': [], 'PFA': [] };
+  Object.keys(ROSTER).forEach(n => {
+      let role = ROSTER[n].role || 'CE';
+      if(groups[role]) groups[role].push(n);
+  });
+
+  let bHtml = '';
+  Object.keys(groups).forEach(role => {
+      if(groups[role].length === 0) return;
+      
+      bHtml += `<tr class="group-header" onclick="toggleGroup('grp-${role}')"><td colspan="100%">▼ ${role} ROSTER (${groups[role].length} Active)</td></tr>`;
+      
+      groups[role].forEach(n => {
+          let r = ROSTER[n];
+          let qPs = role==='LEAD'?FUNNEL.qLdPs : (role==='PFA'?FUNNEL.qPfPs:FUNNEL.qCePs);
+          let qEv = role==='LEAD'?FUNNEL.qLdEv : (role==='PFA'?FUNNEL.qPfEv:FUNNEL.qCeEv);
+          
+          let colHtml = ACTIVE_TIMELINE.map(m => {
+              let pto = r.pto[m] || 0;
+              let wd = LEDGER[m].wd;
+              let capStr = role === 'PFA' ? `${Math.max(0,(wd-pto)*qPs)} PS` : `${Math.max(0,(wd-pto)*qPs)} / ${Math.max(0,(wd-pto)*qEv)}`;
+              return `<td style="border-left:1px solid #1f2937;"><input type="number" step="0.5" value="${pto}" style="width:34px;" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; color:#94a3b8; font-size:9px; white-space:nowrap;">${capStr}</td>`;
+          }).join('');
+
+          bHtml += `<tr class="grp-${role}" data-ce-row-id="${n}"><td style="position:sticky; left:0; background:#0b0f19; z-index:1; border-right:1px solid #374151; display:flex; justify-content:space-between; align-items:center;"><strong>${n}</strong> <button class="btn-remove" onclick="deprovisionClinician('${n}')">×</button></td>${colHtml}</tr>`;
+      });
+  });
+  body.innerHTML = bHtml;
+}
+
+function renderDualCharts() {
+  const ctxPs = document.getElementById('wfmPsChart');
+  const ctxEv = document.getElementById('wfmEvChart');
+  
+  let dLabels = ACTIVE_TIMELINE.map(m => m.split('_')[0]);
+  let psDem=[], psSup=[], evDem=[], evSup=[];
+
+  ACTIVE_TIMELINE.forEach(m => {
+      let wd = LEDGER[m].wd; let mult = 1+(FUNNEL.volBump/100);
+      let tDemPS=0, tDemEV=0;
+      MASTER_STATES.forEach(s => {
+          let a = (LEDGER[m].apps[s]||0)*mult;
+          tDemPS += (a * (FUNNEL.appToPsRate/100));
+          tDemEV += (a * ((LEDGER[m].conv[s]||0)/100));
+      });
+      psDem.push(Math.round(tDemPS)); evDem.push(Math.round(tDemEV));
+
+      let tSupPS=0, tSupEV=0;
+      Object.keys(ROSTER).forEach(n => {
+          let r = ROSTER[n]; let p = parseFloat(r.pto[m])||0;
+          let w = Math.max(0, wd-p);
+          if(r.role==='PFA') { tSupPS += (w*FUNNEL.qPfPs); }
+          else if(r.role==='LEAD') { tSupPS += (w*FUNNEL.qLdPs); tSupEV += (w*FUNNEL.qLdEv); }
+          else { tSupPS += (w*FUNNEL.qCePs); tSupEV += (w*FUNNEL.qCeEv); }
+      });
+      psSup.push(Math.round(tSupPS)); evSup.push(Math.round(tSupEV));
+  });
+
+  if(chartPs) chartPs.destroy();
+  chartPs = new Chart(ctxPs.getContext('2d'), {
+      type: 'line', data: { labels: dLabels, datasets: [
+          { label: 'PS Demand', data: psDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 },
+          { label: 'PS Supply', data: psSup, borderColor: '#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.3 }
+      ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} }
+  });
+
+  if(chartEv) chartEv.destroy();
+  chartEv = new Chart(ctxEv.getContext('2d'), {
+      type: 'line', data: { labels: dLabels, datasets: [
+          { label: 'Eval Demand', data: evDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 },
+          { label: 'Eval Supply', data: evSup, borderColor: '#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)', fill:true, tension:0.3 }
+      ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} }
+  });
+}
+
+// --- SYNC ENGINE ---
+async function syncPtoFromGoogleSheets(isSilent = false) {
+  const btn = document.getElementById('sync-pto-btn');
+  const undoBtn = document.getElementById('undo-sync-btn');
+  const ogText = btn.innerText;
+  
+  if (!isSilent) { btn.innerText = "⏳ FETCHING..."; btn.disabled = true; }
+  
+  try {
+    const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQd7J8oMveRBfBtVb2OxbyVXJg-bW7_DUQdN8fryo-56EmFqxhhICP24tUG7EL3UsxHMCsCil5WJqYz/pub?gid=1443603617&single=true&output=csv&_cb=" + new Date().getTime();
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error("Network response error");
+    const csvText = await response.text();
+    
+    localStorage.setItem('funnel_roster_backup', JSON.stringify(ROSTER));
+    if (!isSilent) undoBtn.style.display = 'inline-block';
+    
+    const rows = csvText.split(/\r\n|\n/).map(r => r.split(','));
+    let ptoCounts = {};
+    Object.keys(ROSTER).forEach(ce => { ptoCounts[ce] = {}; ACTIVE_TIMELINE.forEach(m => ptoCounts[ce][m] = 0); });
+
+    let ceColMap = {}; let headRow = -1;
+    for(let r=0; r<10; r++) {
+        let matches=0;
+        rows[r].forEach((c, i) => {
+            let nm = String(c).replace(/"/g,'').trim().toLowerCase();
+            let matchedCE = Object.keys(ROSTER).find(ce => ce.toLowerCase() === nm);
+            if(matchedCE) { ceColMap[i] = matchedCE; matches++; }
+        });
+        if(matches >= 2) { headRow = r; break; }
+    }
+
+    if(headRow === -1) throw new Error("Names not found");
+
+    let u = 0;
+    for(let r=headRow+1; r<rows.length; r++) {
+        let dateVal = null;
+        for(let c=0; c<4; c++) {
+            let v = String(rows[r][c]).replace(/"/g,'').trim();
+            if(v && (v.includes('/') || v.includes('-')) && !isNaN(Date.parse(v))) { dateVal = v; break; }
+        }
+        if(dateVal) {
+            let d = new Date(dateVal);
+            if(!isNaN(d.getTime())) {
+                let mName = ALL_KNOWN_MONTHS[d.getMonth()];
+                let tMonth = ACTIVE_TIMELINE.find(m => m.startsWith(mName));
+                if(tMonth) {
+                    Object.keys(ceColMap).forEach(idx => {
+                        let f = parseFloat(String(rows[r][idx]).replace(/"/g,'').trim());
+                        if(!isNaN(f) && f > 0) ptoCounts[ceColMap[idx]][tMonth] += f;
+                    });
+                }
+            }
+        }
+    }
+
+    Object.keys(ptoCounts).forEach(ce => {
+        Object.keys(ptoCounts[ce]).forEach(m => {
+            if(ptoCounts[ce][m] !== ROSTER[ce].pto[m]) { ROSTER[ce].pto[m] = ptoCounts[ce][m]; u++; }
+        });
+    });
+    
+    saveState(); recalculateDashboardMetrics();
+    if (!isSilent) promptAlert(`Sync Complete! ${u} PTO entries updated.`);
+  } catch (err) {
+    if (!isSilent) promptAlert("Failed to sync: " + err.message);
+  } finally {
+    if (!isSilent) { btn.innerText = ogText; btn.disabled = false; }
+  }
+}
+
+function undoPtoSync() {
+    let bk = localStorage.getItem('funnel_roster_backup');
+    if (bk) {
+        ROSTER = JSON.parse(bk); saveState(); recalculateDashboardMetrics();
+        document.getElementById('undo-sync-btn').style.display = 'none';
+        promptAlert("PTO Sync Undone.");
+    }
+}
+
+window.onload = () => {
+  bootstrapDataEngine(); buildTimelineControls(); recalculateDashboardMetrics();
+  try { if (window.self === window.top) syncPtoFromGoogleSheets(true); } catch(e){}
+};
+</script>
+</body>
+</html>
