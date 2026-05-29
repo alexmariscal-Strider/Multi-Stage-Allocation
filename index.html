@@ -27,7 +27,11 @@
   .insight-banner strong { color: #fff; font-weight: 700; }
 
   /* FUNNEL ENGINE PANEL */
-  .funnel-panel { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; background: #0f172a; padding: 16px 12px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 16px 12px; }
+  .funnel-panel { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; background: #0f172a; padding: 16px 12px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 16px 12px; position: relative; }
+  .funnel-panel-header { width: 100%; margin-bottom: 4px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; }
+  .funnel-panel-header h2 { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin: 0; }
+  
+  .funnel-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; width: 100%; }
   .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; }
   .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; text-align: center; }
   .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; height: 24px; }
@@ -140,91 +144,95 @@
   <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & DATES MANAGER</button>
 </div>
 
-<!-- UNIVERSAL FUNNEL ENGINE PANEL (FLEX WRAP) -->
+<!-- UNIVERSAL FUNNEL ENGINE PANEL -->
 <div class="funnel-panel">
-    
-    <div class="funnel-step">
-        <span class="funnel-label">Base Apps</span>
-        <div style="height: 24px;"></div> <!-- Spacer to align with inputs -->
-        <span class="funnel-metric" id="disp-base-apps">-</span>
+    <div class="funnel-panel-header">
+        <h2>Universal Funnel Engine</h2>
     </div>
-
-    <div class="funnel-arrow">+</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label">Vol Bump</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-bump" onchange="saveFunnelParams()"><span>%</span></div>
-        <span class="funnel-metric" id="disp-bumped-apps">-</span>
-    </div>
-
-    <div class="funnel-arrow">→</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label">Apps → PS Sched</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div>
-        <span class="funnel-metric" id="disp-ps-sched">-</span>
-    </div>
-
-    <div class="funnel-arrow">→</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label" style="color:#60a5fa;">PS Routed To PFA</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div>
+    <div class="funnel-row">
         
-        <!-- Split Output for PFA vs CE Route -->
-        <div style="display: flex; gap: 10px; margin-top: 4px; align-items: center;">
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:7px; color:#64748b;">PFA</span>
-                <span class="funnel-metric" id="disp-pfa-route" style="color:#60a5fa; margin-top:1px;">-</span>
-            </div>
-            <div style="width:1px; height:15px; background:#475569;"></div>
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:7px; color:#64748b;">CE</span>
-                <span class="funnel-metric" id="disp-ce-route" style="color:#60a5fa; margin-top:1px;">-</span>
+        <div class="funnel-step">
+            <span class="funnel-label">Base Apps</span>
+            <div style="height: 24px;"></div> <!-- Spacer -->
+            <span class="funnel-metric" id="disp-base-apps">-</span>
+        </div>
+
+        <div class="funnel-arrow">+</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label">Vol Bump</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-bump" onchange="saveFunnelParams()"><span>%</span></div>
+            <span class="funnel-metric" id="disp-bumped-apps">-</span>
+        </div>
+
+        <div class="funnel-arrow">→</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label">Apps → PS Sched</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div>
+            <span class="funnel-metric" id="disp-ps-sched">-</span>
+        </div>
+
+        <div class="funnel-arrow">→</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label" style="color:#60a5fa;">PS Routed To PFA</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 4px; align-items: center;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <span style="font-size:7px; color:#64748b;">PFA</span>
+                    <span class="funnel-metric" id="disp-pfa-route" style="color:#60a5fa; margin-top:1px;">-</span>
+                </div>
+                <div style="width:1px; height:15px; background:#475569;"></div>
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <span style="font-size:7px; color:#64748b;">CE</span>
+                    <span class="funnel-metric" id="disp-ce-route" style="color:#60a5fa; margin-top:1px;">-</span>
+                </div>
             </div>
         </div>
+
+        <div class="funnel-arrow">→</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label">PS Completion</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div>
+            <span class="funnel-metric" id="disp-ps-comp">-</span>
+        </div>
+
+        <div class="funnel-arrow">→</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label">Screen-In</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div>
+            <span class="funnel-metric" id="disp-scr-in">-</span>
+        </div>
+
+        <div class="funnel-arrow">→</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label" style="color:#a78bfa;">Eval Sched</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div>
+            <span class="funnel-metric" id="disp-ev-sched" style="color:#c4b5fd;">-</span>
+        </div>
+
+        <div class="funnel-arrow">→</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label">Eval Comp</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div>
+            <span class="funnel-metric" id="disp-ev-comp">-</span>
+        </div>
+
+        <div class="funnel-arrow">→</div>
+
+        <div class="funnel-step">
+            <span class="funnel-label" style="color:#34d399;">Enrollment</span>
+            <div class="funnel-input-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div>
+            <span class="funnel-metric" id="disp-enroll" style="color:#34d399;">-</span>
+        </div>
+
     </div>
-
-    <div class="funnel-arrow">→</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label">PS Completion</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div>
-        <span class="funnel-metric" id="disp-ps-comp">-</span>
-    </div>
-
-    <div class="funnel-arrow">→</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label">Screen-In</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div>
-        <span class="funnel-metric" id="disp-scr-in">-</span>
-    </div>
-
-    <div class="funnel-arrow">→</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label" style="color:#a78bfa;">Eval Sched</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div>
-        <span class="funnel-metric" id="disp-ev-sched" style="color:#c4b5fd;">-</span>
-    </div>
-
-    <div class="funnel-arrow">→</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label">Eval Comp</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div>
-        <span class="funnel-metric" id="disp-ev-comp">-</span>
-    </div>
-
-    <div class="funnel-arrow">→</div>
-
-    <div class="funnel-step">
-        <span class="funnel-label" style="color:#34d399;">Enrollment</span>
-        <div class="funnel-input-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div>
-        <span class="funnel-metric" id="disp-enroll" style="color:#34d399;">-</span>
-    </div>
-
 </div>
 
 <!-- NARRATIVE ENGINE -->
@@ -304,7 +312,7 @@
           <select id="new-clinician-role" style="width: 120px;">
             <option value="CE">Standard CE</option>
             <option value="LEAD">Lead CE</option>
-            <option value="PFA">Stateless PFA</option>
+            <option value="PFA">PFA</option>
           </select>
           <button class="btn-action" onclick="addNewClinicianToRoster()">Provision Seat</button>
       </div>
@@ -893,7 +901,29 @@ function recalculateDashboardMetrics() {
   renderMatrix(ceAllocations, stateMetrics);
   renderCollapsibleLedger(activeMonth, wd);
   renderSidebarProfileManager(ceAllocations);
+  renderExecutiveBanner(sysGrossEvDemand, ceTotalEvSupply, activeMonth);
   renderDualCharts();
+}
+
+function renderExecutiveBanner(evDem, evSup, activeMonth) {
+  const container = document.getElementById('executive-insight-banner');
+  if (!container) return;
+
+  let finalYield = Math.round(evSup * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100));
+  let evShort = Math.max(0, evDem - evSup);
+  
+  container.innerHTML = `
+    <h3>MONTHLY INSIGHT ANALYSIS: ${activeMonth.split('_')[0].toUpperCase()}</h3>
+    <div style="display:flex; gap:20px; align-items:center;">
+        <div style="flex:1;">
+            <p><strong>Evaluation Bottleneck Status:</strong> System requires <strong>${fmt(evDem)} Eval slots</strong> based on top-of-funnel intake. Licensed CEs yield <strong>${fmt(evSup)} slots</strong>.</p>
+            ${evShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Mid-Funnel Deficit: Short ${fmt(evShort)} EV slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ Eval Queue is adequately staffed.</p>`}
+        </div>
+        <div style="flex:1; border-left: 1px solid #374151; padding-left: 20px;">
+            <p><strong>Expected Final Enrollment Yield:</strong> By applying the Eval Comp (${FUNNEL.evCompRate}%) and Enroll (${FUNNEL.enrollRate}%) rates to your total Eval Capacity (${fmt(evSup)}), the system projects <strong>${fmt(finalYield)} Enrolled Patients</strong> for this cohort.</p>
+        </div>
+    </div>
+  `;
 }
 
 function renderDualHeatmap(metrics) {
@@ -1051,7 +1081,7 @@ function renderCollapsibleLedger(activeM, wd) {
   Object.keys(groups).forEach(role => {
       if(groups[role].length === 0) return;
       
-      bHtml += `<tr class="group-header" onclick="toggleGroup('grp-${role}')"><td colspan="100%">▼ ${role === 'PFA' ? 'STATELESS PFA POOL' : (role === 'LEAD' ? 'LEAD CEs' : 'STANDARD CEs')} (${groups[role].length} Active)</td></tr>`;
+      bHtml += `<tr class="group-header" onclick="toggleGroup('grp-${role}')"><td colspan="100%">▼ ${role === 'PFA' ? 'PFA POOL' : (role === 'LEAD' ? 'LEAD CEs' : 'STANDARD CEs')} (${groups[role].length} Active)</td></tr>`;
       
       groups[role].forEach(n => {
           let r = ROSTER[n];
