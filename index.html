@@ -17,16 +17,25 @@
   .panel h2 { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; border-bottom: 1px solid #2d3748; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; }
   .full-width { grid-column: span 4; }
   .span-3 { grid-column: span 3; }
+  .span-2 { grid-column: span 2; }
   .span-1 { grid-column: span 1; }
 
   /* NARRATIVE BANNER */
-  .insight-banner { background: #111827; border-left: 4px solid #8b5cf6; padding: 14px; border-radius: 6px; margin-bottom: 16px; border-top: 1px solid #374151; border-right: 1px solid #374151; border-bottom: 1px solid #374151; width: 100%; }
+  .insight-banner { background: #111827; border-left: 4px solid #8b5cf6; padding: 14px; border-radius: 6px; margin-bottom: 12px; border-top: 1px solid #374151; border-right: 1px solid #374151; border-bottom: 1px solid #374151; width: 100%; }
   .insight-banner h3 { font-size: 11px; text-transform: uppercase; color: #c4b5fd; margin-bottom: 6px; letter-spacing: 0.05em; }
   .insight-banner p { font-size: 12.5px; line-height: 1.5; color: #e2e8f0; }
   .insight-banner strong { color: #fff; font-weight: 700; }
 
+  /* FUNNEL ENGINE PANEL */
+  .funnel-panel { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+  .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; }
+  .funnel-input-wrap input { background: transparent; border: none; color: #a5b4fc; width: 35px; text-align: center; font-size: 11px; font-weight: 700; padding: 0; outline: none; }
+  .funnel-input-wrap span { color: #64748b; font-size: 10px; margin-left: 2px; }
+
   /* HEADERS & CONTROLS */
-  .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; width: 100%; }
+  .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; width: 100%; }
   .month-bar { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
   .month-btn { padding: 5px 12px; border-radius: 4px; border: 1px solid #374151; background: #1f2937; color: #cbd5e1; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.15s; }
   .month-btn.active { background: #4c1d95; border-color: #8b5cf6; color: #fff; }
@@ -34,25 +43,24 @@
   .btn-horizon:hover { border-color: #8b5cf6; color: #f3f4f6; background: #1f2937; }
 
   /* HIGH LEVEL METRICS SUMMARY CARDS */
-  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; width: 100%; }
-  .stat-card { background: #1f2937; padding: 12px; border-radius: 6px; border: 1px solid #374151; position: relative; overflow: hidden; }
-  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #475569; }
-  .stat-card.ps-theme::before { background: #3b82f6; }
-  .stat-card.ev-theme::before { background: #8b5cf6; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; width: 100%; }
+  .stat-card { background: #1f2937; padding: 12px; border-radius: 6px; border: 1px solid #374151; position: relative; border-left: 4px solid #475569; }
+  .stat-card.ps-theme { border-left-color: #3b82f6; }
+  .stat-card.ev-theme { border-left-color: #8b5cf6; }
   .stat-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; font-weight: 700; }
   .stat-val { font-size: 20px; font-weight: 800; color: #f8fafc; }
   
   /* PURE CSS TOOLTIPS */
   .info-icon { cursor: help; display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; background: #374151; color: #94a3b8; border-radius: 50%; font-size: 9px; font-weight: bold; margin-left: 4px; text-decoration: none; font-style: normal; }
   .tooltip-container { position: relative; display: inline-flex; align-items: center; }
-  .tooltip-text { visibility: hidden; width: 220px; background-color: #1e293b; color: #e2e8f0; text-align: left; border-radius: 6px; padding: 10px; border: 1px solid #475569; position: absolute; z-index: 1000; bottom: 130%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.2s; font-size: 10px; font-weight: normal; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); pointer-events: none; }
+  .tooltip-text { visibility: hidden; width: 220px; background-color: #1e293b; color: #e2e8f0; text-align: left; border-radius: 6px; padding: 10px; border: 1px solid #475569; position: absolute; z-index: 9999; bottom: 130%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.2s; font-size: 10px; font-weight: normal; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); pointer-events: none; white-space: normal; }
   .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
 
   /* TABULAR DATA ARCHITECTURE */
   table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: 10.5px; }
   th { padding: 6px; color: #94a3b8; border-bottom: 1px solid #374151; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; background: #1f2937; white-space: nowrap; }
   td { padding: 4px 6px; border-bottom: 1px solid #1f2937; }
-  .hover-row-trace tbody tr:not(.group-header):hover td { background-color: #1e293b !important; }
+  .hover-row-trace tbody tr:not(.group-header):not(.totals-row):hover td { background-color: #1e293b !important; }
   
   /* HEATMAP COLORS */
   .status-red { color: #fca5a5; font-weight: 700; }
@@ -90,19 +98,15 @@
   .dialog-box p { font-size: 13px; margin-bottom: 20px; color: #f8fafc; line-height: 1.5; }
   .dialog-btns { display: flex; justify-content: center; gap: 10px; }
 
-  /* GROUP HEADERS */
+  /* GROUP HEADERS & LEDGER */
   .group-header { background: #1e293b; cursor: pointer; transition: 0.2s; }
   .group-header:hover { background: #334155; }
   .group-header td { border-bottom: 1px solid #475569; font-weight: 700; color: #94a3b8; font-size: 10px; padding: 8px; }
   .totals-row { background: #0f172a; font-weight: bold; }
   .totals-row td { border-top: 2px solid #374151; padding: 8px; }
+  .ledger-input { width: 45px; }
 
-  .chart-container { height: 180px; width: 100%; margin-bottom: 4px; }
-  
-  /* DUAL CAPACITY BADGES */
-  .badge-ps { display: inline-block; background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid #3b82f6; padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: 700; }
-  .badge-ev { display: inline-block; background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid #8b5cf6; padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: 700; }
-
+  .chart-container { height: 180px; width: 100%; }
 </style>
 </head>
 <body>
@@ -118,7 +122,49 @@
     <button class="btn-horizon" onclick="appendFutureMonth()" title="Append a new month to the projection">(+) Add Future</button>
   </div>
   
-  <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL FUNNEL & QUOTA PARAMS</button>
+  <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & DATES MANAGER</button>
+</div>
+
+<!-- UNIVERSAL FUNNEL ENGINE PANEL -->
+<div class="funnel-panel">
+  <div style="display:flex; align-items:center; gap: 8px; border-right: 1px solid #374151; padding-right: 12px;">
+      <span style="font-size:9px; color:#94a3b8; font-weight:700;">VOL BUMP:</span>
+      <div class="funnel-input-wrap" style="background:#0f172a;"><input type="number" id="mod-global-bump" value="0" onchange="saveFunnelParams()"><span style="color:#a5b4fc;">%</span></div>
+  </div>
+  <div class="funnel-step">
+      <span class="funnel-label">Apps → PS Sched</span>
+      <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div>
+  </div>
+  <div style="color:#475569; font-size:14px;">→</div>
+  <div class="funnel-step">
+      <span class="funnel-label" style="color:#60a5fa;">PS Routed To PFA</span>
+      <div class="funnel-input-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div>
+  </div>
+  <div style="color:#475569; font-size:14px;">→</div>
+  <div class="funnel-step">
+      <span class="funnel-label">PS Completion</span>
+      <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div>
+  </div>
+  <div style="color:#475569; font-size:14px;">→</div>
+  <div class="funnel-step">
+      <span class="funnel-label">Screen-In</span>
+      <div class="funnel-input-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div>
+  </div>
+  <div style="color:#475569; font-size:14px;">→</div>
+  <div class="funnel-step">
+      <span class="funnel-label" style="color:#a78bfa;">Eval Sched</span>
+      <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div>
+  </div>
+  <div style="color:#475569; font-size:14px;">→</div>
+  <div class="funnel-step">
+      <span class="funnel-label">Eval Comp</span>
+      <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div>
+  </div>
+  <div style="color:#475569; font-size:14px;">→</div>
+  <div class="funnel-step">
+      <span class="funnel-label" style="color:#34d399;">Enrollment</span>
+      <div class="funnel-input-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div>
+  </div>
 </div>
 
 <!-- NARRATIVE ENGINE -->
@@ -206,8 +252,8 @@
       </div>
     </div>
 
-    <div style="overflow-x: auto; width: 100%; max-height: 400px; overflow-y: auto;">
-      <table id="pto-ledger-table">
+    <div style="overflow-x: auto; width: 100%; max-height: 450px; overflow-y: auto;">
+      <table id="pto-ledger-table" class="hover-row-trace">
         <thead id="pto-ledger-head" style="position: sticky; top: 0; z-index: 10; background: #161b22;"></thead>
         <tbody id="pto-ledger-body"></tbody>
         <tfoot id="pto-ledger-foot" style="position: sticky; bottom: 0; z-index: 10;"></tfoot>
@@ -220,55 +266,38 @@
 <div class="modal-overlay" id="settings-modal">
   <div class="modal-content">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
-        <h2 style="margin:0; border:none; color:#fff; font-size:14px;">Global Architecture Parameters</h2>
+        <h2 style="margin:0; border:none; color:#fff; font-size:14px;">Global Volume & Parameters Manager</h2>
         <button class="btn-action" style="font-size: 11px; padding: 8px 16px;" onclick="saveGlobalModalParams()">COMMIT & RECALCULATE</button>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-      <!-- FUNNEL CONFIG -->
-      <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
-        <h2 style="font-size: 10px; color: #c4b5fd; margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">Universal Funnel Engine</h2>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
-          <span style="font-size: 10px; color:#94a3b8;">Apps → PS Scheduling Ratio:</span>
-          <div style="display: flex; align-items: center;"><input type="number" id="mod-global-ps-rate" style="width: 50px;"> <span style="font-size:10px; color:#64748b; margin-left:4px;">%</span></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
-          <span style="font-size: 10px; color:#94a3b8;">PS → Routed to PFA Pool:</span>
-          <div style="display: flex; align-items: center;"><input type="number" id="mod-global-pfa-route" style="width: 50px;"> <span style="font-size:10px; color:#64748b; margin-left:4px;">%</span></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 10px; color:#94a3b8;">Accepted Apps Volume Bump:</span>
-          <div style="display: flex; align-items: center;"><input type="number" id="mod-global-bump" style="width: 50px;"> <span style="font-size:10px; color:#64748b; margin-left:4px;">%</span></div>
-        </div>
-      </div>
-
-      <!-- QUOTA CONFIG -->
-      <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
-        <h2 style="font-size: 10px; color: #93c5fd; margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">Daily Capacity Quotas</h2>
-        <table style="width: 100%; border: none;">
-          <tr><th style="background: transparent; border: none;">Role</th><th style="background: transparent; border: none; text-align:center;">PS / Day</th><th style="background: transparent; border: none; text-align:center;">Eval / Day</th></tr>
-          <tr><td style="border:none;">Standard CE</td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ce-ps" style="width:40px;"></td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ce-ev" style="width:40px;"></td></tr>
-          <tr><td style="border:none;">Lead CE</td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ld-ps" style="width:40px;"></td><td style="border:none; text-align:center;"><input type="number" id="mod-q-ld-ev" style="width:40px;"></td></tr>
-          <tr><td style="border:none;">Stateless PFA</td><td style="border:none; text-align:center;"><input type="number" id="mod-q-pf-ps" style="width:40px;"></td><td style="border:none; text-align:center;"><input type="number" id="mod-q-pf-ev" style="width:40px;" disabled></td></tr>
-        </table>
-      </div>
     </div>
     
     <!-- WORKING DAYS -->
     <div style="margin-bottom: 16px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
-        <h2 style="margin-bottom: 8px; font-size: 10px;">Calendar Working Days</h2>
+        <h2 style="margin-bottom: 8px; font-size: 10px; color:#94a3b8;">Calendar Working Days</h2>
         <div style="overflow-x: auto;"><table class="compact-modal-table" id="modal-wd-table" style="width: 100%;"></table></div>
     </div>
 
-    <!-- DOUBLE DEMAND GRID -->
-    <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
-        <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
-            <h2 style="margin:0; font-size: 10px;">State Demand Vectors (Top & Mid Funnel)</h2>
-            <span style="font-size: 9px; color: #64748b;"><strong>Tip:</strong> Highlight columns in Google Sheets, click first input box, press <strong>CTRL+V</strong></span>
-        </div>
-        <div style="max-height: 400px; overflow-y: auto; overflow-x: auto; border: 1px solid #1e293b; border-radius: 4px;">
-            <table class="compact-modal-table" id="modal-demand-entry-table" style="width: 100%;"></table>
-        </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <!-- APP VOLUME GRID -->
+      <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+          <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+              <h2 style="margin:0; font-size: 10px; color:#93c5fd;">Accepted App Projections</h2>
+              <span style="font-size: 9px; color: #64748b;"><strong>CTRL+V</strong> to Paste</span>
+          </div>
+          <div style="max-height: 400px; overflow-y: auto; overflow-x: auto; border: 1px solid #1e293b; border-radius: 4px;">
+              <table class="compact-modal-table" id="modal-apps-entry-table" style="width: 100%;"></table>
+          </div>
+      </div>
+      
+      <!-- CONVERSION OVERRIDE GRID -->
+      <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+          <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+              <h2 style="margin:0; font-size: 10px; color:#c4b5fd;">App → Eval Sched % Overrides</h2>
+              <span style="font-size: 9px; color: #64748b;">Leave at 0 to use Global Engine Default</span>
+          </div>
+          <div style="max-height: 400px; overflow-y: auto; overflow-x: auto; border: 1px solid #1e293b; border-radius: 4px;">
+              <table class="compact-modal-table" id="modal-conv-entry-table" style="width: 100%;"></table>
+          </div>
+      </div>
     </div>
 
     <div style="margin-top: 20px; text-align: right;">
@@ -292,8 +321,7 @@
 // --- UTILITIES ---
 const fmt = (num) => Math.round(num || 0).toLocaleString();
 
-// Custom Dialog System (Replaces alert/confirm)
-let dialogAction = null;
+// Custom Dialog System
 function promptAlert(message) {
   document.getElementById('dialog-message').innerText = message;
   document.getElementById('dialog-cancel-btn').style.display = 'none';
@@ -326,14 +354,14 @@ let chartEv = null;
 
 function bootstrapDataEngine() {
   try {
-    ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v1_time')) || ["May","June","July","August","September","October","November","December"];
-    LEDGER = JSON.parse(localStorage.getItem('funnel_v1_ledg')) || {};
-    ROSTER = JSON.parse(localStorage.getItem('funnel_v1_rost')) || {};
-    FUNNEL = JSON.parse(localStorage.getItem('funnel_v1_conf')) || {
+    ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December"];
+    LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
+    ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
+    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || {
         appToPsRate: 95, pfaRouteRate: 30, volBump: 0,
-        qCePs: 4, qCeEv: 3, qLdPs: 3, qLdEv: 3, qPfPs: 10, qPfEv: 0
+        psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80
     };
-    MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v1_stat')) || [...DEFAULT_STATE_LIST];
+    MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v2_stat')) || [...DEFAULT_STATE_LIST];
 
     // Hydrate Ledger
     ACTIVE_TIMELINE.forEach((m) => {
@@ -341,7 +369,7 @@ function bootstrapDataEngine() {
         LEDGER[m] = { wd: 21, apps: {}, conv: {} };
         MASTER_STATES.forEach(s => {
           LEDGER[m].apps[s] = 0;
-          LEDGER[m].conv[s] = 35; // Default 35% App to Eval
+          LEDGER[m].conv[s] = 0; // 0 means use global default
         });
       }
     });
@@ -350,21 +378,34 @@ function bootstrapDataEngine() {
     if (Object.keys(ROSTER).length === 0) {
         let mockCEs = ["Brian Richter", "Charlotte Lively", "Dina Siegel"];
         mockCEs.forEach(name => {
-            ROSTER[name] = { role: 'CE', profile: [...MASTER_STATES], pto: {}, mix: {} };
+            ROSTER[name] = { role: 'CE', qPs: 4, qEv: 3, profile: [...MASTER_STATES], pto: {}, mix: {} };
             ACTIVE_TIMELINE.forEach(m => { ROSTER[name].pto[m] = 0; ROSTER[name].mix[m] = [...MASTER_STATES]; });
         });
-        ROSTER["PFA Alpha"] = { role: 'PFA', profile: [], pto: {}, mix: {} };
-        ROSTER["Lead Beta"] = { role: 'LEAD', profile: [...MASTER_STATES], pto: {}, mix: {} };
+        ROSTER["PFA Alpha"] = { role: 'PFA', qPs: 10, qEv: 0, profile: [], pto: {}, mix: {} };
+        ROSTER["Lead Beta"] = { role: 'LEAD', qPs: 3, qEv: 3, profile: [...MASTER_STATES], pto: {}, mix: {} };
         ACTIVE_TIMELINE.forEach(m => { 
             ROSTER["PFA Alpha"].pto[m] = 0; ROSTER["PFA Alpha"].mix[m] = [];
             ROSTER["Lead Beta"].pto[m] = 0; ROSTER["Lead Beta"].mix[m] = [...MASTER_STATES];
         });
     } else {
-        // Safe backfill for existing missing properties
+        // Safe backfill for existing missing properties including Quotas
         Object.keys(ROSTER).forEach(name => {
             if (!ROSTER[name].profile) ROSTER[name].profile = [];
             if (!ROSTER[name].pto) ROSTER[name].pto = {};
             if (!ROSTER[name].mix) ROSTER[name].mix = {};
+            
+            // Assign defaults if missing
+            if (ROSTER[name].qPs === undefined) {
+                if (ROSTER[name].role === 'PFA') ROSTER[name].qPs = 10;
+                else if (ROSTER[name].role === 'LEAD') ROSTER[name].qPs = 3;
+                else ROSTER[name].qPs = 4;
+            }
+            if (ROSTER[name].qEv === undefined) {
+                if (ROSTER[name].role === 'PFA') ROSTER[name].qEv = 0;
+                else if (ROSTER[name].role === 'LEAD') ROSTER[name].qEv = 3;
+                else ROSTER[name].qEv = 3;
+            }
+
             ACTIVE_TIMELINE.forEach(m => {
                 if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
                 if (!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [...ROSTER[name].profile];
@@ -380,14 +421,37 @@ function bootstrapDataEngine() {
 }
 
 function saveState() {
-  localStorage.setItem('funnel_v1_time', JSON.stringify(ACTIVE_TIMELINE));
-  localStorage.setItem('funnel_v1_ledg', JSON.stringify(LEDGER));
-  localStorage.setItem('funnel_v1_rost', JSON.stringify(ROSTER));
-  localStorage.setItem('funnel_v1_conf', JSON.stringify(FUNNEL));
-  localStorage.setItem('funnel_v1_stat', JSON.stringify(MASTER_STATES));
+  localStorage.setItem('funnel_v2_time', JSON.stringify(ACTIVE_TIMELINE));
+  localStorage.setItem('funnel_v2_ledg', JSON.stringify(LEDGER));
+  localStorage.setItem('funnel_v2_rost', JSON.stringify(ROSTER));
+  localStorage.setItem('funnel_v2_conf', JSON.stringify(FUNNEL));
+  localStorage.setItem('funnel_v2_stat', JSON.stringify(MASTER_STATES));
 }
 
 function triggerFactoryResetWfm() { localStorage.clear(); location.reload(); }
+
+function loadFunnelUI() {
+  document.getElementById('mod-global-bump').value = FUNNEL.volBump;
+  document.getElementById('mod-global-ps-rate').value = FUNNEL.appToPsRate;
+  document.getElementById('mod-global-pfa-route').value = FUNNEL.pfaRouteRate;
+  document.getElementById('mod-global-ps-comp').value = FUNNEL.psCompRate;
+  document.getElementById('mod-global-scr-in').value = FUNNEL.screenInRate;
+  document.getElementById('mod-global-ev-sched').value = FUNNEL.evSchedRate;
+  document.getElementById('mod-global-ev-comp').value = FUNNEL.evCompRate;
+  document.getElementById('mod-global-enroll').value = FUNNEL.enrollRate;
+}
+
+function saveFunnelParams() {
+  FUNNEL.volBump = parseFloat(document.getElementById('mod-global-bump').value) || 0;
+  FUNNEL.appToPsRate = parseFloat(document.getElementById('mod-global-ps-rate').value) || 0;
+  FUNNEL.pfaRouteRate = parseFloat(document.getElementById('mod-global-pfa-route').value) || 0;
+  FUNNEL.psCompRate = parseFloat(document.getElementById('mod-global-ps-comp').value) || 0;
+  FUNNEL.screenInRate = parseFloat(document.getElementById('mod-global-scr-in').value) || 0;
+  FUNNEL.evSchedRate = parseFloat(document.getElementById('mod-global-ev-sched').value) || 0;
+  FUNNEL.evCompRate = parseFloat(document.getElementById('mod-global-ev-comp').value) || 0;
+  FUNNEL.enrollRate = parseFloat(document.getElementById('mod-global-enroll').value) || 0;
+  saveState(); recalculateDashboardMetrics();
+}
 
 // --- TIMELINE CONTROLS ---
 function archiveEarliestMonth() {
@@ -407,7 +471,7 @@ function appendFutureMonth() {
 
   ACTIVE_TIMELINE.push(nextName);
   LEDGER[nextName] = { wd: 21, apps: {}, conv: {} };
-  MASTER_STATES.forEach(s => { LEDGER[nextName].apps[s] = 0; LEDGER[nextName].conv[s] = 35; });
+  MASTER_STATES.forEach(s => { LEDGER[nextName].apps[s] = 0; LEDGER[nextName].conv[s] = 0; });
 
   Object.keys(ROSTER).forEach(n => {
     ROSTER[n].pto[nextName] = 0;
@@ -436,39 +500,31 @@ function toggleModal(id) {
 }
 
 function populateGlobalModalViews() {
-  // Populate Funnel
-  document.getElementById('mod-global-ps-rate').value = FUNNEL.appToPsRate;
-  document.getElementById('mod-global-pfa-route').value = FUNNEL.pfaRouteRate;
-  document.getElementById('mod-global-bump').value = FUNNEL.volBump;
-  document.getElementById('mod-q-ce-ps').value = FUNNEL.qCePs;
-  document.getElementById('mod-q-ce-ev').value = FUNNEL.qCeEv;
-  document.getElementById('mod-q-ld-ps').value = FUNNEL.qLdPs;
-  document.getElementById('mod-q-ld-ev').value = FUNNEL.qLdEv;
-  document.getElementById('mod-q-pf-ps').value = FUNNEL.qPfPs;
-  
   // Working Days Table
   const wdTable = document.getElementById('modal-wd-table');
   let html = `<thead><tr><th style="border-right:1px solid #374151;">Metric</th>${ACTIVE_TIMELINE.map(m => `<th>${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody><tr><td style="border-right:1px solid #374151;"><strong>Working Days</strong></td>`;
   ACTIVE_TIMELINE.forEach(m => { html += `<td><input type="number" id="mod-wd-field-${m}" value="${LEDGER[m].wd}"></td>`; });
   wdTable.innerHTML = html + `</tr></tbody>`;
 
-  // Demand Double Grid
-  const demandTable = document.getElementById('modal-demand-entry-table');
-  let dHtml = `<thead><tr><th style="position:sticky; left:0; top:0; background:#1f2937; z-index:3; border-right:1px solid #374151;">Territory</th>`;
-  ACTIVE_TIMELINE.forEach(m => { dHtml += `<th colspan="2" style="position:sticky; top:0; background:#1f2937; z-index:2; text-align:center; border-right:1px solid #374151;">${m.split('_')[0]}</th>`; });
-  dHtml += `</tr><tr><th style="position:sticky; left:0; top:25px; background:#161b22; z-index:3; border-right:1px solid #374151;"></th>`;
-  ACTIVE_TIMELINE.forEach(() => { dHtml += `<th style="position:sticky; top:25px; background:#161b22; z-index:2; color:#93c5fd;">Apps Vol</th><th style="position:sticky; top:25px; background:#161b22; z-index:2; color:#c4b5fd; border-right:1px solid #374151;">App→Ev %</th>`; });
-  dHtml += `</tr></thead><tbody>`;
-  
+  // Apps Table
+  const appsTable = document.getElementById('modal-apps-entry-table');
+  let aHtml = `<thead><tr><th style="position:sticky; left:0; top:0; background:#1f2937; z-index:3; border-right:1px solid #374151;">Territory</th>${ACTIVE_TIMELINE.map(m => `<th style="position:sticky; top:0; background:#1f2937; z-index:2;">${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody>`;
   MASTER_STATES.forEach((s, rIdx) => {
-    dHtml += `<tr><td style="position:sticky; left:0; background:#161b22; z-index:1; border-right:1px solid #374151;"><strong>${s}</strong></td>`;
-    ACTIVE_TIMELINE.forEach((m, cIdx) => {
-        dHtml += `<td><input type="number" class="paste-target" data-row="${rIdx}" data-col="${cIdx*2}" id="mod-app-${s}-${m}" value="${LEDGER[m].apps[s]}" style="color:#93c5fd;"></td>`;
-        dHtml += `<td style="border-right:1px solid #374151;"><input type="number" class="paste-target" data-row="${rIdx}" data-col="${(cIdx*2)+1}" id="mod-cnv-${s}-${m}" value="${LEDGER[m].conv[s]}" style="color:#c4b5fd; width:45px;"></td>`;
-    });
-    dHtml += `</tr>`;
+    aHtml += `<tr><td style="position:sticky; left:0; background:#161b22; z-index:1; border-right:1px solid #374151;"><strong>${s}</strong></td>`;
+    ACTIVE_TIMELINE.forEach((m, cIdx) => { aHtml += `<td><input type="number" class="paste-target" data-table="apps" data-row="${rIdx}" data-col="${cIdx}" id="mod-app-${s}-${m}" value="${LEDGER[m].apps[s]}" style="color:#93c5fd;"></td>`; });
+    aHtml += `</tr>`;
   });
-  demandTable.innerHTML = dHtml + '</tbody>';
+  appsTable.innerHTML = aHtml + '</tbody>';
+
+  // Conv Table
+  const convTable = document.getElementById('modal-conv-entry-table');
+  let cHtml = `<thead><tr><th style="position:sticky; left:0; top:0; background:#1f2937; z-index:3; border-right:1px solid #374151;">Territory</th>${ACTIVE_TIMELINE.map(m => `<th style="position:sticky; top:0; background:#1f2937; z-index:2;">${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody>`;
+  MASTER_STATES.forEach((s, rIdx) => {
+    cHtml += `<tr><td style="position:sticky; left:0; background:#161b22; z-index:1; border-right:1px solid #374151;"><strong>${s}</strong></td>`;
+    ACTIVE_TIMELINE.forEach((m, cIdx) => { cHtml += `<td><input type="number" class="paste-target" data-table="conv" data-row="${rIdx}" data-col="${cIdx}" id="mod-cnv-${s}-${m}" value="${LEDGER[m].conv[s]}" style="color:#c4b5fd;"></td>`; });
+    cHtml += `</tr>`;
+  });
+  convTable.innerHTML = cHtml + '</tbody>';
 
   attachPasteListeners();
 }
@@ -482,12 +538,13 @@ function attachPasteListeners() {
        const rows = text.split(/\r\n|\n|\r/);
        const startR = parseInt(this.dataset.row);
        const startC = parseInt(this.dataset.col);
+       const tName = this.dataset.table;
        
        rows.forEach((rowStr, rOffset) => {
          if(!rowStr.trim()) return;
          const cols = rowStr.split('\t');
          cols.forEach((val, cOffset) => {
-           const targetInput = document.querySelector(`input[data-row="${startR + rOffset}"][data-col="${startC + cOffset}"]`);
+           const targetInput = document.querySelector(`input[data-table="${tName}"][data-row="${startR + rOffset}"][data-col="${startC + cOffset}"]`);
            if(targetInput) {
              const cleanVal = val.replace(/,|%/g, '').trim();
              if(cleanVal !== "" && !isNaN(cleanVal)) targetInput.value = parseFloat(cleanVal);
@@ -499,15 +556,6 @@ function attachPasteListeners() {
 }
 
 function saveGlobalModalParams() {
-  FUNNEL.appToPsRate = parseFloat(document.getElementById('mod-global-ps-rate').value) || 0;
-  FUNNEL.pfaRouteRate = parseFloat(document.getElementById('mod-global-pfa-route').value) || 0;
-  FUNNEL.volBump = parseFloat(document.getElementById('mod-global-bump').value) || 0;
-  FUNNEL.qCePs = parseFloat(document.getElementById('mod-q-ce-ps').value) || 0;
-  FUNNEL.qCeEv = parseFloat(document.getElementById('mod-q-ce-ev').value) || 0;
-  FUNNEL.qLdPs = parseFloat(document.getElementById('mod-q-ld-ps').value) || 0;
-  FUNNEL.qLdEv = parseFloat(document.getElementById('mod-q-ld-ev').value) || 0;
-  FUNNEL.qPfPs = parseFloat(document.getElementById('mod-q-pf-ps').value) || 0;
-
   ACTIVE_TIMELINE.forEach(m => {
     LEDGER[m].wd = parseFloat(document.getElementById(`mod-wd-field-${m}`).value) || 0;
     MASTER_STATES.forEach(s => {
@@ -518,6 +566,14 @@ function saveGlobalModalParams() {
   saveState(); toggleModal('settings-modal'); recalculateDashboardMetrics();
 }
 
+function setVolMultiplier(val, btn) {
+  FUNNEL.volBump = parseFloat(val) || 0;
+  document.querySelectorAll('.multiplier-wrap .m-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('mod-global-bump').value = FUNNEL.volBump;
+  saveState(); recalculateDashboardMetrics();
+}
+
 // --- ROSTER PROVISIONING LOGIC ---
 function addNewClinicianToRoster() {
   const name = document.getElementById('new-clinician-name').value.trim();
@@ -525,7 +581,10 @@ function addNewClinicianToRoster() {
   if (!name) return;
   if (ROSTER[name]) { promptAlert("Resource already exists."); return; }
   
-  ROSTER[name] = { role: role, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, mix: {} };
+  let dPs = role === 'PFA' ? 10 : (role === 'LEAD' ? 3 : 4);
+  let dEv = role === 'PFA' ? 0 : 3;
+
+  ROSTER[name] = { role: role, qPs: dPs, qEv: dEv, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, mix: {} };
   ACTIVE_TIMELINE.forEach(m => {
     ROSTER[name].pto[m] = 0;
     ROSTER[name].mix[m] = (role === 'PFA' ? [] : [...MASTER_STATES]);
@@ -576,6 +635,10 @@ function recalculateDashboardMetrics() {
   let mult = 1 + (FUNNEL.volBump / 100);
   let psRouteRate = FUNNEL.appToPsRate / 100;
   let pfaGlobalRate = FUNNEL.pfaRouteRate / 100;
+  
+  // Calculate Global Default App to Eval Rate
+  // App -> PS Sched (95%) * PS Comp (74%) * Screen-In (86%) * Eval Sched (78%)
+  let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
 
   // 1. Evaluate Gross Demands
   let sysTotalApps = 0;
@@ -588,7 +651,11 @@ function recalculateDashboardMetrics() {
     sysTotalApps += baseApps;
     
     let statePsDemandFull = baseApps * psRouteRate;
-    let stateEvDemand = baseApps * ((LEDGER[activeMonth].conv[s] || 0) / 100);
+    
+    // Check if State has Override
+    let stateConvOverride = LEDGER[activeMonth].conv[s] || 0;
+    let effectiveAppToEvRate = stateConvOverride > 0 ? (stateConvOverride / 100) : globalAppToEvRate;
+    let stateEvDemand = baseApps * effectiveAppToEvRate;
     
     sysGrossPsDemand += statePsDemandFull;
     sysGrossEvDemand += stateEvDemand;
@@ -604,13 +671,12 @@ function recalculateDashboardMetrics() {
 
   // 2. Global PFA Sweep
   let pfaTotalSupply = 0;
-  let pfaActiveHeadcount = 0;
   Object.keys(ROSTER).forEach(name => {
     let r = ROSTER[name];
     if (r.role === 'PFA') {
-      pfaActiveHeadcount++;
       let pto = parseFloat(r.pto[activeMonth]) || 0;
-      pfaTotalSupply += Math.max(0, (wd - pto) * FUNNEL.qPfPs);
+      let qPs = parseFloat(r.qPs) || 0;
+      pfaTotalSupply += Math.max(0, (wd - pto) * qPs);
     }
   });
 
@@ -618,8 +684,8 @@ function recalculateDashboardMetrics() {
   let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').map(name => {
     let r = ROSTER[name];
     let pto = parseFloat(r.pto[activeMonth]) || 0;
-    let qPs = r.role === 'LEAD' ? FUNNEL.qLdPs : FUNNEL.qCePs;
-    let qEv = r.role === 'LEAD' ? FUNNEL.qLdEv : FUNNEL.qCeEv;
+    let qPs = parseFloat(r.qPs) || 0;
+    let qEv = parseFloat(r.qEv) || 0;
     
     let activeSt = r.mix[activeMonth] || [];
     let loadDenomApps = 0;
@@ -673,15 +739,13 @@ function recalculateDashboardMetrics() {
   `;
 
   renderDualHeatmap(stateMetrics);
-  renderMatrix(ceAllocations, stateMetrics);
-  renderExecutiveBanner(sysGrossPsDemand, totalSystemPsSupply, sysGrossEvDemand, ceTotalEvSupply, activeMonth, stateMetrics);
-  renderCollapsibleLedger(activeMonth);
+  renderMatrix(ceAllocations);
+  renderExecutiveBanner(sysGrossEvDemand, ceTotalEvSupply, activeMonth);
+  renderCollapsibleLedger(activeMonth, wd);
   renderDualCharts();
 }
 
 function renderDualHeatmap(metrics) {
-  let countEvBlue=0, countEvGreen=0, countEvYellow=0, countEvRed=0;
-  
   document.getElementById('heatmap-body').innerHTML = MASTER_STATES.map(s => {
     let r = metrics[s];
     
@@ -696,13 +760,6 @@ function renderDualHeatmap(metrics) {
     let evBal = Math.round(r.evCapCe - r.evDemand);
     let evStr = r.evDemand === 0 ? '-' : `${Math.round(evPct)}%`;
     let evCol = evPct < 80 ? 'status-red' : (evPct < 95 ? 'status-yellow' : 'status-green');
-
-    if(r.evDemand > 0) {
-        if(evPct >= 95) countEvBlue++;
-        else if(evPct >= 80) countEvGreen++;
-        else if(evPct >= 70) countEvYellow++;
-        else countEvRed++;
-    }
 
     return `
       <tr>
@@ -723,7 +780,7 @@ function renderDualHeatmap(metrics) {
   }).join('');
 }
 
-function renderMatrix(ceAllocations, stateMetrics) {
+function renderMatrix(ceAllocations) {
   let head = document.getElementById('matrix-head-row');
   let body = document.getElementById('matrix-body-rows');
   
@@ -731,7 +788,7 @@ function renderMatrix(ceAllocations, stateMetrics) {
     MASTER_STATES.map(s => `<th style="position:sticky; top:0; background:#161b22; z-index:20; text-align:center;">${s}</th>`).join('');
 
   body.innerHTML = ceAllocations.map(ce => {
-    let raw = ROSTER[ce.name] || { profile: [] }; // Safe fallback
+    let raw = ROSTER[ce.name] || { profile: [] };
     let cells = MASTER_STATES.map(s => {
       let isMaster = (raw.profile || []).includes(s);
       if(!isMaster) return `<td class="matrix-cell-empty"></td>`;
@@ -743,26 +800,22 @@ function renderMatrix(ceAllocations, stateMetrics) {
   }).join('');
 }
 
-function renderExecutiveBanner(psDem, psSup, evDem, evSup, m, metrics) {
+function renderExecutiveBanner(evDem, evSup, m) {
   const container = document.getElementById('executive-insight-banner');
-  let psShort = Math.max(0, psDem - psSup);
+  let finalYield = Math.round(evSup * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100));
   let evShort = Math.max(0, evDem - evSup);
   
-  let critStates = MASTER_STATES.filter(s => metrics[s].evDemand > 0 && (metrics[s].evCapCe / metrics[s].evDemand) < 0.80);
-  
   container.innerHTML = `
-    <h3>FRONT/MID FUNNEL ARBITRAGE PULSE: ${m.split('_')[0].toUpperCase()}</h3>
-    <div style="display:flex; gap:20px;">
+    <h3>STRATEGIC YIELD PROJECTION: ${m.split('_')[0].toUpperCase()}</h3>
+    <div style="display:flex; gap:20px; align-items:center;">
         <div style="flex:1;">
-            <p><strong>📞 Phone Screens (Front):</strong> System requires <strong>${fmt(psDem)} slots</strong>. Combined PFA & CE supply yields <strong>${fmt(psSup)}</strong>.</p>
-            ${psShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Shortfall of ${fmt(psShort)} PS slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ PS Pipeline Flow is Stable.</p>`}
+            <p><strong>Evaluation Bottleneck Status:</strong> System requires <strong>${fmt(evDem)} Eval slots</strong> based on top-of-funnel intake. Licensed CEs yield <strong>${fmt(evSup)} slots</strong>.</p>
+            ${evShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Mid-Funnel Deficit: Short ${fmt(evShort)} EV slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ Eval Queue is adequately staffed.</p>`}
         </div>
         <div style="flex:1; border-left: 1px solid #374151; padding-left: 20px;">
-            <p><strong>📋 Evaluations (Mid):</strong> System requires <strong>${fmt(evDem)} slots</strong>. Licensed CE supply yields <strong>${fmt(evSup)}</strong>.</p>
-            ${evShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Shortfall of ${fmt(evShort)} EV slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ Eval Queue is Stable.</p>`}
+            <p><strong>Expected Final Enrollment Yield:</strong> By applying the Eval Comp (${FUNNEL.evCompRate}%) and Enroll (${FUNNEL.enrollRate}%) rates to your total Eval Capacity (${fmt(evSup)}), the system projects <strong>${fmt(finalYield)} Enrolled Patients</strong> for this cohort.</p>
         </div>
     </div>
-    ${critStates.length > 0 ? `<div style="margin-top:12px; padding:8px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:4px; color:#fca5a5; font-size:11px;">⚠️ <strong>Major Eval Coverage Concerns (<80%) — ${critStates.length} State(s) Impacted:</strong> ${critStates.join(', ')}</div>` : ''}
   `;
 }
 
@@ -772,17 +825,17 @@ function toggleGroup(cls) {
     });
 }
 
-function renderCollapsibleLedger(activeM) {
+function renderCollapsibleLedger(activeM, wd) {
   let thead = document.getElementById('pto-ledger-head');
   let body = document.getElementById('pto-ledger-body');
+  let foot = document.getElementById('pto-ledger-foot');
 
-  let headHtml = `<tr><th rowspan="2" style="position:sticky; left:0; background:#161b22; z-index:2; border-right:1px solid #374151; min-width:160px;">Resource</th>`;
-  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-left:1px solid #374151;">${m.split('_')[0]}</th>`; });
-  headHtml += `</tr><tr>`;
-  ACTIVE_TIMELINE.forEach(() => { headHtml += `<th style="text-align:center; border-left:1px solid #374151; font-size:8px;">PTO</th><th style="text-align:center; font-size:8px;">CAP</th>`; });
+  let headHtml = `<tr><th rowspan="2" style="position:sticky; left:0; background:#161b22; z-index:2; border-right:1px solid #374151; min-width:160px;">Resource</th><th colspan="2" style="text-align:center; border-right:1px solid #374151;">Quotas</th>`;
+  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-right:1px solid #374151;">${m.split('_')[0]}</th>`; });
+  headHtml += `</tr><tr><th style="text-align:center;">PS/Day</th><th style="text-align:center; border-right:1px solid #374151;">Ev/Day</th>`;
+  ACTIVE_TIMELINE.forEach(() => { headHtml += `<th style="text-align:center; font-size:8px;">PTO</th><th style="text-align:center; font-size:8px; border-right:1px solid #374151;">CAP</th>`; });
   thead.innerHTML = headHtml + `</tr>`;
 
-  // Group Roster
   let groups = { 'LEAD': [], 'CE': [], 'PFA': [] };
   Object.keys(ROSTER).forEach(n => {
       let role = ROSTER[n].role || 'CE';
@@ -793,24 +846,61 @@ function renderCollapsibleLedger(activeM) {
   Object.keys(groups).forEach(role => {
       if(groups[role].length === 0) return;
       
-      bHtml += `<tr class="group-header" onclick="toggleGroup('grp-${role}')"><td colspan="100%">▼ ${role} ROSTER (${groups[role].length} Active)</td></tr>`;
+      bHtml += `<tr class="group-header" onclick="toggleGroup('grp-${role}')"><td colspan="100%">▼ ${role === 'PFA' ? 'STATELESS PFA POOL' : (role === 'LEAD' ? 'LEAD CEs' : 'STANDARD CEs')} (${groups[role].length} Active)</td></tr>`;
       
       groups[role].forEach(n => {
           let r = ROSTER[n];
-          let qPs = role==='LEAD'?FUNNEL.qLdPs : (role==='PFA'?FUNNEL.qPfPs:FUNNEL.qCePs);
-          let qEv = role==='LEAD'?FUNNEL.qLdEv : (role==='PFA'?FUNNEL.qPfEv:FUNNEL.qCeEv);
           
           let colHtml = ACTIVE_TIMELINE.map(m => {
               let pto = r.pto[m] || 0;
-              let wd = LEDGER[m].wd;
-              let capStr = role === 'PFA' ? `${Math.max(0,(wd-pto)*qPs)} PS` : `${Math.max(0,(wd-pto)*qPs)} / ${Math.max(0,(wd-pto)*qEv)}`;
-              return `<td style="border-left:1px solid #1f2937;"><input type="number" step="0.5" value="${pto}" style="width:34px;" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; color:#94a3b8; font-size:9px; white-space:nowrap;">${capStr}</td>`;
+              let mwd = LEDGER[m].wd;
+              let capPs = Math.max(0,(mwd-pto)*r.qPs);
+              let capEv = Math.max(0,(mwd-pto)*r.qEv);
+              let capStr = role === 'PFA' ? `<span class="badge-ps">${Math.round(capPs)}</span>` : `<span class="badge-ps">${Math.round(capPs)}</span> <span class="badge-ev">${Math.round(capEv)}</span>`;
+              return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
           }).join('');
 
-          bHtml += `<tr class="grp-${role}" data-ce-row-id="${n}"><td style="position:sticky; left:0; background:#0b0f19; z-index:1; border-right:1px solid #374151; display:flex; justify-content:space-between; align-items:center;"><strong>${n}</strong> <button class="btn-remove" onclick="deprovisionClinician('${n}')">×</button></td>${colHtml}</tr>`;
+          bHtml += `<tr class="grp-${role}" data-ce-row-id="${n}">
+            <td style="position:sticky; left:0; background:#0b0f19; z-index:1; border-right:1px solid #374151; display:flex; justify-content:space-between; align-items:center;"><strong>${n}</strong> <button class="btn-remove" onclick="promptConfirm('Permanently remove ${n}?', () => deprovisionClinician('${n}'))">×</button></td>
+            <td style="text-align:center;"><input type="number" value="${r.qPs}" class="ledger-input" style="color:#93c5fd;" onchange="ROSTER['${n}'].qPs=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td>
+            <td style="text-align:center; border-right:1px solid #374151;"><input type="number" value="${r.qEv}" class="ledger-input" style="color:#c4b5fd;" ${role==='PFA'?'disabled':''} onchange="ROSTER['${n}'].qEv=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td>
+            ${colHtml}
+          </tr>`;
       });
   });
   body.innerHTML = bHtml;
+
+  // Build Footer Totals
+  let ceLeadPto = {}; let ceLeadCapPs = {}; let ceLeadCapEv = {};
+  let allPto = {}; let allCapPs = {}; let allCapEv = {};
+
+  ACTIVE_TIMELINE.forEach(m => {
+      ceLeadPto[m] = 0; ceLeadCapPs[m] = 0; ceLeadCapEv[m] = 0;
+      allPto[m] = 0; allCapPs[m] = 0; allCapEv[m] = 0;
+      let mwd = LEDGER[m].wd;
+
+      Object.keys(ROSTER).forEach(n => {
+          let r = ROSTER[n];
+          let p = parseFloat(r.pto[m]) || 0;
+          let cps = Math.max(0, (mwd - p) * r.qPs);
+          let cev = Math.max(0, (mwd - p) * r.qEv);
+
+          allPto[m] += p; allCapPs[m] += cps; allCapEv[m] += cev;
+          if(r.role !== 'PFA') {
+              ceLeadPto[m] += p; ceLeadCapPs[m] += cps; ceLeadCapEv[m] += cev;
+          }
+      });
+  });
+
+  let footHtml = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#c4b5fd;">LICENSED CAPACITY (CE + LEAD)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
+  ACTIVE_TIMELINE.forEach(m => {
+      footHtml += `<td style="text-align:center; color:#fca5a5;">${ceLeadPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><span class="badge-ps">${Math.round(ceLeadCapPs[m])}</span> <span class="badge-ev">${Math.round(ceLeadCapEv[m])}</span></td>`;
+  });
+  footHtml += `</tr><tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#93c5fd;">GLOBAL SYSTEM TOTALS (ALL ROLES)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
+  ACTIVE_TIMELINE.forEach(m => {
+      footHtml += `<td style="text-align:center; color:#ef4444;">${allPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><span class="badge-ps">${Math.round(allCapPs[m])}</span> <span class="badge-ev">${Math.round(allCapEv[m])}</span></td>`;
+  });
+  foot.innerHTML = footHtml + `</tr>`;
 }
 
 function renderDualCharts() {
@@ -820,13 +910,16 @@ function renderDualCharts() {
   let dLabels = ACTIVE_TIMELINE.map(m => m.split('_')[0]);
   let psDem=[], psSup=[], evDem=[], evSup=[];
 
+  let globalAppToEv = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+
   ACTIVE_TIMELINE.forEach(m => {
       let wd = LEDGER[m].wd; let mult = 1+(FUNNEL.volBump/100);
       let tDemPS=0, tDemEV=0;
       MASTER_STATES.forEach(s => {
           let a = (LEDGER[m].apps[s]||0)*mult;
           tDemPS += (a * (FUNNEL.appToPsRate/100));
-          tDemEV += (a * ((LEDGER[m].conv[s]||0)/100));
+          let convOver = LEDGER[m].conv[s] || 0;
+          tDemEV += (a * (convOver > 0 ? convOver/100 : globalAppToEv));
       });
       psDem.push(Math.round(tDemPS)); evDem.push(Math.round(tDemEV));
 
@@ -834,9 +927,8 @@ function renderDualCharts() {
       Object.keys(ROSTER).forEach(n => {
           let r = ROSTER[n]; let p = parseFloat(r.pto[m])||0;
           let w = Math.max(0, wd-p);
-          if(r.role==='PFA') { tSupPS += (w*FUNNEL.qPfPs); }
-          else if(r.role==='LEAD') { tSupPS += (w*FUNNEL.qLdPs); tSupEV += (w*FUNNEL.qLdEv); }
-          else { tSupPS += (w*FUNNEL.qCePs); tSupEV += (w*FUNNEL.qCeEv); }
+          tSupPS += (w * (r.qPs || 0));
+          tSupEV += (w * (r.qEv || 0));
       });
       psSup.push(Math.round(tSupPS)); evSup.push(Math.round(tSupEV));
   });
@@ -875,39 +967,55 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
     localStorage.setItem('funnel_roster_backup', JSON.stringify(ROSTER));
     if (!isSilent) undoBtn.style.display = 'inline-block';
     
-    const rows = csvText.split(/\r\n|\n/).map(r => r.split(','));
+    const parseCSVRow = (row) => {
+        const result = []; let insideQuote = false; let currentVal = '';
+        for (let i = 0; i < row.length; i++) {
+            if (row[i] === '"') insideQuote = !insideQuote;
+            else if (row[i] === ',' && !insideQuote) { result.push(currentVal); currentVal = ''; } 
+            else { currentVal += row[i]; }
+        }
+        result.push(currentVal); return result;
+    };
+    
+    const rows = csvText.split(/\r\n|\n/).filter(r => r.trim());
+    if (rows.length < 2) throw new Error("CSV appears empty or malformed");
+    const parsedData = rows.map(r => parseCSVRow(r));
+    
     let ptoCounts = {};
     Object.keys(ROSTER).forEach(ce => { ptoCounts[ce] = {}; ACTIVE_TIMELINE.forEach(m => ptoCounts[ce][m] = 0); });
 
-    let ceColMap = {}; let headRow = -1;
-    for(let r=0; r<10; r++) {
-        let matches=0;
-        rows[r].forEach((c, i) => {
-            let nm = String(c).replace(/"/g,'').trim().toLowerCase();
-            let matchedCE = Object.keys(ROSTER).find(ce => ce.toLowerCase() === nm);
-            if(matchedCE) { ceColMap[i] = matchedCE; matches++; }
+    let ceColMap = {}; let headerRowIdx = -1;
+    for(let r = 0; r < Math.min(10, parsedData.length); r++) {
+        let matches = 0;
+        parsedData[r].forEach((cell, c) => {
+            let cellName = String(cell).trim().toLowerCase();
+            let matchedCE = Object.keys(ROSTER).find(ce => ce.toLowerCase() === cellName);
+            if (matchedCE) { ceColMap[c] = matchedCE; matches++; }
         });
-        if(matches >= 2) { headRow = r; break; }
+        if (matches >= 2) { headerRowIdx = r; break; }
     }
 
-    if(headRow === -1) throw new Error("Names not found");
+    if (headerRowIdx === -1) throw new Error("Names not found.");
 
     let u = 0;
-    for(let r=headRow+1; r<rows.length; r++) {
+    for (let r = headerRowIdx + 1; r < parsedData.length; r++) {
+        let row = parsedData[r]; if (!row) continue;
         let dateVal = null;
-        for(let c=0; c<4; c++) {
-            let v = String(rows[r][c]).replace(/"/g,'').trim();
-            if(v && (v.includes('/') || v.includes('-')) && !isNaN(Date.parse(v))) { dateVal = v; break; }
+        for (let c = 0; c < 4; c++) {
+            let cellVal = String(row[c]).trim();
+            if (cellVal && (cellVal.includes('/') || cellVal.includes('-')) && !isNaN(Date.parse(cellVal))) {
+                dateVal = cellVal; break;
+            }
         }
-        if(dateVal) {
+        if (dateVal) {
             let d = new Date(dateVal);
-            if(!isNaN(d.getTime())) {
+            if (!isNaN(d.getTime())) {
                 let mName = ALL_KNOWN_MONTHS[d.getMonth()];
                 let tMonth = ACTIVE_TIMELINE.find(m => m.startsWith(mName));
-                if(tMonth) {
-                    Object.keys(ceColMap).forEach(idx => {
-                        let f = parseFloat(String(rows[r][idx]).replace(/"/g,'').trim());
-                        if(!isNaN(f) && f > 0) ptoCounts[ceColMap[idx]][tMonth] += f;
+                if (tMonth) {
+                    Object.keys(ceColMap).forEach(cIdx => {
+                        let f = parseFloat(String(row[cIdx]).trim());
+                        if (!isNaN(f) && f > 0) ptoCounts[ceColMap[cIdx]][tMonth] += f;
                     });
                 }
             }
@@ -916,7 +1024,7 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
 
     Object.keys(ptoCounts).forEach(ce => {
         Object.keys(ptoCounts[ce]).forEach(m => {
-            if(ptoCounts[ce][m] !== ROSTER[ce].pto[m]) { ROSTER[ce].pto[m] = ptoCounts[ce][m]; u++; }
+            if (ptoCounts[ce][m] !== ROSTER[ce].pto[m]) { ROSTER[ce].pto[m] = ptoCounts[ce][m]; u++; }
         });
     });
     
@@ -938,8 +1046,14 @@ function undoPtoSync() {
     }
 }
 
+function deprovisionClinician(name) {
+    delete ROSTER[name];
+    saveState();
+    recalculateDashboardMetrics();
+}
+
 window.onload = () => {
-  bootstrapDataEngine(); buildTimelineControls(); recalculateDashboardMetrics();
+  bootstrapDataEngine(); loadFunnelUI(); buildTimelineControls(); recalculateDashboardMetrics();
   try { if (window.self === window.top) syncPtoFromGoogleSheets(true); } catch(e){}
 };
 </script>
