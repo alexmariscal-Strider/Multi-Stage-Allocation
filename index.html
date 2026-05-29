@@ -27,7 +27,8 @@
   .insight-banner strong { color: #fff; font-weight: 700; }
 
   /* FUNNEL ENGINE PANEL */
-  .funnel-panel { display: flex; align-items: flex-start; justify-content: space-between; background: #0f172a; padding: 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 8px; overflow-x: auto; white-space: nowrap; }
+  .funnel-panel { display: flex; flex-direction: column; background: #0f172a; padding: 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 8px; overflow-x: auto; white-space: nowrap; }
+  .funnel-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 4px; }
   .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; }
   .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
   .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; height: 24px; }
@@ -248,7 +249,7 @@
     <h2 id="heat-title">State Cascading Distribution (PS & Evals)</h2>
     <div id="heatmap-summary" style="display: flex; gap: 8px; margin-bottom: 12px;"></div>
     <div style="overflow-y: auto; max-height: 380px;">
-        <table id="heatmap-table">
+        <table id="heatmap-table" class="hover-row-trace">
         <thead style="position: sticky; top: 0; background: #161b22; z-index: 10;">
             <tr>
             <th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th>
@@ -615,14 +616,6 @@ function saveGlobalModalParams() {
   saveState(); toggleModal('settings-modal'); recalculateDashboardMetrics();
 }
 
-function setVolMultiplier(val, btn) {
-  FUNNEL.volBump = parseFloat(val) || 0;
-  document.querySelectorAll('.multiplier-wrap .m-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  document.getElementById('mod-global-bump').value = FUNNEL.volBump;
-  saveState(); recalculateDashboardMetrics();
-}
-
 // --- ROSTER PROVISIONING LOGIC ---
 function addNewClinicianToRoster() {
   const name = document.getElementById('new-clinician-name').value.trim();
@@ -747,7 +740,18 @@ function recalculateDashboardMetrics() {
   // Calculate Global Default App to Eval Rate
   let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
 
-  // 1. Evaluate Gross Demands
+  // 1. Calculate PFA Total Supply (Capacity) FIRST
+  let pfaTotalSupply = 0;
+  Object.keys(ROSTER).forEach(name => {
+    let r = ROSTER[name];
+    if (r.role === 'PFA') {
+      let pto = parseFloat(r.pto[activeMonth]) || 0;
+      let qPs = parseFloat(r.qPs) || 0;
+      pfaTotalSupply += Math.max(0, (wd - pto) * qPs);
+    }
+  });
+
+  // 2. Evaluate Gross Demands
   let sysTotalApps = 0;
   let sysGrossPsDemand = 0;
   let sysGrossEvDemand = 0;
@@ -771,22 +775,30 @@ function recalculateDashboardMetrics() {
     stateMetrics[s] = {
       apps: bumpedApps,
       psDemandFull: statePsDemandFull,
-      psDemandCE: statePsDemandFull * (1 - pfaGlobalRate), // CEs only take the leftover
       evDemand: stateEvDemand,
       psCapCe: 0, evCapCe: 0, assigned: []
     };
   });
 
-  let sysGrossPsPfa = sysGrossPsDemand * pfaGlobalRate;
-  let sysGrossPsCE = sysGrossPsDemand * (1 - pfaGlobalRate);
+  // 3. APPLY PFA CAPPING LOGIC
+  let requestedPfaVol = sysGrossPsDemand * pfaGlobalRate;
+  let actualPfaVol = Math.min(requestedPfaVol, pfaTotalSupply);
+  let pfaCapped = requestedPfaVol > pfaTotalSupply;
+  
+  // What percentage of total demand did PFAs *actually* take?
+  let effectivePfaRate = sysGrossPsDemand > 0 ? (actualPfaVol / sysGrossPsDemand) : 0;
+  let sysGrossPsCE = sysGrossPsDemand - actualPfaVol;
 
-  // 2. Inject Display Data Directly into Funnel Row to align with inputs
+  // 4. Update state metrics with effective CE demand (after PFA sweep)
+  MASTER_STATES.forEach(s => {
+      stateMetrics[s].psDemandCE = stateMetrics[s].psDemandFull * (1 - effectivePfaRate);
+  });
+
+  // 5. Inject Display Data Directly into Funnel Row to align with inputs
   const dispBase = document.getElementById('disp-base-apps');
   if (dispBase) {
       let fBumped = sysTotalApps * mult;
       let fPsSched = fBumped * psRouteRate;
-      let fPfaRoute = fPsSched * pfaGlobalRate;
-      let fCeRoute = fPsSched - fPfaRoute;
       let fPsComp = fPsSched * (FUNNEL.psCompRate/100);
       let fScrIn = fPsComp * (FUNNEL.screenInRate/100);
       let fEvSched = sysGrossEvDemand; // True calculated demand incorporating state overrides
@@ -796,8 +808,15 @@ function recalculateDashboardMetrics() {
       document.getElementById('disp-base-apps').innerText = fmt(sysTotalApps);
       document.getElementById('disp-bumped-apps').innerText = fmt(fBumped);
       document.getElementById('disp-ps-sched').innerText = fmt(fPsSched);
-      document.getElementById('disp-pfa-route').innerText = fmt(fPfaRoute);
-      document.getElementById('disp-ce-route').innerText = fmt(fCeRoute);
+      
+      // Update PFA Route with Warning if capped
+      let pfaDisplayHtml = fmt(actualPfaVol);
+      if (pfaCapped) {
+          pfaDisplayHtml = `<span style="color:#fca5a5; border-bottom: 1px dashed #fca5a5; cursor: help;" title="Capped at Max Capacity (${fmt(pfaTotalSupply)}). Requested: ${fmt(requestedPfaVol)}">⚠️ ${fmt(actualPfaVol)}</span>`;
+      }
+      document.getElementById('disp-pfa-route').innerHTML = pfaDisplayHtml;
+      
+      document.getElementById('disp-ce-route').innerText = fmt(sysGrossPsCE);
       document.getElementById('disp-ps-comp').innerText = fmt(fPsComp);
       document.getElementById('disp-scr-in').innerText = fmt(fScrIn);
       document.getElementById('disp-ev-sched').innerText = fmt(fEvSched);
@@ -805,18 +824,7 @@ function recalculateDashboardMetrics() {
       document.getElementById('disp-enroll').innerText = fmt(fEnroll);
   }
 
-  // 3. Global PFA Sweep
-  let pfaTotalSupply = 0;
-  Object.keys(ROSTER).forEach(name => {
-    let r = ROSTER[name];
-    if (r.role === 'PFA') {
-      let pto = parseFloat(r.pto[activeMonth]) || 0;
-      let qPs = parseFloat(r.qPs) || 0;
-      pfaTotalSupply += Math.max(0, (wd - pto) * qPs);
-    }
-  });
-
-  // 4. State CE/Lead Capacity Assignment
+  // 6. State CE/Lead Capacity Assignment
   let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').map(name => {
     let r = ROSTER[name];
     let pto = parseFloat(r.pto[activeMonth]) || 0;
@@ -854,7 +862,7 @@ function recalculateDashboardMetrics() {
 
   let totalSystemPsSupply = pfaTotalSupply + ceTotalPsSupply;
 
-  // 5. Update UI Components
+  // 7. Update UI Components
   document.getElementById('top-stats-container').innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Accepted App Vol <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Total top of funnel intake including bump.</span></div></div>
@@ -1021,7 +1029,7 @@ function renderCollapsibleLedger(activeM, wd) {
   let foot = document.getElementById('pto-ledger-foot');
 
   let headHtml = `<tr><th rowspan="2" style="position:sticky; left:0; background:#161b22; z-index:2; border-right:1px solid #374151; min-width:160px;">Resource</th><th colspan="2" style="text-align:center; border-right:1px solid #374151;">Quotas</th>`;
-  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-left:1px solid #374151;">${m.split('_')[0]}</th>`; });
+  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-right:1px solid #374151;">${m.split('_')[0]}</th>`; });
   headHtml += `</tr><tr><th style="text-align:center;">PS/Day</th><th style="text-align:center; border-right:1px solid #374151;">Ev/Day</th>`;
   ACTIVE_TIMELINE.forEach(() => { headHtml += `<th style="text-align:center; font-size:8px;">PTO</th><th style="text-align:center; font-size:8px; border-right:1px solid #374151;">CAP</th>`; });
   thead.innerHTML = headHtml + `</tr>`;
@@ -1048,8 +1056,8 @@ function renderCollapsibleLedger(activeM, wd) {
               let capEv = Math.max(0,(mwd-pto)*r.qEv);
               
               let capStr = role === 'PFA' 
-                  ? `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS</span>` 
-                  : `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
+                  ? `<span style="color:#94a3b8;">${Math.round(capPs)} PS</span>` 
+                  : `<span style="color:#94a3b8;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
                   
               return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
           }).join('');
