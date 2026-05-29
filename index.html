@@ -28,7 +28,7 @@
 
   /* FUNNEL ENGINE PANEL */
   .funnel-panel { display: flex; flex-direction: column; background: #0f172a; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 8px; }
-  .funnel-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; }
+  .funnel-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 4px; }
   .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
   .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; }
@@ -66,8 +66,9 @@
   
   /* HEATMAP COLORS */
   .status-red { color: #fca5a5; font-weight: 700; }
-  .status-green { color: #86efac; font-weight: 700; }
   .status-yellow { color: #fde047; font-weight: 700; }
+  .status-green { color: #86efac; font-weight: 700; }
+  .status-blue { color: #93c5fd; font-weight: 700; }
 
   /* MATRIX BUTTONS */
   .matrix-btn { width: 100%; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; cursor: pointer; padding: 4px 0; transition: 0.2s; }
@@ -89,14 +90,13 @@
 
   /* MODALS */
   .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2,6,23,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); padding: 10px; }
-  /* Make modal significantly larger as requested */
   .modal-content { background: #111827; padding: 20px; border-radius: 8px; border: 1px solid #374151; width: 100%; max-width: 1200px; max-height: 95vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
   .compact-modal-table { border-collapse: collapse; width: 100%; }
   .compact-modal-table th { padding: 4px 8px; font-size: 9px; background: #1f2937; border-bottom: 1px solid #374151; position: sticky; top: 0; z-index: 2; }
   .compact-modal-table td { padding: 3px 8px; border-bottom: 1px solid #1f2937; }
   .compact-modal-table input { width: 55px; padding: 4px; font-size: 10px; background: #0f172a; }
   
-  /* CUSTOM DIALOG (Alert/Confirm Replacement) */
+  /* CUSTOM DIALOG */
   .dialog-box { background: #1e293b; border: 1px solid #475569; border-radius: 8px; padding: 20px; width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
   .dialog-box p { font-size: 13px; margin-bottom: 20px; color: #f8fafc; line-height: 1.5; }
   .dialog-btns { display: flex; justify-content: center; gap: 10px; }
@@ -111,16 +111,15 @@
 
   .chart-container { height: 180px; width: 100%; margin-bottom: 4px; }
   
-  /* DUAL CAPACITY BADGES */
-  .badge-ps { display: inline-block; background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid #3b82f6; padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: 700; }
-  .badge-ev { display: inline-block; background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid #8b5cf6; padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: 700; }
-  
   /* SIDEBAR STYLES */
   .ce-row { margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #2d3548; }
   .state-pill-toggle { display: inline-flex; align-items: center; gap: 2px; padding: 1px 4px; border-radius: 3px; font-size: 8px; cursor: pointer; margin: 1px; font-weight: 700; border: 1px solid transparent; }
   .state-on { background: #1e3a5f; color: #93c5fd; border-color: #3b82f6; }
   .state-off { background: #0f1117; color: #475569; border-color: #1a2030; }
   .del-btn { color: #ef4444; font-size: 9px; margin-left: 2px; cursor: pointer; opacity: 0.5; }
+
+  .progress-bg { background: #0f1117; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 3px; width: 100%; min-width: 40px; }
+  .progress-fill { height: 100%; transition: width 0.3s ease; }
 
 </style>
 </head>
@@ -182,8 +181,8 @@
           <div class="funnel-input-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div>
       </div>
   </div>
-  <!-- GLOBAL VOLUME TOTALS BAR -->
-  <div id="funnel-totals-display" style="width: 100%;"></div>
+  <!-- GLOBAL VOLUME TOTALS BAR & MATH BREAKDOWN -->
+  <div id="funnel-math-breakdown" style="display: flex; gap: 12px; font-size: 10.5px; color: #cbd5e1; flex-wrap: wrap; justify-content: center; width: 100%;"></div>
 </div>
 
 <!-- NARRATIVE ENGINE -->
@@ -205,6 +204,7 @@
   <!-- DUAL HEATMAP -->
   <div class="panel full-width">
     <h2 id="heat-title">State Cascading Distribution (PS & Evals)</h2>
+    <div id="heatmap-summary" style="display: flex; gap: 8px; margin-bottom: 12px;"></div>
     <div style="overflow-y: auto; max-height: 380px;">
         <table id="heatmap-table">
         <thead style="position: sticky; top: 0; background: #161b22; z-index: 10;">
@@ -273,7 +273,7 @@
     </div>
 
     <div style="overflow-x: auto; width: 100%; max-height: 400px; overflow-y: auto;">
-      <table id="pto-ledger-table">
+      <table id="pto-ledger-table" class="hover-row-trace">
         <thead id="pto-ledger-head" style="position: sticky; top: 0; z-index: 10; background: #161b22;"></thead>
         <tbody id="pto-ledger-body"></tbody>
         <tfoot id="pto-ledger-foot" style="position: sticky; bottom: 0; z-index: 10;"></tfoot>
@@ -375,6 +375,7 @@ let chartEv = null;
 
 function bootstrapDataEngine() {
   try {
+    // PRESERVING V2 KEYS TO MAINTAIN EXISTING GITHUB DEPLOYMENT DATA INTEGRITY
     ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
     ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
@@ -395,44 +396,29 @@ function bootstrapDataEngine() {
       }
     });
 
-    // Hydrate Mock Roster if empty
-    if (Object.keys(ROSTER).length === 0) {
-        let mockCEs = ["Brian Richter", "Charlotte Lively", "Dina Siegel"];
-        mockCEs.forEach(name => {
-            ROSTER[name] = { role: 'CE', qPs: 4, qEv: 3, profile: [...MASTER_STATES], pto: {}, mix: {} };
-            ACTIVE_TIMELINE.forEach(m => { ROSTER[name].pto[m] = 0; ROSTER[name].mix[m] = [...MASTER_STATES]; });
-        });
-        ROSTER["PFA Alpha"] = { role: 'PFA', qPs: 10, qEv: 0, profile: [], pto: {}, mix: {} };
-        ROSTER["Lead Beta"] = { role: 'LEAD', qPs: 3, qEv: 3, profile: [...MASTER_STATES], pto: {}, mix: {} };
-        ACTIVE_TIMELINE.forEach(m => { 
-            ROSTER["PFA Alpha"].pto[m] = 0; ROSTER["PFA Alpha"].mix[m] = [];
-            ROSTER["Lead Beta"].pto[m] = 0; ROSTER["Lead Beta"].mix[m] = [...MASTER_STATES];
-        });
-    } else {
-        // Safe backfill for existing missing properties including Quotas
-        Object.keys(ROSTER).forEach(name => {
-            if (!ROSTER[name].profile) ROSTER[name].profile = [];
-            if (!ROSTER[name].pto) ROSTER[name].pto = {};
-            if (!ROSTER[name].mix) ROSTER[name].mix = {};
-            
-            // Assign defaults if missing
-            if (ROSTER[name].qPs === undefined) {
-                if (ROSTER[name].role === 'PFA') ROSTER[name].qPs = 10;
-                else if (ROSTER[name].role === 'LEAD') ROSTER[name].qPs = 3;
-                else ROSTER[name].qPs = 4;
-            }
-            if (ROSTER[name].qEv === undefined) {
-                if (ROSTER[name].role === 'PFA') ROSTER[name].qEv = 0;
-                else if (ROSTER[name].role === 'LEAD') ROSTER[name].qEv = 3;
-                else ROSTER[name].qEv = 3;
-            }
+    // Safe backfill for existing missing properties including Quotas
+    Object.keys(ROSTER).forEach(name => {
+        if (!ROSTER[name].profile) ROSTER[name].profile = [];
+        if (!ROSTER[name].pto) ROSTER[name].pto = {};
+        if (!ROSTER[name].mix) ROSTER[name].mix = {};
+        
+        // Assign defaults if missing
+        if (ROSTER[name].qPs === undefined) {
+            if (ROSTER[name].role === 'PFA') ROSTER[name].qPs = 10;
+            else if (ROSTER[name].role === 'LEAD') ROSTER[name].qPs = 3;
+            else ROSTER[name].qPs = 4;
+        }
+        if (ROSTER[name].qEv === undefined) {
+            if (ROSTER[name].role === 'PFA') ROSTER[name].qEv = 0;
+            else if (ROSTER[name].role === 'LEAD') ROSTER[name].qEv = 3;
+            else ROSTER[name].qEv = 3;
+        }
 
-            ACTIVE_TIMELINE.forEach(m => {
-                if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
-                if (!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [...ROSTER[name].profile];
-            });
+        ACTIVE_TIMELINE.forEach(m => {
+            if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
+            if (!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [...ROSTER[name].profile];
         });
-    }
+    });
 
     saveState();
   } catch (err) {
@@ -726,21 +712,22 @@ function recalculateDashboardMetrics() {
 
   let stateMetrics = {};
   MASTER_STATES.forEach(s => {
-    let baseApps = (LEDGER[activeMonth].apps[s] || 0) * mult;
+    let baseApps = (LEDGER[activeMonth].apps[s] || 0);
     sysTotalApps += baseApps;
     
-    let statePsDemandFull = baseApps * psRouteRate;
+    let bumpedApps = baseApps * mult;
+    let statePsDemandFull = bumpedApps * psRouteRate;
     
     // Check if State has Override
     let stateConvOverride = LEDGER[activeMonth].conv[s] || 0;
     let effectiveAppToEvRate = stateConvOverride > 0 ? (stateConvOverride / 100) : globalAppToEvRate;
-    let stateEvDemand = baseApps * effectiveAppToEvRate;
+    let stateEvDemand = bumpedApps * effectiveAppToEvRate;
     
     sysGrossPsDemand += statePsDemandFull;
     sysGrossEvDemand += stateEvDemand;
 
     stateMetrics[s] = {
-      apps: baseApps,
+      apps: bumpedApps,
       psDemandFull: statePsDemandFull,
       psDemandCE: statePsDemandFull * (1 - pfaGlobalRate), // CEs only take the leftover
       evDemand: stateEvDemand,
@@ -751,17 +738,39 @@ function recalculateDashboardMetrics() {
   let sysGrossPsPfa = sysGrossPsDemand * pfaGlobalRate;
   let sysGrossPsCE = sysGrossPsDemand * (1 - pfaGlobalRate);
 
-  // Totals Display Injection
-  const funnelTotalsDisplay = document.getElementById('funnel-totals-display');
-  if(funnelTotalsDisplay) {
-      funnelTotalsDisplay.innerHTML = `
-        <div style="display:flex; gap:20px; background:#1e293b; padding:8px 12px; border-radius:4px; border:1px solid #374151; margin-top:10px; width: 100%;">
-          <div style="font-size:11px;"><span style="color:#94a3b8;">Total Expected Evals:</span> <strong style="color:#c4b5fd; font-size:13px; margin-left:4px;">${fmt(sysGrossEvDemand)}</strong></div>
-          <div style="width:1px; background:#475569;"></div>
-          <div style="font-size:11px;"><span style="color:#94a3b8;">PS Routed to PFAs:</span> <strong style="color:#60a5fa; font-size:13px; margin-left:4px;">${fmt(sysGrossPsPfa)}</strong></div>
-          <div style="width:1px; background:#475569;"></div>
-          <div style="font-size:11px;"><span style="color:#94a3b8;">PS Routed to CEs:</span> <strong style="color:#60a5fa; font-size:13px; margin-left:4px;">${fmt(sysGrossPsCE)}</strong></div>
-        </div>
+  // Totals Display Injection (Funnel Math Breakdown)
+  const funnelMathBreakdown = document.getElementById('funnel-math-breakdown');
+  if(funnelMathBreakdown) {
+      let fBumped = sysTotalApps * mult;
+      let fPsSched = fBumped * psRouteRate;
+      let fPfaRoute = fPsSched * pfaGlobalRate;
+      let fCeRoute = fPsSched - fPfaRoute;
+      let fPsComp = fPsSched * (FUNNEL.psCompRate/100);
+      let fScrIn = fPsComp * (FUNNEL.screenInRate/100);
+      let fEvSched = sysGrossEvDemand; // True calculated demand incorporating state overrides
+      let fEvComp = fEvSched * (FUNNEL.evCompRate/100);
+      let fEnroll = fEvComp * (FUNNEL.enrollRate/100);
+
+      funnelMathBreakdown.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Apps</span><strong style="color:#f8fafc; font-size:13px;">${fmt(sysTotalApps)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">+${FUNNEL.volBump}%</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Bumped</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fBumped)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">→</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">PS Sched</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fPsSched)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">→</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">PFA Route</span><strong style="color:#60a5fa; font-size:13px;">${fmt(fPfaRoute)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">|</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">CE Route</span><strong style="color:#60a5fa; font-size:13px;">${fmt(fCeRoute)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">→</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">PS Comp</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fPsComp)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">→</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Screen-In</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fScrIn)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">→</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Ev Sched</span><strong style="color:#c4b5fd; font-size:13px;">${fmt(fEvSched)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">→</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Ev Comp</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fEvComp)}</strong></div>
+        <div style="color:#475569; padding-top:8px;">→</div>
+        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Enrollment</span><strong style="color:#34d399; font-size:13px;">${fmt(fEnroll)}</strong></div>
       `;
   }
 
@@ -818,7 +827,7 @@ function recalculateDashboardMetrics() {
   document.getElementById('top-stats-container').innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Accepted App Vol <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Total top of funnel intake including bump.</span></div></div>
-      <div class="stat-val">${fmt(sysTotalApps)}</div>
+      <div class="stat-val">${fmt(sysTotalApps * mult)}</div>
     </div>
     <div class="stat-card ps-theme">
       <div class="stat-label">System PS Capacity <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">PFA Global Pool + State CE Allocations</span></div></div>
@@ -842,20 +851,31 @@ function recalculateDashboardMetrics() {
 }
 
 function renderDualHeatmap(metrics) {
-  document.getElementById('heatmap-body').innerHTML = MASTER_STATES.map(s => {
+  let countEvBlue=0, countEvGreen=0, countEvYellow=0, countEvRed=0;
+  
+  let htmlRows = MASTER_STATES.map(s => {
     let r = metrics[s];
     
     // PS
     let psPct = r.psDemandCE > 0 ? (r.psCapCe / r.psDemandCE) * 100 : 0;
     let psBal = Math.round(r.psCapCe - r.psDemandCE);
     let psStr = r.psDemandCE === 0 ? '-' : `${Math.round(psPct)}%`;
-    let psCol = psPct < 80 ? 'status-red' : (psPct < 95 ? 'status-yellow' : 'status-green');
+    let psCol = psPct < 70 ? 'status-red' : (psPct < 80 ? 'status-yellow' : (psPct < 90 ? 'status-green' : 'status-blue'));
+    let psBarColor = psPct < 70 ? '#ef4444' : (psPct < 80 ? '#eab308' : (psPct < 90 ? '#22c55e' : '#3b82f6'));
 
     // EV
     let evPct = r.evDemand > 0 ? (r.evCapCe / r.evDemand) * 100 : 0;
     let evBal = Math.round(r.evCapCe - r.evDemand);
     let evStr = r.evDemand === 0 ? '-' : `${Math.round(evPct)}%`;
-    let evCol = evPct < 80 ? 'status-red' : (evPct < 95 ? 'status-yellow' : 'status-green');
+    let evCol = evPct < 70 ? 'status-red' : (evPct < 80 ? 'status-yellow' : (evPct < 90 ? 'status-green' : 'status-blue'));
+    let evBarColor = evPct < 70 ? '#ef4444' : (evPct < 80 ? '#eab308' : (evPct < 90 ? '#22c55e' : '#3b82f6'));
+
+    if(r.evDemand > 0) {
+        if(evPct >= 90) countEvBlue++;
+        else if(evPct >= 80) countEvGreen++;
+        else if(evPct >= 70) countEvYellow++;
+        else countEvRed++;
+    }
 
     return `
       <tr>
@@ -864,16 +884,51 @@ function renderDualHeatmap(metrics) {
         
         <td style="background:rgba(59,130,246,0.02); text-align:center;">${r.psDemandCE===0?'-':fmt(r.psDemandCE)}</td>
         <td style="background:rgba(59,130,246,0.02); text-align:center; font-weight:700; color:#93c5fd;">${r.psDemandCE===0?'-':fmt(r.psCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.psDemandCE>0?psCol:''}">${psStr}</span></td>
-        <td style="background:rgba(59,130,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.psDemandCE===0?'':(psBal<0?'status-red':'status-green')}">${r.psDemandCE===0?'-':(psBal>0?'+':'')+fmt(psBal)}</td>
+        <td style="background:rgba(59,130,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.psDemandCE===0?'':(psBal<0?'status-red':'status-green')}">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+            <span>${r.psDemandCE===0?'-':(psBal>0?'+':'')+fmt(psBal)}</span>
+            ${r.psDemandCE > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, psPct)}%; background:${psBarColor};"></div></div>` : ''}
+          </div>
+        </td>
         
         <td style="background:rgba(139,92,246,0.02); text-align:center;">${r.evDemand===0?'-':fmt(r.evDemand)}</td>
         <td style="background:rgba(139,92,246,0.02); text-align:center; font-weight:700; color:#c4b5fd;">${r.evDemand===0?'-':fmt(r.evCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.evDemand>0?evCol:''}">${evStr}</span></td>
-        <td style="background:rgba(139,92,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.evDemand===0?'':(evBal<0?'status-red':'status-green')}">${r.evDemand===0?'-':(evBal>0?'+':'')+fmt(evBal)}</td>
+        <td style="background:rgba(139,92,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.evDemand===0?'':(evBal<0?'status-red':'status-green')}">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+            <span>${r.evDemand===0?'-':(evBal>0?'+':'')+fmt(evBal)}</span>
+            ${r.evDemand > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, evPct)}%; background:${evBarColor};"></div></div>` : ''}
+          </div>
+        </td>
         
         <td style="text-align:center; color:#94a3b8;">${r.assigned.length}</td>
       </tr>
     `;
   }).join('');
+
+  document.getElementById('heatmap-body').innerHTML = htmlRows;
+
+  // Render Heatmap Summary
+  const summaryContainer = document.getElementById('heatmap-summary');
+  if (summaryContainer) {
+      summaryContainer.innerHTML = `
+        <div style="flex:1; background:rgba(59,130,246,0.1); border:1px solid #3b82f6; border-radius:4px; padding:6px; text-align:center;">
+          <div style="font-size:16px; font-weight:700; color:#93c5fd;">${countEvBlue}</div>
+          <div style="font-size:8px; color:#60a5fa; text-transform:uppercase; font-weight:bold;">Optimal Eval Cov (≥90%)</div>
+        </div>
+        <div style="flex:1; background:rgba(34,197,94,0.1); border:1px solid #22c55e; border-radius:4px; padding:6px; text-align:center;">
+          <div style="font-size:16px; font-weight:700; color:#86efac;">${countEvGreen}</div>
+          <div style="font-size:8px; color:#4ade80; text-transform:uppercase; font-weight:bold;">Healthy Eval Cov (80-89%)</div>
+        </div>
+        <div style="flex:1; background:rgba(234,179,8,0.1); border:1px solid #eab308; border-radius:4px; padding:6px; text-align:center;">
+          <div style="font-size:16px; font-weight:700; color:#fde047;">${countEvYellow}</div>
+          <div style="font-size:8px; color:#facc15; text-transform:uppercase; font-weight:bold;">Warning Eval Cov (70-79%)</div>
+        </div>
+        <div style="flex:1; background:rgba(239,68,68,0.1); border:1px solid #ef4444; border-radius:4px; padding:6px; text-align:center;">
+          <div style="font-size:16px; font-weight:700; color:#fca5a5;">${countEvRed}</div>
+          <div style="font-size:8px; color:#f87171; text-transform:uppercase; font-weight:bold;">Critical Eval Cov (<70%)</div>
+        </div>
+      `;
+  }
 }
 
 function renderMatrix(ceAllocations, stateMetrics) {
@@ -960,7 +1015,8 @@ function renderCollapsibleLedger(activeM, wd) {
               let mwd = LEDGER[m].wd;
               let capPs = Math.max(0,(mwd-pto)*r.qPs);
               let capEv = Math.max(0,(mwd-pto)*r.qEv);
-              let capStr = role === 'PFA' ? `<span class="badge-ps">${Math.round(capPs)}</span>` : `<span class="badge-ps">${Math.round(capPs)}</span> <span class="badge-ev">${Math.round(capEv)}</span>`;
+              // Clean text representation instead of bulky badges
+              let capStr = role === 'PFA' ? `<span style="color:#94a3b8;">${Math.round(capPs)} PS</span>` : `<span style="color:#94a3b8;">${Math.round(capPs)} PS / ${Math.round(capEv)} EV</span>`;
               return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
           }).join('');
 
@@ -998,11 +1054,11 @@ function renderCollapsibleLedger(activeM, wd) {
 
   let footHtml = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#c4b5fd;">LICENSED CAPACITY (CE + LEAD)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
   ACTIVE_TIMELINE.forEach(m => {
-      footHtml += `<td style="text-align:center; color:#fca5a5;">${ceLeadPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><span class="badge-ps">${Math.round(ceLeadCapPs[m])}</span> <span class="badge-ev">${Math.round(ceLeadCapEv[m])}</span></td>`;
+      footHtml += `<td style="text-align:center; color:#fca5a5;">${ceLeadPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(ceLeadCapPs[m])} PS / ${Math.round(ceLeadCapEv[m])} EV</strong></td>`;
   });
   footHtml += `</tr><tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#93c5fd;">GLOBAL SYSTEM TOTALS (ALL ROLES)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
   ACTIVE_TIMELINE.forEach(m => {
-      footHtml += `<td style="text-align:center; color:#ef4444;">${allPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><span class="badge-ps">${Math.round(allCapPs[m])}</span> <span class="badge-ev">${Math.round(allCapEv[m])}</span></td>`;
+      footHtml += `<td style="text-align:center; color:#ef4444;">${allPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(allCapPs[m])} PS / ${Math.round(allCapEv[m])} EV</strong></td>`;
   });
   foot.innerHTML = footHtml + `</tr>`;
 }
