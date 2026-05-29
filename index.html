@@ -909,7 +909,8 @@ function renderExecutiveBanner(evDem, evSup, activeMonth) {
   const container = document.getElementById('executive-insight-banner');
   if (!container) return;
 
-  let finalYield = Math.round(evSup * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100));
+  let actualEvals = Math.min(evDem, evSup);
+  let finalYield = Math.round(actualEvals * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100));
   let evShort = Math.max(0, evDem - evSup);
   
   container.innerHTML = `
@@ -920,7 +921,7 @@ function renderExecutiveBanner(evDem, evSup, activeMonth) {
             ${evShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Mid-Funnel Deficit: Short ${fmt(evShort)} EV slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ Eval Queue is adequately staffed.</p>`}
         </div>
         <div style="flex:1; border-left: 1px solid #374151; padding-left: 20px;">
-            <p><strong>Expected Final Enrollment Yield:</strong> By applying the Eval Comp (${FUNNEL.evCompRate}%) and Enroll (${FUNNEL.enrollRate}%) rates to your total Eval Capacity (${fmt(evSup)}), the system projects <strong>${fmt(finalYield)} Enrolled Patients</strong> for this cohort.</p>
+            <p><strong>Expected Final Enrollment Yield:</strong> By applying the Eval Comp (${FUNNEL.evCompRate}%) and Enroll (${FUNNEL.enrollRate}%) rates to the achievable Evaluations (${fmt(actualEvals)}), the system projects <strong>${fmt(finalYield)} Enrolled Patients</strong> for this cohort.</p>
         </div>
     </div>
   `;
@@ -1093,8 +1094,8 @@ function renderCollapsibleLedger(activeM, wd) {
               let capEv = Math.max(0,(mwd-pto)*r.qEv);
               
               let capStr = role === 'PFA' 
-                  ? `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS</span>` 
-                  : `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
+                  ? `<span style="color:#94a3b8;">${Math.round(capPs)} PS</span>` 
+                  : `<span style="color:#94a3b8;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
                   
               return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
           }).join('');
