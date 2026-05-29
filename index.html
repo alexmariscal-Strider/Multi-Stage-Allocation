@@ -27,15 +27,14 @@
   .insight-banner strong { color: #fff; font-weight: 700; }
 
   /* FUNNEL ENGINE PANEL */
-  .funnel-panel { display: flex; flex-direction: column; background: #0f172a; padding: 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 8px; overflow-x: auto; white-space: nowrap; }
-  .funnel-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 4px; }
+  .funnel-panel { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; background: #0f172a; padding: 16px 12px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 16px 12px; }
   .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; }
-  .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+  .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; text-align: center; }
   .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; height: 24px; }
   .funnel-input-wrap input { background: transparent; border: none; color: #a5b4fc; width: 35px; text-align: center; font-size: 11px; font-weight: 700; padding: 0; outline: none; }
   .funnel-input-wrap span { color: #64748b; font-size: 10px; margin-left: 2px; }
   .funnel-metric { font-size: 14px; font-weight: 700; color: #f8fafc; margin-top: 4px; }
-  .funnel-arrow { color: #475569; font-size: 14px; margin-top: 18px; }
+  .funnel-arrow { color: #475569; font-size: 14px; margin-top: 18px; font-weight: bold; }
 
   /* HEADERS & CONTROLS */
   .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; width: 100%; }
@@ -141,7 +140,7 @@
   <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & DATES MANAGER</button>
 </div>
 
-<!-- UNIVERSAL FUNNEL ENGINE PANEL (VERTICALLY ALIGNED) -->
+<!-- UNIVERSAL FUNNEL ENGINE PANEL (FLEX WRAP) -->
 <div class="funnel-panel">
     
     <div class="funnel-step">
@@ -616,6 +615,14 @@ function saveGlobalModalParams() {
   saveState(); toggleModal('settings-modal'); recalculateDashboardMetrics();
 }
 
+function setVolMultiplier(val, btn) {
+  FUNNEL.volBump = parseFloat(val) || 0;
+  document.querySelectorAll('.multiplier-wrap .m-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('mod-global-bump').value = FUNNEL.volBump;
+  saveState(); recalculateDashboardMetrics();
+}
+
 // --- ROSTER PROVISIONING LOGIC ---
 function addNewClinicianToRoster() {
   const name = document.getElementById('new-clinician-name').value.trim();
@@ -1056,8 +1063,8 @@ function renderCollapsibleLedger(activeM, wd) {
               let capEv = Math.max(0,(mwd-pto)*r.qEv);
               
               let capStr = role === 'PFA' 
-                  ? `<span style="color:#94a3b8;">${Math.round(capPs)} PS</span>` 
-                  : `<span style="color:#94a3b8;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
+                  ? `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS</span>` 
+                  : `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
                   
               return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
           }).join('');
