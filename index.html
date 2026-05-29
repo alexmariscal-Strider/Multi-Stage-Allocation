@@ -27,13 +27,14 @@
   .insight-banner strong { color: #fff; font-weight: 700; }
 
   /* FUNNEL ENGINE PANEL */
-  .funnel-panel { display: flex; flex-direction: column; background: #0f172a; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 8px; }
-  .funnel-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 4px; }
-  .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .funnel-panel { display: flex; align-items: flex-start; justify-content: space-between; background: #0f172a; padding: 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; gap: 8px; overflow-x: auto; white-space: nowrap; }
+  .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; }
   .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
-  .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; }
+  .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; height: 24px; }
   .funnel-input-wrap input { background: transparent; border: none; color: #a5b4fc; width: 35px; text-align: center; font-size: 11px; font-weight: 700; padding: 0; outline: none; }
   .funnel-input-wrap span { color: #64748b; font-size: 10px; margin-left: 2px; }
+  .funnel-metric { font-size: 14px; font-weight: 700; color: #f8fafc; margin-top: 4px; }
+  .funnel-arrow { color: #475569; font-size: 14px; margin-top: 18px; }
 
   /* HEADERS & CONTROLS */
   .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; width: 100%; }
@@ -139,50 +140,91 @@
   <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & DATES MANAGER</button>
 </div>
 
-<!-- UNIVERSAL FUNNEL ENGINE PANEL -->
+<!-- UNIVERSAL FUNNEL ENGINE PANEL (VERTICALLY ALIGNED) -->
 <div class="funnel-panel">
-  <div class="funnel-row">
-      <div style="display:flex; align-items:center; gap: 8px; border-right: 1px solid #374151; padding-right: 12px;">
-          <span style="font-size:9px; color:#94a3b8; font-weight:700;">VOL BUMP:</span>
-          <div class="funnel-input-wrap" style="background:#0f172a;"><input type="number" id="mod-global-bump" value="0" onchange="saveFunnelParams()"><span style="color:#a5b4fc;">%</span></div>
-      </div>
-      <div class="funnel-step">
-          <span class="funnel-label">Apps → PS Sched</span>
-          <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div>
-      </div>
-      <div style="color:#475569; font-size:14px;">→</div>
-      <div class="funnel-step">
-          <span class="funnel-label" style="color:#60a5fa;">PS Routed To PFA</span>
-          <div class="funnel-input-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div>
-      </div>
-      <div style="color:#475569; font-size:14px;">→</div>
-      <div class="funnel-step">
-          <span class="funnel-label">PS Completion</span>
-          <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div>
-      </div>
-      <div style="color:#475569; font-size:14px;">→</div>
-      <div class="funnel-step">
-          <span class="funnel-label">Screen-In</span>
-          <div class="funnel-input-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div>
-      </div>
-      <div style="color:#475569; font-size:14px;">→</div>
-      <div class="funnel-step">
-          <span class="funnel-label" style="color:#a78bfa;">Eval Sched</span>
-          <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div>
-      </div>
-      <div style="color:#475569; font-size:14px;">→</div>
-      <div class="funnel-step">
-          <span class="funnel-label">Eval Comp</span>
-          <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div>
-      </div>
-      <div style="color:#475569; font-size:14px;">→</div>
-      <div class="funnel-step">
-          <span class="funnel-label" style="color:#34d399;">Enrollment</span>
-          <div class="funnel-input-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div>
-      </div>
-  </div>
-  <!-- GLOBAL VOLUME TOTALS BAR & MATH BREAKDOWN -->
-  <div id="funnel-math-breakdown" style="display: flex; gap: 12px; font-size: 10.5px; color: #cbd5e1; flex-wrap: wrap; justify-content: center; width: 100%;"></div>
+    
+    <div class="funnel-step">
+        <span class="funnel-label">Base Apps</span>
+        <div style="height: 24px;"></div> <!-- Spacer to align with inputs -->
+        <span class="funnel-metric" id="disp-base-apps">-</span>
+    </div>
+
+    <div class="funnel-arrow">+</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label">Vol Bump</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-bump" onchange="saveFunnelParams()"><span>%</span></div>
+        <span class="funnel-metric" id="disp-bumped-apps">-</span>
+    </div>
+
+    <div class="funnel-arrow">→</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label">Apps → PS Sched</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div>
+        <span class="funnel-metric" id="disp-ps-sched">-</span>
+    </div>
+
+    <div class="funnel-arrow">→</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label" style="color:#60a5fa;">PS Routed To PFA</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div>
+        
+        <!-- Split Output for PFA vs CE Route -->
+        <div style="display: flex; gap: 10px; margin-top: 4px; align-items: center;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:7px; color:#64748b;">PFA</span>
+                <span class="funnel-metric" id="disp-pfa-route" style="color:#60a5fa; margin-top:1px;">-</span>
+            </div>
+            <div style="width:1px; height:15px; background:#475569;"></div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:7px; color:#64748b;">CE</span>
+                <span class="funnel-metric" id="disp-ce-route" style="color:#60a5fa; margin-top:1px;">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="funnel-arrow">→</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label">PS Completion</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div>
+        <span class="funnel-metric" id="disp-ps-comp">-</span>
+    </div>
+
+    <div class="funnel-arrow">→</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label">Screen-In</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div>
+        <span class="funnel-metric" id="disp-scr-in">-</span>
+    </div>
+
+    <div class="funnel-arrow">→</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label" style="color:#a78bfa;">Eval Sched</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div>
+        <span class="funnel-metric" id="disp-ev-sched" style="color:#c4b5fd;">-</span>
+    </div>
+
+    <div class="funnel-arrow">→</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label">Eval Comp</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div>
+        <span class="funnel-metric" id="disp-ev-comp">-</span>
+    </div>
+
+    <div class="funnel-arrow">→</div>
+
+    <div class="funnel-step">
+        <span class="funnel-label" style="color:#34d399;">Enrollment</span>
+        <div class="funnel-input-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div>
+        <span class="funnel-metric" id="disp-enroll" style="color:#34d399;">-</span>
+    </div>
+
 </div>
 
 <!-- NARRATIVE ENGINE -->
@@ -738,9 +780,9 @@ function recalculateDashboardMetrics() {
   let sysGrossPsPfa = sysGrossPsDemand * pfaGlobalRate;
   let sysGrossPsCE = sysGrossPsDemand * (1 - pfaGlobalRate);
 
-  // Totals Display Injection (Funnel Math Breakdown)
-  const funnelMathBreakdown = document.getElementById('funnel-math-breakdown');
-  if(funnelMathBreakdown) {
+  // 2. Inject Display Data Directly into Funnel Row to align with inputs
+  const dispBase = document.getElementById('disp-base-apps');
+  if (dispBase) {
       let fBumped = sysTotalApps * mult;
       let fPsSched = fBumped * psRouteRate;
       let fPfaRoute = fPsSched * pfaGlobalRate;
@@ -751,30 +793,19 @@ function recalculateDashboardMetrics() {
       let fEvComp = fEvSched * (FUNNEL.evCompRate/100);
       let fEnroll = fEvComp * (FUNNEL.enrollRate/100);
 
-      funnelMathBreakdown.innerHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Apps</span><strong style="color:#f8fafc; font-size:13px;">${fmt(sysTotalApps)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">+${FUNNEL.volBump}%</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Bumped</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fBumped)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">→</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">PS Sched</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fPsSched)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">→</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">PFA Route</span><strong style="color:#60a5fa; font-size:13px;">${fmt(fPfaRoute)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">|</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">CE Route</span><strong style="color:#60a5fa; font-size:13px;">${fmt(fCeRoute)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">→</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">PS Comp</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fPsComp)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">→</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Screen-In</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fScrIn)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">→</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Ev Sched</span><strong style="color:#c4b5fd; font-size:13px;">${fmt(fEvSched)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">→</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Ev Comp</span><strong style="color:#f8fafc; font-size:13px;">${fmt(fEvComp)}</strong></div>
-        <div style="color:#475569; padding-top:8px;">→</div>
-        <div style="display:flex; flex-direction:column; align-items:center;"><span style="color:#64748b; font-size:9px; text-transform:uppercase;">Enrollment</span><strong style="color:#34d399; font-size:13px;">${fmt(fEnroll)}</strong></div>
-      `;
+      document.getElementById('disp-base-apps').innerText = fmt(sysTotalApps);
+      document.getElementById('disp-bumped-apps').innerText = fmt(fBumped);
+      document.getElementById('disp-ps-sched').innerText = fmt(fPsSched);
+      document.getElementById('disp-pfa-route').innerText = fmt(fPfaRoute);
+      document.getElementById('disp-ce-route').innerText = fmt(fCeRoute);
+      document.getElementById('disp-ps-comp').innerText = fmt(fPsComp);
+      document.getElementById('disp-scr-in').innerText = fmt(fScrIn);
+      document.getElementById('disp-ev-sched').innerText = fmt(fEvSched);
+      document.getElementById('disp-ev-comp').innerText = fmt(fEvComp);
+      document.getElementById('disp-enroll').innerText = fmt(fEnroll);
   }
 
-  // 2. Global PFA Sweep
+  // 3. Global PFA Sweep
   let pfaTotalSupply = 0;
   Object.keys(ROSTER).forEach(name => {
     let r = ROSTER[name];
@@ -785,7 +816,7 @@ function recalculateDashboardMetrics() {
     }
   });
 
-  // 3. State CE/Lead Capacity Assignment
+  // 4. State CE/Lead Capacity Assignment
   let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').map(name => {
     let r = ROSTER[name];
     let pto = parseFloat(r.pto[activeMonth]) || 0;
@@ -823,7 +854,7 @@ function recalculateDashboardMetrics() {
 
   let totalSystemPsSupply = pfaTotalSupply + ceTotalPsSupply;
 
-  // 4. Update UI Components
+  // 5. Update UI Components
   document.getElementById('top-stats-container').innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Accepted App Vol <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Total top of funnel intake including bump.</span></div></div>
@@ -1015,8 +1046,11 @@ function renderCollapsibleLedger(activeM, wd) {
               let mwd = LEDGER[m].wd;
               let capPs = Math.max(0,(mwd-pto)*r.qPs);
               let capEv = Math.max(0,(mwd-pto)*r.qEv);
-              // Clean text representation instead of bulky badges
-              let capStr = role === 'PFA' ? `<span style="color:#94a3b8;">${Math.round(capPs)} PS</span>` : `<span style="color:#94a3b8;">${Math.round(capPs)} PS / ${Math.round(capEv)} EV</span>`;
+              
+              let capStr = role === 'PFA' 
+                  ? `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS</span>` 
+                  : `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
+                  
               return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
           }).join('');
 
@@ -1054,11 +1088,11 @@ function renderCollapsibleLedger(activeM, wd) {
 
   let footHtml = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#c4b5fd;">LICENSED CAPACITY (CE + LEAD)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
   ACTIVE_TIMELINE.forEach(m => {
-      footHtml += `<td style="text-align:center; color:#fca5a5;">${ceLeadPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(ceLeadCapPs[m])} PS / ${Math.round(ceLeadCapEv[m])} EV</strong></td>`;
+      footHtml += `<td style="text-align:center; color:#fca5a5;">${ceLeadPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(ceLeadCapPs[m])} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(ceLeadCapEv[m])} EV</strong></td>`;
   });
   footHtml += `</tr><tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#93c5fd;">GLOBAL SYSTEM TOTALS (ALL ROLES)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
   ACTIVE_TIMELINE.forEach(m => {
-      footHtml += `<td style="text-align:center; color:#ef4444;">${allPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(allCapPs[m])} PS / ${Math.round(allCapEv[m])} EV</strong></td>`;
+      footHtml += `<td style="text-align:center; color:#ef4444;">${allPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(allCapPs[m])} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(allCapEv[m])} EV</strong></td>`;
   });
   foot.innerHTML = footHtml + `</tr>`;
 }
