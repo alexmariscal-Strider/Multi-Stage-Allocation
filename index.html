@@ -32,13 +32,23 @@
   .funnel-panel-header h2 { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin: 0; }
   
   .funnel-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; width: 100%; }
-  .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; }
+  .funnel-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 70px; }
   .funnel-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; text-align: center; }
   .funnel-input-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; height: 24px; }
   .funnel-input-wrap input { background: transparent; border: none; color: #a5b4fc; width: 35px; text-align: center; font-size: 11px; font-weight: 700; padding: 0; outline: none; }
   .funnel-input-wrap span { color: #64748b; font-size: 10px; margin-left: 2px; }
-  .funnel-metric { font-size: 14px; font-weight: 700; color: #f8fafc; margin-top: 4px; }
-  .funnel-arrow { color: #475569; font-size: 14px; margin-top: 18px; font-weight: bold; }
+  .funnel-arrow { color: #475569; font-size: 14px; margin-top: 25px; font-weight: bold; }
+
+  /* DUAL METRIC UI */
+  .dual-metric { display: flex; flex-direction: column; width: 100%; gap: 4px; margin-top: 4px; }
+  .dm-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 2px 4px; border-radius: 3px; min-width: 65px; }
+  .dm-dem { background: rgba(239,68,68,0.05); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+  .dm-sup { background: rgba(34,197,94,0.05); color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+  .dm-label { font-size: 8px; text-transform: uppercase; font-weight: 700; opacity: 0.7; }
+  .dm-val { font-weight: 800; font-size: 12px; }
+  .cap-info-box { font-size: 8.5px; text-align: center; margin-top: 4px; padding: 3px; border-radius: 3px; background: #1e293b; border: 1px solid #334155; width: 100%; color: #94a3b8; line-height: 1.3; }
+  .cap-info-box strong { color: #e2e8f0; }
+  .loss-red { color: #fca5a5; cursor: help; border-bottom: 1px dotted #fca5a5; }
 
   /* HEADERS & CONTROLS */
   .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; width: 100%; }
@@ -143,17 +153,24 @@
   <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & PARAMETERS</button>
 </div>
 
-<!-- UNIVERSAL FUNNEL ENGINE PANEL -->
 <div class="funnel-panel">
-    <div class="funnel-panel-header">
-        <h2>Universal Funnel Engine</h2>
+    <div class="funnel-panel-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <h2>Universal Funnel Engine: Unconstrained Demand vs. Capacity Yield</h2>
+        <div style="display:flex; gap: 12px;">
+            <div style="display:flex; align-items:center; gap:4px; font-size:9px; color:#fca5a5;"><div style="width:8px; height:8px; background:rgba(239,68,68,0.2); border:1px solid #fca5a5; border-radius:2px;"></div> DEMAND (MATH ONLY)</div>
+            <div style="display:flex; align-items:center; gap:4px; font-size:9px; color:#86efac;"><div style="width:8px; height:8px; background:rgba(34,197,94,0.2); border:1px solid #86efac; border-radius:2px;"></div> YIELD (CAPACITY CONSTRAINED)</div>
+        </div>
     </div>
+    
     <div class="funnel-row">
         
         <div class="funnel-step">
             <span class="funnel-label">Base Apps</span>
-            <div style="height: 24px;"></div> <!-- Spacer -->
-            <span class="funnel-metric" id="disp-base-apps">-</span>
+            <div style="height: 24px;"></div>
+            <div class="dual-metric" style="margin-top:0;">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-base">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-base">-</span></div>
+            </div>
         </div>
 
         <div class="funnel-arrow">+</div>
@@ -161,7 +178,10 @@
         <div class="funnel-step">
             <span class="funnel-label">Vol Bump</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-bump" onchange="saveFunnelParams()"><span>%</span></div>
-            <span class="funnel-metric" id="disp-bumped-apps">-</span>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-bump">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-bump">-</span></div>
+            </div>
         </div>
 
         <div class="funnel-arrow">→</div>
@@ -169,26 +189,23 @@
         <div class="funnel-step">
             <span class="funnel-label">Apps → PS Sched</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div>
-            <span class="funnel-metric" id="disp-ps-sched">-</span>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-ps-sched">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-ps-sched">-</span></div>
+            </div>
+            <div class="cap-info-box" id="box-ps-cap"></div>
         </div>
 
         <div class="funnel-arrow">→</div>
 
         <div class="funnel-step">
-            <span class="funnel-label" style="color:#60a5fa;">PS Routed To PFA</span>
+            <span class="funnel-label" style="color:#60a5fa;">PS Route To PFA</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 4px; align-items: center;">
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <span style="font-size:7px; color:#64748b;">PFA</span>
-                    <span class="funnel-metric" id="disp-pfa-route" style="color:#60a5fa; margin-top:1px;">-</span>
-                </div>
-                <div style="width:1px; height:15px; background:#475569;"></div>
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <span style="font-size:7px; color:#64748b;">CE</span>
-                    <span class="funnel-metric" id="disp-ce-route" style="color:#60a5fa; margin-top:1px;">-</span>
-                </div>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem" style="background:rgba(59,130,246,0.05); color:#93c5fd; border-color:rgba(59,130,246,0.2);"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-pfa">-</span></div>
+                <div class="dm-row dm-sup" style="background:rgba(59,130,246,0.1); color:#60a5fa; border-color:rgba(59,130,246,0.3);"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-pfa">-</span></div>
             </div>
+            <div class="cap-info-box" id="box-pfa-cap"></div>
         </div>
 
         <div class="funnel-arrow">→</div>
@@ -196,7 +213,10 @@
         <div class="funnel-step">
             <span class="funnel-label">PS Completion</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div>
-            <span class="funnel-metric" id="disp-ps-comp">-</span>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-ps-comp">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-ps-comp">-</span></div>
+            </div>
         </div>
 
         <div class="funnel-arrow">→</div>
@@ -204,7 +224,10 @@
         <div class="funnel-step">
             <span class="funnel-label">Screen-In</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div>
-            <span class="funnel-metric" id="disp-scr-in">-</span>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-scr-in">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-scr-in">-</span></div>
+            </div>
         </div>
 
         <div class="funnel-arrow">→</div>
@@ -212,7 +235,11 @@
         <div class="funnel-step">
             <span class="funnel-label" style="color:#a78bfa;">Eval Sched</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div>
-            <span class="funnel-metric" id="disp-ev-sched" style="color:#c4b5fd;">-</span>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-ev-sched">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-ev-sched">-</span></div>
+            </div>
+            <div class="cap-info-box" id="box-ev-cap"></div>
         </div>
 
         <div class="funnel-arrow">→</div>
@@ -220,7 +247,10 @@
         <div class="funnel-step">
             <span class="funnel-label">Eval Comp</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div>
-            <span class="funnel-metric" id="disp-ev-comp">-</span>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-ev-comp">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-ev-comp">-</span></div>
+            </div>
         </div>
 
         <div class="funnel-arrow">→</div>
@@ -228,19 +258,20 @@
         <div class="funnel-step">
             <span class="funnel-label" style="color:#34d399;">Enrollment</span>
             <div class="funnel-input-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div>
-            <span class="funnel-metric" id="disp-enroll" style="color:#34d399;">-</span>
+            <div class="dual-metric">
+                <div class="dm-row dm-dem"><span class="dm-label">Dem</span><span class="dm-val" id="f-dem-enroll">-</span></div>
+                <div class="dm-row dm-sup"><span class="dm-label">Yld</span><span class="dm-val" id="f-sup-enroll">-</span></div>
+            </div>
         </div>
 
     </div>
 </div>
 
-<!-- NARRATIVE ENGINE -->
 <div class="insight-banner" id="executive-insight-banner"></div>
 
 <div class="stat-grid" id="top-stats-container"></div>
 
 <div class="dashboard-grid">
-  <!-- FORECAST PROJECTIONS -->
   <div class="panel span-2">
     <h2>Phone Screen (PS) Capacity vs Demand</h2>
     <div class="chart-container"><canvas id="wfmPsChart"></canvas></div>
@@ -250,7 +281,6 @@
     <div class="chart-container"><canvas id="wfmEvChart"></canvas></div>
   </div>
 
-  <!-- DUAL HEATMAP -->
   <div class="panel full-width">
     <h2 id="heat-title">State Cascading Distribution (PS & Evals)</h2>
     <div id="heatmap-summary" style="display: flex; gap: 8px; margin-bottom: 12px;"></div>
@@ -278,7 +308,6 @@
     </div>
   </div>
 
-  <!-- STATE ALLOCATION GRID (No PFAs) -->
   <div class="panel span-3">
     <h2 id="matrix-title-label">Mid-Funnel CE Licensure Matrix</h2>
     <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">PFAs do not appear here as they pull from the global stateless pool. Toggling a CE 'ON' allocates their proportional time to that state.</p>
@@ -291,7 +320,6 @@
     </div>
   </div>
 
-  <!-- PROFILE MANAGER -->
   <div class="panel span-1">
     <h2 id="mix-title" style="align-items: center; display: flex;">
       <span>CE Profile Manager</span>
@@ -300,7 +328,6 @@
     <div id="ce-controls" style="max-height: 380px; overflow-y: auto; padding-right: 5px;"></div>
   </div>
 
-  <!-- DYNAMIC ROSTER AND PTO ALLOCATION LEDGER -->
   <div class="panel full-width">
     <h2>Rolling Capacity & Role Ledger</h2>
     
@@ -331,7 +358,6 @@
   </div>
 </div>
 
-<!-- DYNAMIC MONTH MANAGER MODAL -->
 <div class="modal-overlay" id="month-manager-modal">
   <div class="modal-content" style="max-width: 500px;">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 10px;">
@@ -339,14 +365,12 @@
         <button class="btn-action" style="background:#475569;" onclick="document.getElementById('month-manager-modal').style.display='none'">CLOSE</button>
     </div>
 
-    <!-- ADD NEW MONTH -->
     <div style="display:flex; gap: 8px; margin-bottom: 16px; align-items: center; background: #0f172a; padding: 12px; border-radius: 6px; border: 1px solid #374151;">
         <span style="font-size: 11px; color: #94a3b8; font-weight: bold;">+ Add New Month:</span>
         <input type="text" id="new-month-input" placeholder="e.g. June, Q3, etc." style="flex:1; padding: 6px;">
         <button class="btn-action" style="background: #10b981;" onclick="addNewSpecificMonth()">ADD TO TIMELINE</button>
     </div>
 
-    <!-- ACTIVE TIMELINE -->
     <h3 style="font-size: 11px; color: #a5b4fc; text-transform: uppercase; margin-bottom: 8px;">Active Horizon</h3>
     <table class="compact-modal-table" style="width: 100%; margin-bottom: 16px;">
         <thead>
@@ -359,13 +383,11 @@
         <tbody id="active-months-tbody"></tbody>
     </table>
 
-    <!-- ARCHIVE VAULT -->
     <h3 style="font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">Archived Vault</h3>
     <div id="archive-vault-container" style="display: flex; gap: 8px; flex-wrap: wrap; background: #0f172a; padding: 12px; border-radius: 6px; border: 1px solid #374151; min-height: 50px;"></div>
   </div>
 </div>
 
-<!-- GLOBAL PARAMS MODAL (STACKED, LARGER WIDTH) -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal-content">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
@@ -373,15 +395,12 @@
         <button class="btn-action" style="font-size: 11px; padding: 8px 16px;" onclick="saveGlobalModalParams()">COMMIT & RECALCULATE</button>
     </div>
     
-    <!-- WORKING DAYS -->
     <div style="margin-bottom: 16px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
         <h2 style="margin-bottom: 8px; font-size: 10px; color:#94a3b8;">Calendar Working Days</h2>
         <div style="overflow-x: auto;"><table class="compact-modal-table" id="modal-wd-table" style="width: 100%;"></table></div>
     </div>
 
-    <!-- STACKED GRIDS -->
     <div style="display: flex; flex-direction: column; gap: 16px;">
-      <!-- APP VOLUME GRID -->
       <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
           <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
               <h2 style="margin:0; font-size: 10px; color:#93c5fd;">Accepted App Projections</h2>
@@ -392,7 +411,6 @@
           </div>
       </div>
       
-      <!-- CONVERSION OVERRIDE GRID -->
       <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
           <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
               <h2 style="margin:0; font-size: 10px; color:#c4b5fd;">App → Eval Sched % Overrides</h2>
@@ -410,7 +428,6 @@
   </div>
 </div>
 
-<!-- CUSTOM ALERT/CONFIRM DIALOG -->
 <div class="modal-overlay" id="custom-dialog-overlay" style="z-index: 9999;">
   <div class="dialog-box">
     <p id="dialog-message"></p>
@@ -948,34 +965,61 @@ function recalculateDashboardMetrics() {
   let psRouteRate = FUNNEL.appToPsRate / 100;
   let pfaGlobalRate = FUNNEL.pfaRouteRate / 100;
   
-  // Calculate Global Default App to Eval Rate
+  // Calculate Global Default App to Eval Rate (Demand Baseline)
   let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
 
-  // 1. Calculate PFA Total Supply (Capacity) FIRST
-  let pfaTotalSupply = 0;
+  // 1. DUAL CAPACITY CALCULATIONS (Max vs Actual) & PTO TOOLTIP BUILDER
+  let pfaTotalSupply = 0, pfaMaxSupply = 0;
+  let ceTotalPsSupply = 0, ceMaxPsSupply = 0;
+  let ceTotalEvSupply = 0, ceMaxEvSupply = 0;
+  
+  let ptoPsDetails = [];
+  let ptoEvDetails = [];
+
   Object.keys(ROSTER).forEach(name => {
     let r = ROSTER[name];
+    let pto = parseFloat(r.pto[activeMonth]) || 0;
+    let qPs = parseFloat(r.qPs) || 0;
+    let qEv = parseFloat(r.qEv) || 0;
+
+    let psLoss = pto * qPs;
+    let evLoss = pto * qEv;
+
     if (r.role === 'PFA') {
-      let pto = parseFloat(r.pto[activeMonth]) || 0;
-      let qPs = parseFloat(r.qPs) || 0;
+      pfaMaxSupply += (wd * qPs);
       pfaTotalSupply += Math.max(0, (wd - pto) * qPs);
+      if (psLoss > 0) ptoPsDetails.push(`<strong>${name}</strong>: ${pto} days <em>(-${psLoss} PS)</em>`);
+    } else {
+      ceMaxPsSupply += (wd * qPs);
+      ceTotalPsSupply += Math.max(0, (wd - pto) * qPs);
+      if (psLoss > 0) ptoPsDetails.push(`<strong>${name}</strong>: ${pto} days <em>(-${psLoss} PS)</em>`);
+      
+      ceMaxEvSupply += (wd * qEv);
+      ceTotalEvSupply += Math.max(0, (wd - pto) * qEv);
+      if (evLoss > 0) ptoEvDetails.push(`<strong>${name}</strong>: ${pto} days <em>(-${evLoss} EV)</em>`);
     }
   });
 
-  // 2. Evaluate Gross Demands
+  let totalSystemPsSupply = pfaTotalSupply + ceTotalPsSupply;
+  let totalSystemPsMax = pfaMaxSupply + ceMaxPsSupply;
+  let psLostToPto = totalSystemPsMax - totalSystemPsSupply;
+
+  let totalSystemEvSupply = ceTotalEvSupply;
+  let totalSystemEvMax = ceMaxEvSupply;
+  let evLostToPto = totalSystemEvMax - totalSystemEvSupply;
+
+  // 2. STATE DEMAND (Heatmap Baseline)
   let sysTotalApps = 0;
   let sysGrossPsDemand = 0;
   let sysGrossEvDemand = 0;
-
   let stateMetrics = {};
+
   MASTER_STATES.forEach(s => {
     let baseApps = (LEDGER[activeMonth].apps[s] || 0);
     sysTotalApps += baseApps;
-    
     let bumpedApps = baseApps * mult;
     let statePsDemandFull = bumpedApps * psRouteRate;
     
-    // Check if State has Override
     let stateConvOverride = LEDGER[activeMonth].conv[s] || 0;
     let effectiveAppToEvRate = stateConvOverride > 0 ? (stateConvOverride / 100) : globalAppToEvRate;
     let stateEvDemand = bumpedApps * effectiveAppToEvRate;
@@ -983,82 +1027,76 @@ function recalculateDashboardMetrics() {
     sysGrossPsDemand += statePsDemandFull;
     sysGrossEvDemand += stateEvDemand;
 
-    stateMetrics[s] = {
-      apps: bumpedApps,
-      psDemandFull: statePsDemandFull,
-      evDemand: stateEvDemand,
-      psCapCe: 0, evCapCe: 0, assigned: []
-    };
+    stateMetrics[s] = { apps: bumpedApps, psDemandFull: statePsDemandFull, evDemand: stateEvDemand, psCapCe: 0, evCapCe: 0, assigned: [] };
   });
 
-  // 3. APPLY PFA CAPPING LOGIC
+  // 3. APPLY PFA CAPPING LOGIC (For Heatmap CE Routing)
   let requestedPfaVol = sysGrossPsDemand * pfaGlobalRate;
   let actualPfaVol = Math.min(requestedPfaVol, pfaTotalSupply);
-  let pfaCapped = requestedPfaVol > pfaTotalSupply;
-  
-  // What percentage of total demand did PFAs *actually* take?
   let effectivePfaRate = sysGrossPsDemand > 0 ? (actualPfaVol / sysGrossPsDemand) : 0;
   let sysGrossPsCE = sysGrossPsDemand - actualPfaVol;
+  MASTER_STATES.forEach(s => { stateMetrics[s].psDemandCE = stateMetrics[s].psDemandFull * (1 - effectivePfaRate); });
 
-  // 4. Update state metrics with effective CE demand (after PFA sweep)
-  MASTER_STATES.forEach(s => {
-      stateMetrics[s].psDemandCE = stateMetrics[s].psDemandFull * (1 - effectivePfaRate);
-  });
+  // 4. THE DUAL-FUNNEL ENGINE (Demand vs Yield)
+  // Demand (Unconstrained Pure Math)
+  let d_base = sysTotalApps;
+  let d_bumped = d_base * mult;
+  let d_psSched = d_bumped * (FUNNEL.appToPsRate/100);
+  let d_pfa = d_psSched * pfaGlobalRate;
+  let d_psComp = d_psSched * (FUNNEL.psCompRate/100);
+  let d_scrIn = d_psComp * (FUNNEL.screenInRate/100);
+  let d_evSched = d_scrIn * (FUNNEL.evSchedRate/100); // Decoupled: Pure Global Math
+  let d_evComp = d_evSched * (FUNNEL.evCompRate/100);
+  let d_enroll = d_evComp * (FUNNEL.enrollRate/100);
 
-  // 5. Inject Display Data Directly into Funnel Row to align with inputs
-  const dispBase = document.getElementById('disp-base-apps');
-  if (dispBase) {
-      let fBumped = sysTotalApps * mult;
-      let fPsSched = fBumped * psRouteRate;
-      let fPsComp = fPsSched * (FUNNEL.psCompRate/100);
-      let fScrIn = fPsComp * (FUNNEL.screenInRate/100);
-      let fEvSched = sysGrossEvDemand; // True calculated demand incorporating state overrides
-      let fEvComp = fEvSched * (FUNNEL.evCompRate/100);
-      let fEnroll = fEvComp * (FUNNEL.enrollRate/100);
+  // Yield (Capacity-Constrained Flow)
+  let y_base = d_base;
+  let y_bumped = d_bumped;
+  let y_psSched = Math.min(d_psSched, totalSystemPsSupply); // CONSTRAINT 1
+  let y_pfa = Math.min(y_psSched * pfaGlobalRate, pfaTotalSupply);
+  let y_psComp = y_psSched * (FUNNEL.psCompRate/100);
+  let y_scrIn = y_psComp * (FUNNEL.screenInRate/100);
+  let y_evSched = Math.min(y_scrIn * (FUNNEL.evSchedRate/100), totalSystemEvSupply); // CONSTRAINT 2
+  let y_evComp = y_evSched * (FUNNEL.evCompRate/100);
+  let y_enroll = y_evComp * (FUNNEL.enrollRate/100);
 
-      document.getElementById('disp-base-apps').innerText = fmt(sysTotalApps);
-      document.getElementById('disp-bumped-apps').innerText = fmt(fBumped);
-      document.getElementById('disp-ps-sched').innerText = fmt(fPsSched);
-      
-      // Update PFA Route with Warning if capped
-      let pfaDisplayHtml = fmt(actualPfaVol);
-      if (pfaCapped) {
-          pfaDisplayHtml = `<span style="color:#fca5a5; border-bottom: 1px dashed #fca5a5; cursor: help;" title="Capped at Max Capacity (${fmt(pfaTotalSupply)}). Requested: ${fmt(requestedPfaVol)}">⚠️ ${fmt(actualPfaVol)}</span>`;
-      }
-      document.getElementById('disp-pfa-route').innerHTML = pfaDisplayHtml;
-      
-      document.getElementById('disp-ce-route').innerText = fmt(sysGrossPsCE);
-      document.getElementById('disp-ps-comp').innerText = fmt(fPsComp);
-      document.getElementById('disp-scr-in').innerText = fmt(fScrIn);
-      document.getElementById('disp-ev-sched').innerText = fmt(fEvSched);
-      document.getElementById('disp-ev-comp').innerText = fmt(fEvComp);
-      document.getElementById('disp-enroll').innerText = fmt(fEnroll);
-  }
+  // Inject Dual Metrics into UI
+  document.getElementById('f-dem-base').innerText = fmt(d_base); document.getElementById('f-sup-base').innerText = fmt(y_base);
+  document.getElementById('f-dem-bump').innerText = fmt(d_bumped); document.getElementById('f-sup-bump').innerText = fmt(y_bumped);
+  
+  document.getElementById('f-dem-ps-sched').innerText = fmt(d_psSched); document.getElementById('f-sup-ps-sched').innerText = fmt(y_psSched);
+  let tooltipPsHtml = ptoPsDetails.length ? `<div class="tooltip-container loss-red">Lost: ${Math.round(psLostToPto)}<span class="tooltip-text" style="width:180px; font-size:10px;"><strong style="color:#fca5a5;">PTO Impact (PS):</strong><br>${ptoPsDetails.join('<br>')}</span></div>` : `<span style="color:#94a3b8;">Lost: 0</span>`;
+  document.getElementById('box-ps-cap').innerHTML = `<strong>Cap: ${fmt(totalSystemPsSupply)}</strong> | ${tooltipPsHtml}`;
 
-  // 6. State CE/Lead Capacity Assignment
+  document.getElementById('f-dem-pfa').innerText = fmt(d_pfa); document.getElementById('f-sup-pfa').innerText = fmt(y_pfa);
+  document.getElementById('box-pfa-cap').innerHTML = `PFA Cap: ${fmt(pfaTotalSupply)}`;
+
+  document.getElementById('f-dem-ps-comp').innerText = fmt(d_psComp); document.getElementById('f-sup-ps-comp').innerText = fmt(y_psComp);
+  document.getElementById('f-dem-scr-in').innerText = fmt(d_scrIn); document.getElementById('f-sup-scr-in').innerText = fmt(y_scrIn);
+  
+  document.getElementById('f-dem-ev-sched').innerText = fmt(d_evSched); document.getElementById('f-sup-ev-sched').innerText = fmt(y_evSched);
+  let tooltipEvHtml = ptoEvDetails.length ? `<div class="tooltip-container loss-red">Lost: ${Math.round(evLostToPto)}<span class="tooltip-text" style="width:180px; font-size:10px;"><strong style="color:#fca5a5;">PTO Impact (EV):</strong><br>${ptoEvDetails.join('<br>')}</span></div>` : `<span style="color:#94a3b8;">Lost: 0</span>`;
+  document.getElementById('box-ev-cap').innerHTML = `<strong>Cap: ${fmt(totalSystemEvSupply)}</strong> | ${tooltipEvHtml}`;
+
+  document.getElementById('f-dem-ev-comp').innerText = fmt(d_evComp); document.getElementById('f-sup-ev-comp').innerText = fmt(y_evComp);
+  document.getElementById('f-dem-enroll').innerText = fmt(d_enroll); document.getElementById('f-sup-enroll').innerText = fmt(y_enroll);
+
+  // 5. State CE/Lead Capacity Assignment (Heatmap Distribution)
   let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').map(name => {
     let r = ROSTER[name];
     let pto = parseFloat(r.pto[activeMonth]) || 0;
-    let qPs = parseFloat(r.qPs) || 0;
-    let qEv = parseFloat(r.qEv) || 0;
-    
     let activeSt = r.mix[activeMonth] || [];
     let loadDenomApps = 0;
     activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); });
 
     return {
       name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile,
-      psCapTotal: Math.max(0, (wd - pto) * qPs),
-      evCapTotal: Math.max(0, (wd - pto) * qEv)
+      psCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qPs) || 0)),
+      evCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qEv) || 0))
     };
   });
 
-  let ceTotalPsSupply = 0;
-  let ceTotalEvSupply = 0;
-
   ceAllocations.forEach(ce => {
-    ceTotalPsSupply += ce.psCapTotal;
-    ceTotalEvSupply += ce.evCapTotal;
     if(ce.denom > 0) {
       ce.activeStates.forEach(s => {
         if (stateMetrics[s]) {
@@ -1071,9 +1109,7 @@ function recalculateDashboardMetrics() {
     }
   });
 
-  let totalSystemPsSupply = pfaTotalSupply + ceTotalPsSupply;
-
-  // 7. Update UI Components
+  // 6. Update UI Components
   document.getElementById('top-stats-container').innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Accepted App Vol <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Total top of funnel intake including bump.</span></div></div>
@@ -1097,27 +1133,25 @@ function recalculateDashboardMetrics() {
   renderMatrix(ceAllocations, stateMetrics);
   renderCollapsibleLedger(activeMonth, wd);
   renderSidebarProfileManager(ceAllocations);
-  renderExecutiveBanner(sysGrossEvDemand, ceTotalEvSupply, activeMonth);
+  renderExecutiveBanner(d_evSched, totalSystemEvSupply, y_enroll, activeMonth);
   renderDualCharts();
 }
 
-function renderExecutiveBanner(evDem, evSup, activeMonth) {
+function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth) {
   const container = document.getElementById('executive-insight-banner');
   if (!container) return;
 
-  let actualEvals = Math.min(evDem, evSup);
-  let finalYield = Math.round(actualEvals * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100));
   let evShort = Math.max(0, evDem - evSup);
   
   container.innerHTML = `
     <h3>MONTHLY INSIGHT ANALYSIS: ${activeMonth.split('_')[0].toUpperCase()}</h3>
     <div style="display:flex; gap:20px; align-items:center;">
         <div style="flex:1;">
-            <p><strong>Evaluation Bottleneck Status:</strong> System requires <strong>${fmt(evDem)} Eval slots</strong> based on top-of-funnel intake. Licensed CEs yield <strong>${fmt(evSup)} slots</strong>.</p>
+            <p><strong>Evaluation Bottleneck Status:</strong> Base global metrics demand <strong>${fmt(evDem)} Eval slots</strong>. Total Licensed CE Roster yields <strong>${fmt(evSup)} Schedulable Slots</strong> after PTO shrinkage.</p>
             ${evShort > 0 ? `<p style="color:#fca5a5; font-size:11px; margin-top:4px;">⚠️ Mid-Funnel Deficit: Short ${fmt(evShort)} EV slots.</p>` : `<p style="color:#86efac; font-size:11px; margin-top:4px;">✅ Eval Queue is adequately staffed.</p>`}
         </div>
         <div style="flex:1; border-left: 1px solid #374151; padding-left: 20px;">
-            <p><strong>Expected Final Enrollment Yield:</strong> By applying the Eval Comp (${FUNNEL.evCompRate}%) and Enroll (${FUNNEL.enrollRate}%) rates to the achievable Evaluations (${fmt(actualEvals)}), the system projects <strong>${fmt(finalYield)} Enrolled Patients</strong> for this cohort.</p>
+            <p><strong>Expected Final Enrollment Yield:</strong> After factoring in all upper-funnel capacity constraints and current PTO loss, the system physically projects <strong>${fmt(finalYield)} Enrolled Patients</strong> for this cohort.</p>
         </div>
     </div>
   `;
