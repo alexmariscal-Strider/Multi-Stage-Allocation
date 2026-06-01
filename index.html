@@ -136,12 +136,11 @@
   </div>
   
   <div class="month-bar">
-    <button class="btn-horizon" onclick="archiveEarliestMonth()" title="Archive the oldest tracking period">(-) Archive Past</button>
+    <button class="btn-horizon" style="margin-right: 6px; font-weight: bold; color: #a5b4fc; border-color: #6366f1;" onclick="openMonthManager()">📅 Manage Months</button>
     <div id="month-tabs" style="display: inline-flex; gap: 4px; margin: 0 4px;"></div>
-    <button class="btn-horizon" onclick="appendFutureMonth()" title="Append a new month to the projection">(+) Add Future</button>
   </div>
   
-  <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & DATES MANAGER</button>
+  <button class="btn-action" style="background: #374151; color: #f8fafc; border: 1px solid #4b5563;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & PARAMETERS</button>
 </div>
 
 <!-- UNIVERSAL FUNNEL ENGINE PANEL -->
@@ -332,6 +331,40 @@
   </div>
 </div>
 
+<!-- DYNAMIC MONTH MANAGER MODAL -->
+<div class="modal-overlay" id="month-manager-modal">
+  <div class="modal-content" style="max-width: 500px;">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 10px;">
+        <h2 style="margin:0; border:none; color:#fff; font-size:14px;">📅 Dynamic Month Manager</h2>
+        <button class="btn-action" style="background:#475569;" onclick="document.getElementById('month-manager-modal').style.display='none'">CLOSE</button>
+    </div>
+
+    <!-- ADD NEW MONTH -->
+    <div style="display:flex; gap: 8px; margin-bottom: 16px; align-items: center; background: #0f172a; padding: 12px; border-radius: 6px; border: 1px solid #374151;">
+        <span style="font-size: 11px; color: #94a3b8; font-weight: bold;">+ Add New Month:</span>
+        <input type="text" id="new-month-input" placeholder="e.g. June, Q3, etc." style="flex:1; padding: 6px;">
+        <button class="btn-action" style="background: #10b981;" onclick="addNewSpecificMonth()">ADD TO TIMELINE</button>
+    </div>
+
+    <!-- ACTIVE TIMELINE -->
+    <h3 style="font-size: 11px; color: #a5b4fc; text-transform: uppercase; margin-bottom: 8px;">Active Horizon</h3>
+    <table class="compact-modal-table" style="width: 100%; margin-bottom: 16px;">
+        <thead>
+            <tr>
+                <th style="width:50px; text-align:center;">Order</th>
+                <th>Tracking Period</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="active-months-tbody"></tbody>
+    </table>
+
+    <!-- ARCHIVE VAULT -->
+    <h3 style="font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">Archived Vault</h3>
+    <div id="archive-vault-container" style="display: flex; gap: 8px; flex-wrap: wrap; background: #0f172a; padding: 12px; border-radius: 6px; border: 1px solid #374151; min-height: 50px;"></div>
+  </div>
+</div>
+
 <!-- GLOBAL PARAMS MODAL (STACKED, LARGER WIDTH) -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal-content">
@@ -423,6 +456,11 @@ let activeMonthIdx = 0;
 let chartPs = null;
 let chartEv = null;
 
+// --- ARCHIVE STATE ---
+let ARCHIVED_TIMELINE = [];
+let ARCHIVED_LEDGER = {};
+let ARCHIVED_ROSTER = {};
+
 function bootstrapDataEngine() {
   try {
     // PRESERVING V2 KEYS TO MAINTAIN EXISTING GITHUB DEPLOYMENT DATA INTEGRITY
@@ -434,6 +472,11 @@ function bootstrapDataEngine() {
         psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80
     };
     MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v2_stat')) || [...DEFAULT_STATE_LIST];
+
+    // Load Archives
+    ARCHIVED_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_archive_time')) || [];
+    ARCHIVED_LEDGER = JSON.parse(localStorage.getItem('funnel_v2_archive_ledg')) || {};
+    ARCHIVED_ROSTER = JSON.parse(localStorage.getItem('funnel_v2_archive_rost')) || {};
 
     // Hydrate Ledger
     ACTIVE_TIMELINE.forEach((m) => {
@@ -483,6 +526,10 @@ function saveState() {
   localStorage.setItem('funnel_v2_rost', JSON.stringify(ROSTER));
   localStorage.setItem('funnel_v2_conf', JSON.stringify(FUNNEL));
   localStorage.setItem('funnel_v2_stat', JSON.stringify(MASTER_STATES));
+  
+  localStorage.setItem('funnel_v2_archive_time', JSON.stringify(ARCHIVED_TIMELINE));
+  localStorage.setItem('funnel_v2_archive_ledg', JSON.stringify(ARCHIVED_LEDGER));
+  localStorage.setItem('funnel_v2_archive_rost', JSON.stringify(ARCHIVED_ROSTER));
 }
 
 function triggerFactoryResetWfm() { localStorage.clear(); location.reload(); }
@@ -510,31 +557,180 @@ function saveFunnelParams() {
   saveState(); recalculateDashboardMetrics();
 }
 
-// --- TIMELINE CONTROLS ---
-function archiveEarliestMonth() {
-  if (ACTIVE_TIMELINE.length <= 1) { promptAlert("Cannot archive last month."); return; }
-  let removed = ACTIVE_TIMELINE.shift();
-  delete LEDGER[removed];
-  Object.keys(ROSTER).forEach(n => { delete ROSTER[n].pto[removed]; delete ROSTER[n].mix[removed]; });
-  activeMonthIdx = 0; saveState(); buildTimelineControls(); recalculateDashboardMetrics();
+// --- DYNAMIC MONTH MANAGER & ARCHIVE ENGINE ---
+function openMonthManager() {
+    renderMonthManagerUI();
+    document.getElementById('month-manager-modal').style.display = 'flex';
 }
 
-function appendFutureMonth() {
-  let latest = ACTIVE_TIMELINE[ACTIVE_TIMELINE.length - 1];
-  let cleanName = latest.split('_')[0]; 
-  let nextIdx = (ALL_KNOWN_MONTHS.indexOf(cleanName) + 1) % 12;
-  let nextName = ALL_KNOWN_MONTHS[nextIdx];
-  if (ACTIVE_TIMELINE.some(m => m.startsWith(nextName))) nextName += `_${Date.now().toString().slice(-4)}`;
+function renderMonthManagerUI() {
+    const tbody = document.getElementById('active-months-tbody');
+    tbody.innerHTML = ACTIVE_TIMELINE.map((m, i) => `
+        <tr>
+            <td style="text-align:center;">
+                <button style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:12px; padding:2px;" onclick="moveMonth(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.3"' : ''}>▲</button>
+                <button style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:12px; padding:2px;" onclick="moveMonth(${i}, 1)" ${i === ACTIVE_TIMELINE.length - 1 ? 'disabled style="opacity:0.3"' : ''}>▼</button>
+            </td>
+            <td style="font-weight:bold; color:#f8fafc;">${m.split('_')[0]}</td>
+            <td style="text-align:right;">
+                <button class="btn-action" style="padding: 4px 8px; font-size: 9px; background: #f59e0b;" onclick="archiveSpecificMonth('${m}')">ARCHIVE</button>
+                <button class="btn-action" style="padding: 4px 8px; font-size: 9px; background: #ef4444; margin-left: 4px;" onclick="promptConfirm('Permanently delete ${m.split('_')[0]}?', () => deleteSpecificMonth('${m}'))">DELETE</button>
+            </td>
+        </tr>
+    `).join('');
 
-  ACTIVE_TIMELINE.push(nextName);
-  LEDGER[nextName] = { wd: 21, apps: {}, conv: {} };
-  MASTER_STATES.forEach(s => { LEDGER[nextName].apps[s] = 0; LEDGER[nextName].conv[s] = 0; });
+    const archiveContainer = document.getElementById('archive-vault-container');
+    if (ARCHIVED_TIMELINE.length === 0) {
+        archiveContainer.innerHTML = '<span style="font-size:10px; color:#64748b; font-style:italic;">No archived periods stored in vault.</span>';
+    } else {
+        archiveContainer.innerHTML = ARCHIVED_TIMELINE.map(m => `
+            <div style="background:#0f172a; border:1px solid #374151; padding:6px 10px; border-radius:4px; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:10px; color:#94a3b8;">${m.split('_')[0]}</span>
+                <button class="btn-action" style="background:#059669; padding:2px 6px; font-size:8px;" onclick="restoreArchivedMonth('${m}')">RESTORE</button>
+                <button style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:14px; margin-left:4px;" title="Permanently Delete" onclick="promptConfirm('Permanently erase archived ${m.split('_')[0]}?', () => deleteArchivedMonth('${m}'))">×</button>
+            </div>
+        `).join('');
+    }
+}
 
-  Object.keys(ROSTER).forEach(n => {
-    ROSTER[n].pto[nextName] = 0;
-    ROSTER[n].mix[nextName] = ROSTER[n].role === 'PFA' ? [] : [...(ROSTER[n].profile||[])];
-  });
-  saveState(); buildTimelineControls(); recalculateDashboardMetrics();
+function moveMonth(idx, dir) {
+    if (idx + dir < 0 || idx + dir >= ACTIVE_TIMELINE.length) return;
+    let temp = ACTIVE_TIMELINE[idx];
+    ACTIVE_TIMELINE[idx] = ACTIVE_TIMELINE[idx + dir];
+    ACTIVE_TIMELINE[idx + dir] = temp;
+    
+    // Ensure activeMonthIdx tracks the moved item to prevent weird UI jumps
+    if (activeMonthIdx === idx) activeMonthIdx = idx + dir;
+    else if (activeMonthIdx === idx + dir) activeMonthIdx = idx;
+
+    saveState();
+    renderMonthManagerUI();
+    buildTimelineControls();
+    recalculateDashboardMetrics();
+}
+
+function addNewSpecificMonth() {
+    let inp = document.getElementById('new-month-input');
+    let rawVal = inp.value.trim();
+    if(!rawVal) return;
+    
+    let newM = rawVal;
+    if (ACTIVE_TIMELINE.includes(newM) || ARCHIVED_TIMELINE.includes(newM)) {
+        newM += `_${Date.now().toString().slice(-4)}`;
+    }
+
+    ACTIVE_TIMELINE.push(newM);
+    LEDGER[newM] = { wd: 21, apps: {}, conv: {} };
+    MASTER_STATES.forEach(s => { LEDGER[newM].apps[s] = 0; LEDGER[newM].conv[s] = 0; });
+
+    Object.keys(ROSTER).forEach(name => {
+        ROSTER[name].pto[newM] = 0;
+        ROSTER[name].mix[newM] = ROSTER[name].role === 'PFA' ? [] : [...(ROSTER[name].profile||[])];
+    });
+
+    inp.value = '';
+    saveState();
+    renderMonthManagerUI();
+    buildTimelineControls();
+    recalculateDashboardMetrics();
+}
+
+function archiveSpecificMonth(m) {
+    if (ACTIVE_TIMELINE.length <= 1) {
+        promptAlert("System limitation: You must keep at least one active tracking month in the horizon.");
+        return;
+    }
+    
+    ACTIVE_TIMELINE = ACTIVE_TIMELINE.filter(x => x !== m);
+    if (!ARCHIVED_TIMELINE.includes(m)) ARCHIVED_TIMELINE.push(m);
+    ARCHIVED_LEDGER[m] = JSON.parse(JSON.stringify(LEDGER[m])); 
+    
+    Object.keys(ROSTER).forEach(name => {
+        if (!ARCHIVED_ROSTER[name]) ARCHIVED_ROSTER[name] = { pto: {}, mix: {} };
+        if (ROSTER[name].pto) {
+            ARCHIVED_ROSTER[name].pto[m] = ROSTER[name].pto[m];
+        }
+        if (ROSTER[name].mix) {
+            ARCHIVED_ROSTER[name].mix[m] = JSON.parse(JSON.stringify(ROSTER[name].mix[m] || []));
+        }
+        delete ROSTER[name].pto[m];
+        delete ROSTER[name].mix[m];
+    });
+    
+    delete LEDGER[m];
+    activeMonthIdx = 0;
+    saveState();
+    renderMonthManagerUI();
+    buildTimelineControls();
+    recalculateDashboardMetrics();
+}
+
+function restoreArchivedMonth(m) {
+    ARCHIVED_TIMELINE = ARCHIVED_TIMELINE.filter(x => x !== m);
+    ACTIVE_TIMELINE.push(m); 
+    
+    if (ARCHIVED_LEDGER[m]) {
+        LEDGER[m] = JSON.parse(JSON.stringify(ARCHIVED_LEDGER[m]));
+        delete ARCHIVED_LEDGER[m];
+    } else {
+        LEDGER[m] = { wd: 21, apps: {}, conv: {} };
+        MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; });
+    }
+
+    Object.keys(ROSTER).forEach(name => {
+        if (ARCHIVED_ROSTER[name] && ARCHIVED_ROSTER[name].pto[m] !== undefined) {
+            ROSTER[name].pto[m] = ARCHIVED_ROSTER[name].pto[m];
+            ROSTER[name].mix[m] = ARCHIVED_ROSTER[name].mix[m] || [...(ROSTER[name].profile || [])];
+            delete ARCHIVED_ROSTER[name].pto[m];
+            delete ARCHIVED_ROSTER[name].mix[m];
+        } else {
+            ROSTER[name].pto[m] = 0;
+            ROSTER[name].mix[m] = ROSTER[name].role === 'PFA' ? [] : [...(ROSTER[name].profile || [])];
+        }
+    });
+
+    activeMonthIdx = ACTIVE_TIMELINE.length - 1; // Focus on the newly restored month
+    saveState();
+    renderMonthManagerUI();
+    buildTimelineControls();
+    recalculateDashboardMetrics();
+    // Refresh modal in case it's open
+    if(document.getElementById('settings-modal').style.display === 'flex') populateGlobalModalViews(); 
+}
+
+function deleteSpecificMonth(m) {
+    if (ACTIVE_TIMELINE.length <= 1) { 
+        promptAlert("System limitation: You must keep at least one active tracking month in the horizon."); 
+        return; 
+    }
+    
+    ACTIVE_TIMELINE = ACTIVE_TIMELINE.filter(x => x !== m);
+    delete LEDGER[m];
+    Object.keys(ROSTER).forEach(name => {
+        if (ROSTER[name]) {
+            delete ROSTER[name].pto[m];
+            delete ROSTER[name].mix[m];
+        }
+    });
+    
+    activeMonthIdx = 0;
+    saveState();
+    renderMonthManagerUI();
+    buildTimelineControls();
+    recalculateDashboardMetrics();
+}
+
+function deleteArchivedMonth(m) {
+    ARCHIVED_TIMELINE = ARCHIVED_TIMELINE.filter(x => x !== m);
+    delete ARCHIVED_LEDGER[m];
+    Object.keys(ARCHIVED_ROSTER).forEach(name => {
+        if(ARCHIVED_ROSTER[name]) {
+            delete ARCHIVED_ROSTER[name].pto[m];
+            delete ARCHIVED_ROSTER[name].mix[m];
+        }
+    });
+    saveState();
+    renderMonthManagerUI();
 }
 
 function buildTimelineControls() {
@@ -1067,7 +1263,7 @@ function renderCollapsibleLedger(activeM, wd) {
   let foot = document.getElementById('pto-ledger-foot');
 
   let headHtml = `<tr><th rowspan="2" style="position:sticky; left:0; background:#161b22; z-index:2; border-right:1px solid #374151; min-width:160px;">Resource</th><th colspan="2" style="text-align:center; border-right:1px solid #374151;">Quotas</th>`;
-  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-right:1px solid #374151;">${m.split('_')[0]}</th>`; });
+  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-left:1px solid #374151;">${m.split('_')[0]}</th>`; });
   headHtml += `</tr><tr><th style="text-align:center;">PS/Day</th><th style="text-align:center; border-right:1px solid #374151;">Ev/Day</th>`;
   ACTIVE_TIMELINE.forEach(() => { headHtml += `<th style="text-align:center; font-size:8px;">PTO</th><th style="text-align:center; font-size:8px; border-right:1px solid #374151;">CAP</th>`; });
   thead.innerHTML = headHtml + `</tr>`;
@@ -1094,8 +1290,8 @@ function renderCollapsibleLedger(activeM, wd) {
               let capEv = Math.max(0,(mwd-pto)*r.qEv);
               
               let capStr = role === 'PFA' 
-                  ? `<span style="color:#94a3b8;">${Math.round(capPs)} PS</span>` 
-                  : `<span style="color:#94a3b8;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
+                  ? `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS</span>` 
+                  : `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
                   
               return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
           }).join('');
