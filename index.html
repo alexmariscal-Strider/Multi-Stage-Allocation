@@ -157,7 +157,11 @@
     </div>
   </div>
   
-  <button class="btn-action" style="background: #1f2937; color: #f8fafc; border: 1px solid #475569; padding: 8px 16px; font-size: 10px; border-radius: 6px;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & PARAMETERS</button>
+  <!-- Right Side Buttons -->
+  <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="btn-action" style="background: transparent; color: #94a3b8; border: 1px solid #374151; padding: 8px 12px; font-size: 10px; border-radius: 6px; transition: 0.2s;" onmouseover="this.style.color='#f8fafc'; this.style.borderColor='#64748b';" onmouseout="this.style.color='#94a3b8'; this.style.borderColor='#374151';" onclick="toggleModal('summary-modal')">ℹ️ SUMMARY</button>
+      <button class="btn-action" style="background: #1f2937; color: #f8fafc; border: 1px solid #475569; padding: 8px 16px; font-size: 10px; border-radius: 6px;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & PARAMETERS</button>
+  </div>
 </div>
 
 <!-- GLOBAL PARAMETER STRIP -->
@@ -356,6 +360,29 @@
   </div>
 </div>
 
+<!-- DASHBOARD SUMMARY MODAL -->
+<div class="modal-overlay" id="summary-modal">
+  <div class="modal-content" style="max-width: 650px; overflow-wrap: break-word;">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
+        <h2 style="margin:0; border:none; color:#fff; font-size:15px;">ℹ️ Dashboard Summary & Architecture</h2>
+        <button class="btn-action" style="background:#475569; padding: 6px 16px; font-size: 10px;" onclick="toggleModal('summary-modal')">CLOSE</button>
+    </div>
+    
+    <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
+        <p style="margin-bottom: 14px;"><strong style="color: #93c5fd;">What it does:</strong> End-to-end tactical alignment (Demand Pipeline vs. Maximum Capacity Potential).</p>
+        
+        <p style="margin-bottom: 20px;"><strong style="color: #c4b5fd;">Core Focus:</strong> This is the definitive "Command Center" dashboard that highlights exactly where the pipeline will choke on a monthly and weekly basis. It bridges your marketing numbers with your physical roster limitations.</p>
+        
+        <h3 style="color: #f8fafc; font-size: 14px; margin-bottom: 10px; border-bottom: 1px dotted #374151; padding-bottom: 6px;">Key Features</h3>
+        <ul style="padding-left: 24px; list-style-type: disc;">
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">The 50/50 Dual View:</strong> Maps out unconstrained mathematical Demand side-by-side with your roster's true Max Potential Yield at every transition point.</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Bottom-Up Math:</strong> It locks in your net available phone screen hours (after stripping out granular CE and PFA PTO) and slides that raw capacity down the funnel to project your true mathematical maximum throughput.</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Variance Alert System:</strong> Instantly highlights deficits at each funnel stage, calculates weekly enrollment pacing, tracks cascading state distributions, and triggers warning caps if the global PFA routing parameters overwhelm your active supply.</li>
+        </ul>
+    </div>
+  </div>
+</div>
+
 <!-- DYNAMIC MONTH MANAGER MODAL -->
 <div class="modal-overlay" id="month-manager-modal">
   <div class="modal-content" style="max-width: 500px;">
@@ -453,6 +480,17 @@ function toggleFunnelCollapse() {
         wrap.style.display = 'none';
         icon.innerText = '▶';
     }
+}
+
+// Modal Toggle Manager (handles multiple modals safely)
+function toggleModal(id) {
+  const modal = document.getElementById(id);
+  if (modal.style.display === 'flex') { 
+    modal.style.display = 'none'; 
+  } else { 
+    if(id === 'settings-modal') populateGlobalModalViews(); 
+    modal.style.display = 'flex'; 
+  }
 }
 
 // Custom Dialog System
@@ -684,13 +722,6 @@ function buildTimelineControls() {
     btn.innerText = m.split('_')[0]; btn.onclick = () => { activeMonthIdx = i; buildTimelineControls(); recalculateDashboardMetrics(); };
     container.appendChild(btn);
   });
-}
-
-// --- MODAL CONTROLS ---
-function toggleModal(id) {
-  const modal = document.getElementById(id);
-  if (modal.style.display === 'flex') { modal.style.display = 'none'; } 
-  else { populateGlobalModalViews(); modal.style.display = 'flex'; }
 }
 
 function populateGlobalModalViews() {
