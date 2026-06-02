@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Multi-Stage Funnel WFM Suite v1.2 (Live)</title>
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Firebase Compat Libraries -->
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
@@ -140,6 +142,9 @@
   .month-btn.active { background: #3b82f6; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
   .btn-horizon { background: transparent; border: none; color: #8b5cf6; padding: 6px 12px; font-size: 11px; cursor: pointer; transition: 0.2s; font-weight: 800; border-right: 1px solid #374151; margin-right: 4px; text-transform: uppercase; }
   .btn-horizon:hover { color: #a5b4fc; background: #1e293b; }
+  
+  .sort-btn { background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 10px; padding: 0 3px; }
+  .sort-btn:hover { color: #cbd5e1; }
 
 </style>
 </head>
@@ -160,32 +165,37 @@
     </div>
   </div>
   
+  <!-- Right Side Buttons -->
   <div style="display: flex; gap: 8px; align-items: center;">
       <button class="btn-action" style="background: transparent; color: #94a3b8; border: 1px solid #374151; padding: 8px 12px; font-size: 10px; border-radius: 6px; transition: 0.2s;" onmouseover="this.style.color='#f8fafc'; this.style.borderColor='#64748b';" onmouseout="this.style.color='#94a3b8'; this.style.borderColor='#374151';" onclick="toggleModal('summary-modal')">ℹ️ SUMMARY</button>
       <button class="btn-action" style="background: #1f2937; color: #f8fafc; border: 1px solid #475569; padding: 8px 16px; font-size: 10px; border-radius: 6px;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & PARAMETERS</button>
   </div>
 </div>
 
+<!-- GLOBAL PARAMETER STRIP -->
 <div class="params-strip">
-    <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">App→PS Route</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">PFA Allocation</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">App→PS Route</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">PFA Allocation</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Enrollment</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Enrollment</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="triggerUpdate()"><span>%</span></div></div>
 </div>
 
+<!-- 50/50 SPLIT ARCHITECTURE -->
 <div class="top-50-50">
+    <!-- LEFT HALF: Narrative & High-Level Metrics -->
     <div class="top-left">
         <div class="insight-banner" id="executive-insight-banner"></div>
         <div class="stat-grid" id="top-stats-container"></div>
     </div>
 
+    <!-- RIGHT HALF: Unified Bottom-Up Funnel -->
     <div class="top-right panel">
         <h2 style="cursor: pointer; margin-bottom: 0;" onclick="toggleFunnelCollapse()">
             <span style="display:flex; align-items:center; gap:6px;">
@@ -213,6 +223,7 @@
 </div>
 
 <div class="dashboard-grid">
+  <!-- FORECAST PROJECTIONS -->
   <div class="panel span-2">
     <h2>Phone Screen (PS) Capacity vs Demand</h2>
     <div class="chart-container"><canvas id="wfmPsChart"></canvas></div>
@@ -222,6 +233,7 @@
     <div class="chart-container"><canvas id="wfmEvChart"></canvas></div>
   </div>
 
+  <!-- DUAL HEATMAP -->
   <div class="panel full-width">
     <h2 id="heat-title">State Cascading Distribution (PS & Evals)</h2>
     <div id="heatmap-summary" style="display: flex; gap: 8px; margin-bottom: 12px;"></div>
@@ -245,6 +257,7 @@
     </div>
   </div>
 
+  <!-- STATE ALLOCATION GRID -->
   <div class="panel span-3">
     <h2 id="matrix-title-label">Mid-Funnel CE Licensure Matrix</h2>
     <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">PFAs do not appear here as they pull from the global stateless pool. Toggling a CE 'ON' allocates their proportional time to that state.</p>
@@ -257,6 +270,7 @@
     </div>
   </div>
 
+  <!-- PROFILE MANAGER -->
   <div class="panel span-1">
     <h2 id="mix-title" style="align-items: center; display: flex;">
       <span>CE Profile Manager</span>
@@ -265,6 +279,7 @@
     <div id="ce-controls" style="max-height: 380px; overflow-y: auto; padding-right: 5px;"></div>
   </div>
 
+  <!-- DYNAMIC ROSTER AND PTO ALLOCATION LEDGER -->
   <div class="panel full-width">
     <h2>Rolling Capacity & Role Ledger</h2>
     <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px;">
@@ -293,6 +308,7 @@
   </div>
 </div>
 
+<!-- DASHBOARD SUMMARY MODAL -->
 <div class="modal-overlay" id="summary-modal">
   <div class="modal-content" style="max-width: 650px; overflow-wrap: break-word;">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
@@ -312,6 +328,7 @@
   </div>
 </div>
 
+<!-- DYNAMIC MONTH MANAGER MODAL -->
 <div class="modal-overlay" id="month-manager-modal">
   <div class="modal-content" style="max-width: 500px;">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 10px;">
@@ -333,6 +350,7 @@
   </div>
 </div>
 
+<!-- GLOBAL PARAMS MODAL -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal-content">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
@@ -369,6 +387,7 @@
   </div>
 </div>
 
+<!-- CUSTOM ALERT/CONFIRM DIALOG -->
 <div class="modal-overlay" id="custom-dialog-overlay" style="z-index: 9999;">
   <div class="dialog-box">
     <p id="dialog-message"></p>
@@ -442,7 +461,6 @@ let ARCHIVED_TIMELINE = []; let ARCHIVED_LEDGER = {}; let ARCHIVED_ROSTER = {};
 
 // --- BOOTSTRAP: OPTIMISTIC LOCAL-FIRST UI ---
 function bootstrapDataEngine() {
-    // 1. Load instantly from Local Storage (Safety Net)
     ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
     ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
@@ -453,13 +471,7 @@ function bootstrapDataEngine() {
     ARCHIVED_ROSTER = JSON.parse(localStorage.getItem('funnel_v2_archive_rost')) || {};
 
     hydrateDataDefaults();
-    
-    // 2. Render UI immediately (Buttons will work instantly)
-    loadFunnelUI();
-    buildTimelineControls();
-    recalculateDashboardMetrics();
-
-    // 3. Connect to Firebase in the background
+    loadFunnelUI(); buildTimelineControls(); recalculateDashboardMetrics();
     initCloudSync();
 }
 
@@ -467,12 +479,19 @@ function hydrateDataDefaults() {
     ACTIVE_TIMELINE.forEach((m) => {
       if (!LEDGER[m]) { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
     });
+    
+    let rosterCount = 0;
     Object.keys(ROSTER).forEach(name => {
         if (!ROSTER[name].profile) ROSTER[name].profile = [];
         if (!ROSTER[name].pto) ROSTER[name].pto = {};
         if (!ROSTER[name].mix) ROSTER[name].mix = {};
         if (ROSTER[name].qPs === undefined) ROSTER[name].qPs = (ROSTER[name].role === 'PFA') ? 10 : (ROSTER[name].role === 'LEAD' ? 3 : 4);
         if (ROSTER[name].qEv === undefined) ROSTER[name].qEv = (ROSTER[name].role === 'PFA') ? 0 : 3;
+        
+        // Ensure every CE has an order index for sorting
+        if (ROSTER[name].order === undefined) ROSTER[name].order = rosterCount;
+        rosterCount++;
+
         ACTIVE_TIMELINE.forEach(m => {
             if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
             if (!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [...ROSTER[name].profile];
@@ -492,16 +511,12 @@ function initCloudSync() {
             if(document.getElementById('settings-modal').style.display === 'flex') populateGlobalModalViews(); 
             if(document.getElementById('month-manager-modal').style.display === 'flex') renderMonthManagerUI();
         } else {
-            // Cloud is empty. Seed it with the local data we just loaded.
             saveState();
         }
-    }, (error) => {
-        console.warn("Firebase restricted or unavailable:", error);
-    });
+    }, (error) => { console.warn("Firebase restricted or unavailable:", error); });
 }
 
 function saveState() {
-  // Save locally first so UI never breaks
   localStorage.setItem('funnel_v2_time', JSON.stringify(ACTIVE_TIMELINE));
   localStorage.setItem('funnel_v2_ledg', JSON.stringify(LEDGER));
   localStorage.setItem('funnel_v2_rost', JSON.stringify(ROSTER));
@@ -511,7 +526,6 @@ function saveState() {
   localStorage.setItem('funnel_v2_archive_ledg', JSON.stringify(ARCHIVED_LEDGER));
   localStorage.setItem('funnel_v2_archive_rost', JSON.stringify(ARCHIVED_ROSTER));
 
-  // Push to Cloud
   db.ref('/wfm_state').set({
       time: ACTIVE_TIMELINE, ledg: LEDGER, rost: ROSTER, conf: FUNNEL, stat: MASTER_STATES,
       archive_time: ARCHIVED_TIMELINE, archive_ledg: ARCHIVED_LEDGER, archive_rost: ARCHIVED_ROSTER
@@ -519,6 +533,8 @@ function saveState() {
 }
 
 function triggerFactoryResetWfm() { db.ref('/wfm_state').remove().then(() => { localStorage.clear(); location.reload(); }); }
+
+function triggerUpdate() { saveFunnelParams(); }
 
 function loadFunnelUI() {
   document.getElementById('mod-global-bump').value = FUNNEL.volBump;
@@ -540,7 +556,7 @@ function saveFunnelParams() {
   FUNNEL.evSchedRate = parseFloat(document.getElementById('mod-global-ev-sched').value) || 0;
   FUNNEL.evCompRate = parseFloat(document.getElementById('mod-global-ev-comp').value) || 0;
   FUNNEL.enrollRate = parseFloat(document.getElementById('mod-global-enroll').value) || 0;
-  saveState(); recalculateDashboardMetrics();
+  saveState(); 
 }
 
 function openMonthManager() { renderMonthManagerUI(); document.getElementById('month-manager-modal').style.display = 'flex'; }
@@ -557,7 +573,7 @@ function moveMonth(idx, dir) {
     if (idx + dir < 0 || idx + dir >= ACTIVE_TIMELINE.length) return;
     let temp = ACTIVE_TIMELINE[idx]; ACTIVE_TIMELINE[idx] = ACTIVE_TIMELINE[idx + dir]; ACTIVE_TIMELINE[idx + dir] = temp;
     if (activeMonthIdx === idx) activeMonthIdx = idx + dir; else if (activeMonthIdx === idx + dir) activeMonthIdx = idx;
-    saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    saveState(); 
 }
 
 function addNewSpecificMonth() {
@@ -565,7 +581,7 @@ function addNewSpecificMonth() {
     let newM = rawVal; if (ACTIVE_TIMELINE.includes(newM) || ARCHIVED_TIMELINE.includes(newM)) newM += `_${Date.now().toString().slice(-4)}`;
     ACTIVE_TIMELINE.push(newM); LEDGER[newM] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[newM].apps[s] = 0; LEDGER[newM].conv[s] = 0; });
     Object.keys(ROSTER).forEach(name => { ROSTER[name].pto[newM] = 0; ROSTER[name].mix[newM] = ROSTER[name].role === 'PFA' ? [] : [...(ROSTER[name].profile||[])]; });
-    inp.value = ''; saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    inp.value = ''; saveState(); 
 }
 
 function archiveSpecificMonth(m) {
@@ -578,7 +594,7 @@ function archiveSpecificMonth(m) {
         if (ROSTER[name].mix) ARCHIVED_ROSTER[name].mix[m] = JSON.parse(JSON.stringify(ROSTER[name].mix[m] || []));
         delete ROSTER[name].pto[m]; delete ROSTER[name].mix[m];
     });
-    delete LEDGER[m]; activeMonthIdx = 0; saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    delete LEDGER[m]; activeMonthIdx = 0; saveState(); 
 }
 
 function restoreArchivedMonth(m) {
@@ -588,21 +604,20 @@ function restoreArchivedMonth(m) {
         if (ARCHIVED_ROSTER[name] && ARCHIVED_ROSTER[name].pto[m] !== undefined) { ROSTER[name].pto[m] = ARCHIVED_ROSTER[name].pto[m]; ROSTER[name].mix[m] = ARCHIVED_ROSTER[name].mix[m] || [...(ROSTER[name].profile || [])]; delete ARCHIVED_ROSTER[name].pto[m]; delete ARCHIVED_ROSTER[name].mix[m]; } 
         else { ROSTER[name].pto[m] = 0; ROSTER[name].mix[m] = ROSTER[name].role === 'PFA' ? [] : [...(ROSTER[name].profile || [])]; }
     });
-    activeMonthIdx = ACTIVE_TIMELINE.length - 1; saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
-    if(document.getElementById('settings-modal').style.display === 'flex') populateGlobalModalViews(); 
+    activeMonthIdx = ACTIVE_TIMELINE.length - 1; saveState(); 
 }
 
 function deleteSpecificMonth(m) {
     if (ACTIVE_TIMELINE.length <= 1) { promptAlert("System limitation: You must keep at least one active tracking month in the horizon."); return; }
     ACTIVE_TIMELINE = ACTIVE_TIMELINE.filter(x => x !== m); delete LEDGER[m];
     Object.keys(ROSTER).forEach(name => { if (ROSTER[name]) { delete ROSTER[name].pto[m]; delete ROSTER[name].mix[m]; } });
-    activeMonthIdx = 0; saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    activeMonthIdx = 0; saveState(); 
 }
 
 function deleteArchivedMonth(m) {
     ARCHIVED_TIMELINE = ARCHIVED_TIMELINE.filter(x => x !== m); delete ARCHIVED_LEDGER[m];
     Object.keys(ARCHIVED_ROSTER).forEach(name => { if(ARCHIVED_ROSTER[name]) { delete ARCHIVED_ROSTER[name].pto[m]; delete ARCHIVED_ROSTER[name].mix[m]; } });
-    saveState(); renderMonthManagerUI();
+    saveState(); 
 }
 
 function buildTimelineControls() {
@@ -668,12 +683,31 @@ function saveGlobalModalParams() {
   saveState(); toggleModal('settings-modal'); recalculateDashboardMetrics();
 }
 
+// --- SORTING ENGINE ---
+function moveClinicianOrder(name, direction) {
+    let sortedNames = Object.keys(ROSTER).sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0));
+    let currIdx = sortedNames.indexOf(name);
+    let targetIdx = currIdx + direction;
+    
+    if(targetIdx < 0 || targetIdx >= sortedNames.length) return;
+    
+    let targetName = sortedNames[targetIdx];
+    let tempOrder = ROSTER[name].order;
+    ROSTER[name].order = ROSTER[targetName].order;
+    ROSTER[targetName].order = tempOrder;
+    
+    saveState(); recalculateDashboardMetrics();
+}
+
 function addNewClinicianToRoster() {
   const name = document.getElementById('new-clinician-name').value.trim(); const role = document.getElementById('new-clinician-role').value;
   if (!name) return; if (ROSTER[name]) { promptAlert("Resource already exists."); return; }
   let dPs = role === 'PFA' ? 10 : (role === 'LEAD' ? 3 : 4); let dEv = role === 'PFA' ? 0 : 3;
-  ROSTER[name] = { role: role, qPs: dPs, qEv: dEv, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, mix: {} };
+  
+  let newOrder = Object.keys(ROSTER).length;
+  ROSTER[name] = { role: role, qPs: dPs, qEv: dEv, order: newOrder, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, mix: {} };
   ACTIVE_TIMELINE.forEach(m => { ROSTER[name].pto[m] = 0; ROSTER[name].mix[m] = (role === 'PFA' ? [] : [...MASTER_STATES]); });
+  
   document.getElementById('new-clinician-name').value = ''; saveState(); recalculateDashboardMetrics();
 }
 
@@ -710,7 +744,12 @@ function renderSidebarProfileManager(ceAllocations) {
   container.innerHTML = ceAllocations.map(ce => `
     <div class="ce-row">
       <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-        <strong>${ce.name}</strong> <span title="Denominator: Total demand of all active states." style="font-size:7px; color:#64748b; cursor:help;">Load: ${Math.round(ce.denom)}</span>
+        <strong>
+            <button class="sort-btn" onclick="moveClinicianOrder('${ce.name}', -1)">▲</button>
+            <button class="sort-btn" style="margin-right: 4px;" onclick="moveClinicianOrder('${ce.name}', 1)">▼</button>
+            ${ce.name}
+        </strong> 
+        <span title="Denominator: Total demand of all active states." style="font-size:7px; color:#64748b; cursor:help;">Load: ${Math.round(ce.denom)}</span>
       </div>
       <div style="margin-bottom:6px;">
         ${MASTER_STATES.filter(s => ce.masterProfile.includes(s)).map(s => `
@@ -856,12 +895,16 @@ function recalculateDashboardMetrics() {
   
   MASTER_STATES.forEach(s => { stateMetrics[s].psDemandCE = stateMetrics[s].psDemandFull * (1 - effectivePfaRate); });
 
-  let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').map(name => {
-    let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0;
-    let activeSt = r.mix[activeMonth] || []; let loadDenomApps = 0;
-    activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); });
-    return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, psCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qPs) || 0)), evCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qEv) || 0)) };
-  });
+  // Add .sort() directly to ceAllocations mapping
+  let ceAllocations = Object.keys(ROSTER)
+    .filter(n => ROSTER[n].role !== 'PFA')
+    .sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0))
+    .map(name => {
+      let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0;
+      let activeSt = r.mix[activeMonth] || []; let loadDenomApps = 0;
+      activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); });
+      return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, psCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qPs) || 0)), evCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qEv) || 0)) };
+    });
 
   ceAllocations.forEach(ce => {
     if(ce.denom > 0) {
@@ -986,7 +1029,9 @@ function renderCollapsibleLedger(activeM, wd) {
   Object.keys(groups).forEach(role => {
       if(groups[role].length === 0) return;
       bHtml += `<tr class="group-header" onclick="toggleGroup('grp-${role}')"><td colspan="100%">▼ ${role === 'PFA' ? 'PFA POOL' : (role === 'LEAD' ? 'LEAD CEs' : 'STANDARD CEs')} (${groups[role].length} Active)</td></tr>`;
-      groups[role].forEach(n => {
+      
+      // Sort within the ledger group before displaying
+      groups[role].sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0)).forEach(n => {
           let r = ROSTER[n];
           let colHtml = ACTIVE_TIMELINE.map(m => {
               let pto = r.pto[m] || 0; let mwd = LEDGER[m].wd; let capPs = Math.max(0,(mwd-pto)*r.qPs); let capEv = Math.max(0,(mwd-pto)*r.qEv);
