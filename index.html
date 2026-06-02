@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Multi-Stage Funnel WFM Suite v1.2</title>
+<title>Multi-Stage Funnel WFM Suite v1.2 (Live)</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
 <style>
   /* IFRAME-SAFE NORMALIZATION */
@@ -40,7 +44,6 @@
   .unified-funnel td:first-child { text-align: left; font-weight: 600; color: #cbd5e1; font-size: 11px; }
   .unified-funnel tr:hover td { background-color: #1e293b; }
   
-  /* Funnel specific highlights */
   .col-dem { color: #93c5fd !important; }
   .col-pot { color: #86efac !important; }
   .row-major td { border-top: 1px dashed #334155; padding-top: 12px; }
@@ -76,7 +79,6 @@
   td { padding: 4px 6px; border-bottom: 1px solid #1f2937; }
   .hover-row-trace tbody tr:not(.group-header):not(.totals-row):hover td { background-color: #1e293b !important; }
   
-  /* HEATMAP COLORS */
   .status-red { color: #fca5a5; font-weight: 700; }
   .status-yellow { color: #fde047; font-weight: 700; }
   .status-green { color: #86efac; font-weight: 700; }
@@ -112,14 +114,12 @@
   .dialog-box p { font-size: 13px; margin-bottom: 20px; color: #f8fafc; line-height: 1.5; }
   .dialog-btns { display: flex; justify-content: center; gap: 10px; }
 
-  /* GROUP HEADERS & LEDGER */
   .group-header { background: #1e293b; cursor: pointer; transition: 0.2s; }
   .group-header:hover { background: #334155; }
   .group-header td { border-bottom: 1px solid #475569; font-weight: 700; color: #94a3b8; font-size: 10px; padding: 8px; }
   .totals-row { background: #0f172a; font-weight: bold; }
   .totals-row td { border-top: 2px solid #374151; padding: 8px; }
   .ledger-input { width: 45px; }
-
   .chart-container { height: 180px; width: 100%; margin-bottom: 4px; }
   
   /* SIDEBAR STYLES */
@@ -140,7 +140,6 @@
   .month-btn.active { background: #3b82f6; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
   .btn-horizon { background: transparent; border: none; color: #8b5cf6; padding: 6px 12px; font-size: 11px; cursor: pointer; transition: 0.2s; font-weight: 800; border-right: 1px solid #374151; margin-right: 4px; text-transform: uppercase; }
   .btn-horizon:hover { color: #a5b4fc; background: #1e293b; }
-
 </style>
 </head>
 <body>
@@ -148,7 +147,10 @@
 <div class="header-flex">
   <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
     <div>
-      <h1 style="font-size: 18px; margin: 0; font-weight: 800; color: #f8fafc; letter-spacing: -0.5px;">Multi-Stage Funnel Arbitrage Suite <span style="font-weight:400; color:#64748b; font-size: 14px;">· v1.2</span></h1>
+      <h1 style="font-size: 18px; margin: 0; font-weight: 800; color: #f8fafc; letter-spacing: -0.5px;">
+        Multi-Stage Funnel Arbitrage Suite <span style="font-weight:400; color:#64748b; font-size: 14px;">· v1.2</span>
+        <span style="font-size:10px; color:#10b981; background:rgba(16,185,129,0.1); padding:3px 6px; border-radius:4px; margin-left:8px; border:1px solid rgba(16,185,129,0.2); font-weight:bold; vertical-align: middle;">🟢 CLOUD SYNC ACTIVE</span>
+      </h1>
     </div>
     
     <div class="month-bar">
@@ -157,38 +159,33 @@
     </div>
   </div>
   
-  <!-- Right Side Buttons -->
   <div style="display: flex; gap: 8px; align-items: center;">
       <button class="btn-action" style="background: transparent; color: #94a3b8; border: 1px solid #374151; padding: 8px 12px; font-size: 10px; border-radius: 6px; transition: 0.2s;" onmouseover="this.style.color='#f8fafc'; this.style.borderColor='#64748b';" onmouseout="this.style.color='#94a3b8'; this.style.borderColor='#374151';" onclick="toggleModal('summary-modal')">ℹ️ SUMMARY</button>
       <button class="btn-action" style="background: #1f2937; color: #f8fafc; border: 1px solid #475569; padding: 8px 16px; font-size: 10px; border-radius: 6px;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & PARAMETERS</button>
   </div>
 </div>
 
-<!-- GLOBAL PARAMETER STRIP -->
 <div class="params-strip">
-    <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">App→PS Route</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">PFA Allocation</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">App→PS Route</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">PFA Allocation</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="saveFunnelParams()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Enrollment</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="saveFunnelParams()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+    <div class="param-item"><span class="param-lbl">Enrollment</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="triggerUpdate()"><span>%</span></div></div>
 </div>
 
-<!-- 50/50 SPLIT ARCHITECTURE -->
 <div class="top-50-50">
     
-    <!-- LEFT HALF: Narrative & High-Level Metrics -->
     <div class="top-left">
         <div class="insight-banner" id="executive-insight-banner"></div>
         <div class="stat-grid" id="top-stats-container"></div>
     </div>
 
-    <!-- RIGHT HALF: Unified Bottom-Up Funnel -->
     <div class="top-right panel">
         <h2 style="cursor: pointer; margin-bottom: 0;" onclick="toggleFunnelCollapse()">
             <span style="display:flex; align-items:center; gap:6px;">
@@ -269,7 +266,6 @@
 </div>
 
 <div class="dashboard-grid">
-  <!-- FORECAST PROJECTIONS -->
   <div class="panel span-2">
     <h2>Phone Screen (PS) Capacity vs Demand</h2>
     <div class="chart-container"><canvas id="wfmPsChart"></canvas></div>
@@ -279,7 +275,6 @@
     <div class="chart-container"><canvas id="wfmEvChart"></canvas></div>
   </div>
 
-  <!-- DUAL HEATMAP -->
   <div class="panel full-width">
     <h2 id="heat-title">State Cascading Distribution (PS & Evals)</h2>
     <div id="heatmap-summary" style="display: flex; gap: 8px; margin-bottom: 12px;"></div>
@@ -307,7 +302,6 @@
     </div>
   </div>
 
-  <!-- STATE ALLOCATION GRID (No PFAs) -->
   <div class="panel span-3">
     <h2 id="matrix-title-label">Mid-Funnel CE Licensure Matrix</h2>
     <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">PFAs do not appear here as they pull from the global stateless pool. Toggling a CE 'ON' allocates their proportional time to that state.</p>
@@ -320,7 +314,6 @@
     </div>
   </div>
 
-  <!-- PROFILE MANAGER -->
   <div class="panel span-1">
     <h2 id="mix-title" style="align-items: center; display: flex;">
       <span>CE Profile Manager</span>
@@ -329,7 +322,6 @@
     <div id="ce-controls" style="max-height: 380px; overflow-y: auto; padding-right: 5px;"></div>
   </div>
 
-  <!-- DYNAMIC ROSTER AND PTO ALLOCATION LEDGER -->
   <div class="panel full-width">
     <h2>Rolling Capacity & Role Ledger</h2>
     
@@ -360,7 +352,6 @@
   </div>
 </div>
 
-<!-- DASHBOARD SUMMARY MODAL -->
 <div class="modal-overlay" id="summary-modal">
   <div class="modal-content" style="max-width: 650px; overflow-wrap: break-word;">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
@@ -370,7 +361,6 @@
     
     <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
         <p style="margin-bottom: 14px;"><strong style="color: #93c5fd;">What it does:</strong> End-to-end tactical alignment (Demand Pipeline vs. Maximum Capacity Potential).</p>
-        
         <p style="margin-bottom: 20px;"><strong style="color: #c4b5fd;">Core Focus:</strong> This is the definitive "Command Center" dashboard that highlights exactly where the pipeline will choke on a monthly and weekly basis. It bridges your marketing numbers with your physical roster limitations.</p>
         
         <h3 style="color: #f8fafc; font-size: 14px; margin-bottom: 10px; border-bottom: 1px dotted #374151; padding-bottom: 6px;">Key Features</h3>
@@ -383,7 +373,6 @@
   </div>
 </div>
 
-<!-- DYNAMIC MONTH MANAGER MODAL -->
 <div class="modal-overlay" id="month-manager-modal">
   <div class="modal-content" style="max-width: 500px;">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 10px;">
@@ -408,7 +397,6 @@
   </div>
 </div>
 
-<!-- GLOBAL PARAMS MODAL -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal-content">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
@@ -444,12 +432,11 @@
     </div>
 
     <div style="margin-top: 20px; text-align: right;">
-        <button class="btn-action" onclick="promptConfirm('Wipe all local storage and revert to factory codebase settings?', triggerFactoryResetWfm)" style="background:transparent; border: 1px solid #ef4444; color: #ef4444; padding: 6px 12px;">⚠️ HARD FACTORY RESET</button>
+        <button class="btn-action" onclick="promptConfirm('Wipe all cloud data and revert to factory defaults?', triggerFactoryResetWfm)" style="background:transparent; border: 1px solid #ef4444; color: #ef4444; padding: 6px 12px;">⚠️ HARD FACTORY RESET</button>
     </div>
   </div>
 </div>
 
-<!-- CUSTOM ALERT/CONFIRM DIALOG -->
 <div class="modal-overlay" id="custom-dialog-overlay" style="z-index: 9999;">
   <div class="dialog-box">
     <p id="dialog-message"></p>
@@ -461,6 +448,20 @@
 </div>
 
 <script>
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBU1tPMTjYtRSbmlttGfLKebl7gnwLzgBw",
+  authDomain: "ce-wfm-suite.firebaseapp.com",
+  databaseURL: "https://ce-wfm-suite-default-rtdb.firebaseio.com",
+  projectId: "ce-wfm-suite",
+  storageBucket: "ce-wfm-suite.firebasestorage.app",
+  messagingSenderId: "590100182080",
+  appId: "1:590100182080:web:b52ae564a6aa4377709ba5"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 // --- UTILITIES ---
 const fmt = (num) => Math.round(num || 0).toLocaleString();
 
@@ -473,27 +474,16 @@ function formatVar(delta) {
 function toggleFunnelCollapse() {
     const wrap = document.getElementById('unified-funnel-wrapper');
     const icon = document.getElementById('funnel-toggle-icon');
-    if (wrap.style.display === 'none') {
-        wrap.style.display = 'block';
-        icon.innerText = '▼';
-    } else {
-        wrap.style.display = 'none';
-        icon.innerText = '▶';
-    }
+    if (wrap.style.display === 'none') { wrap.style.display = 'block'; icon.innerText = '▼'; } 
+    else { wrap.style.display = 'none'; icon.innerText = '▶'; }
 }
 
-// Modal Toggle Manager (handles multiple modals safely)
 function toggleModal(id) {
   const modal = document.getElementById(id);
-  if (modal.style.display === 'flex') { 
-    modal.style.display = 'none'; 
-  } else { 
-    if(id === 'settings-modal') populateGlobalModalViews(); 
-    modal.style.display = 'flex'; 
-  }
+  if (modal.style.display === 'flex') { modal.style.display = 'none'; } 
+  else { if(id === 'settings-modal') populateGlobalModalViews(); modal.style.display = 'flex'; }
 }
 
-// Custom Dialog System
 function promptAlert(message) {
   document.getElementById('dialog-message').innerText = message;
   document.getElementById('dialog-cancel-btn').style.display = 'none';
@@ -529,26 +519,58 @@ let ARCHIVED_TIMELINE = [];
 let ARCHIVED_LEDGER = {};
 let ARCHIVED_ROSTER = {};
 
-function bootstrapDataEngine() {
-  try {
+// Cloud connection tracking
+let isInitialized = false;
+
+// --- CLOUD SYNC ENGINE ---
+function initCloudSync() {
+    const stateRef = db.ref('/wfm_state');
+    
+    stateRef.on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            ACTIVE_TIMELINE = data.time || [];
+            LEDGER = data.ledg || {};
+            ROSTER = data.rost || {};
+            FUNNEL = data.conf || {};
+            MASTER_STATES = data.stat || [];
+            ARCHIVED_TIMELINE = data.archive_time || [];
+            ARCHIVED_LEDGER = data.archive_ledg || {};
+            ARCHIVED_ROSTER = data.archive_rost || {};
+            
+            hydrateDataDefaults();
+            
+            loadFunnelUI();
+            buildTimelineControls();
+            recalculateDashboardMetrics();
+            
+            if(document.getElementById('settings-modal').style.display === 'flex') populateGlobalModalViews(); 
+            if(document.getElementById('month-manager-modal').style.display === 'flex') renderMonthManagerUI();
+            
+            isInitialized = true;
+        } else {
+            console.log("Empty cloud database. Uploading local fallback data.");
+            bootstrapFallbackData();
+            saveState();
+        }
+    });
+}
+
+function bootstrapFallbackData() {
     ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
     ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
-    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || {
-        appToPsRate: 95, pfaRouteRate: 30, volBump: 0,
-        psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80
-    };
+    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80 };
     MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v2_stat')) || [...DEFAULT_STATE_LIST];
-
     ARCHIVED_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_archive_time')) || [];
     ARCHIVED_LEDGER = JSON.parse(localStorage.getItem('funnel_v2_archive_ledg')) || {};
     ARCHIVED_ROSTER = JSON.parse(localStorage.getItem('funnel_v2_archive_rost')) || {};
+    hydrateDataDefaults();
+}
 
+function hydrateDataDefaults() {
     ACTIVE_TIMELINE.forEach((m) => {
-      if (!LEDGER[m]) {
-        LEDGER[m] = { wd: 21, apps: {}, conv: {} };
-        MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; });
-      }
+      if (!LEDGER[m]) { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
     });
 
     Object.keys(ROSTER).forEach(name => {
@@ -556,41 +578,47 @@ function bootstrapDataEngine() {
         if (!ROSTER[name].pto) ROSTER[name].pto = {};
         if (!ROSTER[name].mix) ROSTER[name].mix = {};
         
-        if (ROSTER[name].qPs === undefined) {
-            if (ROSTER[name].role === 'PFA') ROSTER[name].qPs = 10;
-            else if (ROSTER[name].role === 'LEAD') ROSTER[name].qPs = 3;
-            else ROSTER[name].qPs = 4;
-        }
-        if (ROSTER[name].qEv === undefined) {
-            if (ROSTER[name].role === 'PFA') ROSTER[name].qEv = 0;
-            else if (ROSTER[name].role === 'LEAD') ROSTER[name].qEv = 3;
-            else ROSTER[name].qEv = 3;
-        }
+        if (ROSTER[name].qPs === undefined) { ROSTER[name].qPs = (ROSTER[name].role === 'PFA') ? 10 : (ROSTER[name].role === 'LEAD' ? 3 : 4); }
+        if (ROSTER[name].qEv === undefined) { ROSTER[name].qEv = (ROSTER[name].role === 'PFA') ? 0 : 3; }
 
         ACTIVE_TIMELINE.forEach(m => {
             if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
             if (!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [...ROSTER[name].profile];
         });
     });
-
-    saveState();
-  } catch (err) {
-    console.error("Hydration Failure", err); triggerFactoryResetWfm();
-  }
 }
 
 function saveState() {
+  // Push to Cloud
+  db.ref('/wfm_state').set({
+      time: ACTIVE_TIMELINE,
+      ledg: LEDGER,
+      rost: ROSTER,
+      conf: FUNNEL,
+      stat: MASTER_STATES,
+      archive_time: ARCHIVED_TIMELINE,
+      archive_ledg: ARCHIVED_LEDGER,
+      archive_rost: ARCHIVED_ROSTER
+  });
+
+  // Local backup for safety
   localStorage.setItem('funnel_v2_time', JSON.stringify(ACTIVE_TIMELINE));
   localStorage.setItem('funnel_v2_ledg', JSON.stringify(LEDGER));
   localStorage.setItem('funnel_v2_rost', JSON.stringify(ROSTER));
   localStorage.setItem('funnel_v2_conf', JSON.stringify(FUNNEL));
   localStorage.setItem('funnel_v2_stat', JSON.stringify(MASTER_STATES));
-  localStorage.setItem('funnel_v2_archive_time', JSON.stringify(ARCHIVED_TIMELINE));
-  localStorage.setItem('funnel_v2_archive_ledg', JSON.stringify(ARCHIVED_LEDGER));
-  localStorage.setItem('funnel_v2_archive_rost', JSON.stringify(ARCHIVED_ROSTER));
 }
 
-function triggerFactoryResetWfm() { localStorage.clear(); location.reload(); }
+function triggerFactoryResetWfm() {
+    db.ref('/wfm_state').remove().then(() => {
+        localStorage.clear();
+        location.reload();
+    });
+}
+
+function triggerUpdate() {
+    saveFunnelParams();
+}
 
 function loadFunnelUI() {
   document.getElementById('mod-global-bump').value = FUNNEL.volBump;
@@ -612,7 +640,7 @@ function saveFunnelParams() {
   FUNNEL.evSchedRate = parseFloat(document.getElementById('mod-global-ev-sched').value) || 0;
   FUNNEL.evCompRate = parseFloat(document.getElementById('mod-global-ev-comp').value) || 0;
   FUNNEL.enrollRate = parseFloat(document.getElementById('mod-global-enroll').value) || 0;
-  saveState(); recalculateDashboardMetrics();
+  saveState(); 
 }
 
 // --- DYNAMIC MONTH MANAGER & ARCHIVE ENGINE ---
@@ -658,7 +686,7 @@ function moveMonth(idx, dir) {
     ACTIVE_TIMELINE[idx + dir] = temp;
     if (activeMonthIdx === idx) activeMonthIdx = idx + dir;
     else if (activeMonthIdx === idx + dir) activeMonthIdx = idx;
-    saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    saveState(); 
 }
 
 function addNewSpecificMonth() {
@@ -668,7 +696,7 @@ function addNewSpecificMonth() {
     LEDGER[newM] = { wd: 21, apps: {}, conv: {} };
     MASTER_STATES.forEach(s => { LEDGER[newM].apps[s] = 0; LEDGER[newM].conv[s] = 0; });
     Object.keys(ROSTER).forEach(name => { ROSTER[name].pto[newM] = 0; ROSTER[name].mix[newM] = ROSTER[name].role === 'PFA' ? [] : [...(ROSTER[name].profile||[])]; });
-    inp.value = ''; saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    inp.value = ''; saveState(); 
 }
 
 function archiveSpecificMonth(m) {
@@ -683,7 +711,7 @@ function archiveSpecificMonth(m) {
         delete ROSTER[name].pto[m]; delete ROSTER[name].mix[m];
     });
     delete LEDGER[m]; activeMonthIdx = 0;
-    saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    saveState(); 
 }
 
 function restoreArchivedMonth(m) {
@@ -698,21 +726,20 @@ function restoreArchivedMonth(m) {
         } else { ROSTER[name].pto[m] = 0; ROSTER[name].mix[m] = ROSTER[name].role === 'PFA' ? [] : [...(ROSTER[name].profile || [])]; }
     });
     activeMonthIdx = ACTIVE_TIMELINE.length - 1;
-    saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
-    if(document.getElementById('settings-modal').style.display === 'flex') populateGlobalModalViews(); 
+    saveState(); 
 }
 
 function deleteSpecificMonth(m) {
     if (ACTIVE_TIMELINE.length <= 1) { promptAlert("System limitation: You must keep at least one active tracking month in the horizon."); return; }
     ACTIVE_TIMELINE = ACTIVE_TIMELINE.filter(x => x !== m); delete LEDGER[m];
     Object.keys(ROSTER).forEach(name => { if (ROSTER[name]) { delete ROSTER[name].pto[m]; delete ROSTER[name].mix[m]; } });
-    activeMonthIdx = 0; saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
+    activeMonthIdx = 0; saveState(); 
 }
 
 function deleteArchivedMonth(m) {
     ARCHIVED_TIMELINE = ARCHIVED_TIMELINE.filter(x => x !== m); delete ARCHIVED_LEDGER[m];
     Object.keys(ARCHIVED_ROSTER).forEach(name => { if(ARCHIVED_ROSTER[name]) { delete ARCHIVED_ROSTER[name].pto[m]; delete ARCHIVED_ROSTER[name].mix[m]; } });
-    saveState(); renderMonthManagerUI();
+    saveState(); 
 }
 
 function buildTimelineControls() {
@@ -775,7 +802,7 @@ function saveGlobalModalParams() {
       LEDGER[m].conv[s] = parseFloat(document.getElementById(`mod-cnv-${s}-${m}`).value) || 0;
     });
   });
-  saveState(); toggleModal('settings-modal'); recalculateDashboardMetrics();
+  saveState(); toggleModal('settings-modal'); 
 }
 
 // --- ROSTER PROVISIONING LOGIC ---
@@ -785,7 +812,11 @@ function addNewClinicianToRoster() {
   let dPs = role === 'PFA' ? 10 : (role === 'LEAD' ? 3 : 4); let dEv = role === 'PFA' ? 0 : 3;
   ROSTER[name] = { role: role, qPs: dPs, qEv: dEv, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, mix: {} };
   ACTIVE_TIMELINE.forEach(m => { ROSTER[name].pto[m] = 0; ROSTER[name].mix[m] = (role === 'PFA' ? [] : [...MASTER_STATES]); });
-  document.getElementById('new-clinician-name').value = ''; saveState(); recalculateDashboardMetrics();
+  document.getElementById('new-clinician-name').value = ''; saveState(); 
+}
+
+function deprovisionClinician(name) {
+    if(ROSTER[name]) { delete ROSTER[name]; saveState(); }
 }
 
 function updateMonthlyMixToggle(name, state, action) {
@@ -793,7 +824,7 @@ function updateMonthlyMixToggle(name, state, action) {
   if(!r.mix) r.mix = {}; if(!r.profile) r.profile = []; let mix = r.mix[activeM] || [];
   if (action === "On") { if (!r.profile.includes(state)) r.profile.push(state); if (!mix.includes(state)) mix.push(state); } 
   else { mix = mix.filter(s => s !== state); }
-  r.mix[activeM] = mix; saveState(); recalculateDashboardMetrics();
+  r.mix[activeM] = mix; saveState(); 
 }
 
 function addAllStatesToAllProviders() {
@@ -809,7 +840,7 @@ function addAllStatesToAllProviders() {
           });
       });
   });
-  saveState(); recalculateDashboardMetrics();
+  saveState(); 
 }
 
 function renderSidebarProfileManager(ceAllocations) {
@@ -822,437 +853,4 @@ function renderSidebarProfileManager(ceAllocations) {
       <div style="margin-bottom:6px;">
         ${MASTER_STATES.filter(s => ce.masterProfile.includes(s)).map(s => `
           <span class="state-pill-toggle ${ce.activeStates.includes(s) ? 'state-on' : 'state-off'}">
-            <span onclick="updateMonthlyMixToggle('${ce.name}','${s}', '${ce.activeStates.includes(s) ? 'Off' : 'On'}')">${s}</span>
-            <span class="del-btn" onclick="removeLicenseFromProfile('${ce.name}','${s}')" title="Permanently remove license">×</span>
-          </span>
-        `).join('')}
-      </div>
-      <div style="display:flex; align-items:center; gap:4px;">
-        <input type="text" placeholder="ST" style="width:40px;" id="add-${ce.name.replace(/\s/g, '')}">
-        <button class="btn-action" style="padding:2px 6px;" onclick="addLicenseToProfile('${ce.name}')" title="Add Single State">+</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function addLicenseToProfile(name) {
-  const inp = document.getElementById(`add-${name.replace(/\s/g, '')}`); if(!inp) return;
-  const state = inp.value.toUpperCase().trim();
-  if (state && MASTER_STATES.includes(state)) {
-    if(!ROSTER[name].profile) ROSTER[name].profile = [];
-    if (!ROSTER[name].profile.includes(state)) {
-      ROSTER[name].profile.push(state);
-      ACTIVE_TIMELINE.forEach(m => {
-        if(!ROSTER[name].mix) ROSTER[name].mix = {};
-        if(!ROSTER[name].mix[m]) ROSTER[name].mix[m] = [];
-        if (!ROSTER[name].mix[m].includes(state)) ROSTER[name].mix[m].push(state);
-      });
-      saveState(); recalculateDashboardMetrics();
-    }
-  }
-  inp.value = '';
-}
-
-function removeLicenseFromProfile(name, state) {
-  if(!ROSTER[name]) return;
-  ROSTER[name].profile = ROSTER[name].profile.filter(s => s !== state);
-  ACTIVE_TIMELINE.forEach(m => { if(ROSTER[name].mix && ROSTER[name].mix[m]) ROSTER[name].mix[m] = ROSTER[name].mix[m].filter(s => s !== state); });
-  saveState(); recalculateDashboardMetrics();
-}
-
-
-// --- WFM ENGINE CORE ---
-function recalculateDashboardMetrics() {
-  let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
-  if (!activeMonth) return;
-  
-  let wd = LEDGER[activeMonth].wd;
-  let mult = 1 + (FUNNEL.volBump / 100);
-  let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
-
-  // 1. DUAL CAPACITY CALCULATIONS (Bottom-Up Max vs PTO)
-  let maxPsCap = 0, ptoPsLossCE = 0, ptoPsLossPFA = 0;
-  let maxEvCap = 0, ptoEvLossCE = 0;
-  let pfaMaxCap = 0;
-
-  Object.keys(ROSTER).forEach(name => {
-    let r = ROSTER[name];
-    let pto = parseFloat(r.pto[activeMonth]) || 0;
-    let qPs = parseFloat(r.qPs) || 0;
-    let qEv = parseFloat(r.qEv) || 0;
-
-    maxPsCap += (wd * qPs);
-
-    if (r.role === 'PFA') {
-      pfaMaxCap += (wd * qPs);
-      ptoPsLossPFA += (pto * qPs);
-    } else {
-      maxEvCap += (wd * qEv);
-      ptoPsLossCE += (pto * qPs);
-      ptoEvLossCE += (pto * qEv);
-    }
-  });
-
-  let totalPtoPsLoss = ptoPsLossCE + ptoPsLossPFA;
-  let netPsCap = maxPsCap - totalPtoPsLoss;
-  let netEvCap = maxEvCap - ptoEvLossCE;
-  let netPfaCap = pfaMaxCap - ptoPsLossPFA;
-
-  // 2. STATE DEMAND (Heatmap Baseline)
-  let sysTotalApps = 0; let sysGrossPsDemand = 0; let sysGrossEvDemand = 0;
-  let stateMetrics = {};
-
-  MASTER_STATES.forEach(s => {
-    let baseApps = (LEDGER[activeMonth].apps[s] || 0); sysTotalApps += baseApps;
-    let bumpedApps = baseApps * mult;
-    let statePsDemandFull = bumpedApps * (FUNNEL.appToPsRate/100);
-    let stateConvOverride = LEDGER[activeMonth].conv[s] || 0;
-    let effectiveAppToEvRate = stateConvOverride > 0 ? (stateConvOverride / 100) : globalAppToEvRate;
-    let stateEvDemand = bumpedApps * effectiveAppToEvRate;
-    
-    sysGrossPsDemand += statePsDemandFull; sysGrossEvDemand += stateEvDemand;
-    stateMetrics[s] = { apps: bumpedApps, psDemandFull: statePsDemandFull, evDemand: stateEvDemand, psCapCe: 0, evCapCe: 0, assigned: [] };
-  });
-
-  // 3. THE 50/50 UNIFIED FUNNEL ENGINE
-  // DEMAND PIPELINE (Unconstrained Math)
-  let d_base = sysTotalApps;
-  let d_bumped = d_base * mult;
-  let d_psSched = d_bumped * (FUNNEL.appToPsRate/100);
-  let d_psComp = d_psSched * (FUNNEL.psCompRate/100);
-  let d_scrIn = d_psComp * (FUNNEL.screenInRate/100);
-  let d_evSched = d_scrIn * (FUNNEL.evSchedRate/100); 
-  let d_evComp = d_evSched * (FUNNEL.evCompRate/100);
-  let d_enroll = d_evComp * (FUNNEL.enrollRate/100);
-
-  // MAX POTENTIAL YIELD (Bottom-Up Math constrained by Net PS and Net Ev Cap)
-  let p_apps = d_bumped; // Upper funnel apps are just apps
-  let p_psSched = netPsCap; // Absolute maximum PS possible
-  let p_psComp = p_psSched * (FUNNEL.psCompRate/100);
-  let p_scrIn = p_psComp * (FUNNEL.screenInRate/100);
-  let p_yldEvDem = p_scrIn * (FUNNEL.evSchedRate/100); // What this PS yield theoretically demands of Ev
-  
-  let p_evSched = Math.min(p_yldEvDem, netEvCap); // Constraint 2: Can Evals handle the theoretical output?
-  let p_evComp = p_evSched * (FUNNEL.evCompRate/100);
-  let p_enroll = p_evComp * (FUNNEL.enrollRate/100);
-
-  // Inject into Unified Table
-  document.getElementById('tbl-dem-apps').innerText = fmt(d_bumped);
-  document.getElementById('tbl-pot-apps').innerText = fmt(p_apps);
-  document.getElementById('tbl-var-apps').innerHTML = formatVar(0);
-
-  document.getElementById('tbl-dem-ps-sched').innerText = fmt(d_psSched);
-  document.getElementById('tbl-pot-ps-sched').innerText = fmt(p_psSched);
-  document.getElementById('tbl-var-ps-sched').innerHTML = formatVar(p_psSched - d_psSched);
-
-  document.getElementById('tbl-dem-ps-comp').innerText = fmt(d_psComp);
-  document.getElementById('tbl-pot-ps-comp').innerText = fmt(p_psComp);
-  document.getElementById('tbl-var-ps-comp').innerHTML = formatVar(p_psComp - d_psComp);
-
-  document.getElementById('tbl-dem-scr-in').innerText = fmt(d_scrIn);
-  document.getElementById('tbl-pot-scr-in').innerText = fmt(p_scrIn);
-  document.getElementById('tbl-var-scr-in').innerHTML = formatVar(p_scrIn - d_scrIn);
-
-  document.getElementById('tbl-dem-ev-dem').innerText = fmt(d_evSched);
-  document.getElementById('tbl-pot-ev-dem').innerText = fmt(p_yldEvDem);
-  document.getElementById('tbl-var-ev-dem').innerHTML = formatVar(p_yldEvDem - d_evSched);
-
-  document.getElementById('tbl-dem-ev-sched').innerText = fmt(d_evSched);
-  document.getElementById('tbl-pot-ev-sched').innerText = fmt(p_evSched);
-  document.getElementById('tbl-var-ev-sched').innerHTML = formatVar(p_evSched - d_evSched);
-
-  document.getElementById('tbl-dem-ev-comp').innerText = fmt(d_evComp);
-  document.getElementById('tbl-pot-ev-comp').innerText = fmt(p_evComp);
-  document.getElementById('tbl-var-ev-comp').innerHTML = formatVar(p_evComp - d_evComp);
-
-  document.getElementById('tbl-dem-enroll').innerText = fmt(d_enroll);
-  document.getElementById('tbl-pot-enroll').innerText = fmt(p_enroll);
-  document.getElementById('tbl-var-enroll').innerHTML = formatVar(p_enroll - d_enroll);
-
-  document.getElementById('tbl-dem-pace').innerText = fmt(d_enroll / 4.33);
-  document.getElementById('tbl-pot-pace').innerText = fmt(p_enroll / 4.33);
-
-  // 4. Heatmap & Matrix Routing
-  // Heatmap relies on ACTUAL YIELD (which is the minimum of Demand vs Cap) to route properly
-  let actualPsYield = Math.min(d_psSched, netPsCap);
-  let pfaActual = Math.min(actualPsYield * (FUNNEL.pfaRouteRate/100), netPfaCap);
-  let effectivePfaRate = d_psSched > 0 ? (pfaActual / d_psSched) : 0;
-  
-  MASTER_STATES.forEach(s => { stateMetrics[s].psDemandCE = stateMetrics[s].psDemandFull * (1 - effectivePfaRate); });
-
-  let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').map(name => {
-    let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0;
-    let activeSt = r.mix[activeMonth] || []; let loadDenomApps = 0;
-    activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); });
-    return {
-      name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile,
-      psCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qPs) || 0)),
-      evCapTotal: Math.max(0, (wd - pto) * (parseFloat(r.qEv) || 0))
-    };
-  });
-
-  ceAllocations.forEach(ce => {
-    if(ce.denom > 0) {
-      ce.activeStates.forEach(s => {
-        if (stateMetrics[s]) {
-            let weight = stateMetrics[s].apps / ce.denom;
-            stateMetrics[s].psCapCe += (ce.psCapTotal * weight);
-            stateMetrics[s].evCapCe += (ce.evCapTotal * weight);
-            stateMetrics[s].assigned.push(ce.name);
-        }
-      });
-    }
-  });
-
-  // 5. Update Left-Side Dashboard Elements (Stat Grid + Executive Banner)
-  let cePtoTotal = Object.values(ROSTER).filter(r => r.role !== 'PFA').reduce((acc, r) => acc + (parseFloat(r.pto[activeMonth])||0), 0);
-  let pfaPtoTotal = Object.values(ROSTER).filter(r => r.role === 'PFA').reduce((acc, r) => acc + (parseFloat(r.pto[activeMonth])||0), 0);
-  
-  document.getElementById('top-stats-container').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Accepted App Vol <div class="tooltip-container"><span class="info-icon">?</span><span class="tooltip-text">Total top of funnel intake including bump.</span></div></div>
-      <div class="stat-val">${fmt(sysTotalApps * mult)}</div>
-    </div>
-    <div class="stat-card ps-theme">
-      <div class="stat-label">Net System PS Capacity</div>
-      <div class="stat-val" style="color:#93c5fd;">${fmt(netPsCap)} <span style="font-size:11px; font-weight:400; color:#64748b;">/ ${fmt(d_psSched)} Dem</span></div>
-    </div>
-    <div class="stat-card ev-theme">
-      <div class="stat-label">Net System Eval Capacity</div>
-      <div class="stat-val" style="color:#c4b5fd;">${fmt(netEvCap)} <span style="font-size:11px; font-weight:400; color:#64748b;">/ ${fmt(d_evSched)} Dem</span></div>
-    </div>
-    <div class="stat-card pto-theme">
-      <div class="stat-label">Total Roster PTO</div>
-      <div class="stat-val" style="color:#fca5a5;">${cePtoTotal + pfaPtoTotal}</div>
-      <div class="pto-split"><span>CE PTO: ${cePtoTotal} days</span><span>PFA PTO: ${pfaPtoTotal} days</span></div>
-    </div>
-  `;
-
-  // Determine which number to show in the banner based on actual yield constraints
-  let finalYield = Math.min(d_enroll, p_enroll);
-  renderExecutiveBanner(d_evSched, netEvCap, finalYield, activeMonth);
-  renderDualHeatmap(stateMetrics); renderMatrix(ceAllocations, stateMetrics);
-  renderCollapsibleLedger(activeMonth, wd); renderSidebarProfileManager(ceAllocations); renderDualCharts();
-}
-
-function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth) {
-  const container = document.getElementById('executive-insight-banner'); if (!container) return;
-  let evShort = Math.max(0, evDem - evSup);
-  container.innerHTML = `
-    <h3>MONTHLY INSIGHT ANALYSIS: ${activeMonth.split('_')[0].toUpperCase()}</h3>
-    <p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. The CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>
-    ${evShort > 0 ? `<p style="color:#fca5a5; font-size:11.5px; margin-top:4px;">⚠️ Mid-Funnel Deficit: We are short ${fmt(evShort)} Evaluation slots compared to baseline demand.</p>` : `<p style="color:#86efac; font-size:11.5px; margin-top:4px;">✅ Eval Queue is adequately staffed.</p>`}
-    <p style="margin-top: 8px;"><strong>Actual Enrollment Yield:</strong> Constraining the pipeline by physical PS limits and EV limits, the system projects <strong>${fmt(finalYield)} Actual Enrollments</strong> for this cohort.</p>
-  `;
-}
-
-function renderDualHeatmap(metrics) {
-  let countEvBlue=0, countEvGreen=0, countEvYellow=0, countEvRed=0;
-  let htmlRows = MASTER_STATES.map(s => {
-    let r = metrics[s];
-    let psPct = r.psDemandCE > 0 ? (r.psCapCe / r.psDemandCE) * 100 : 0;
-    let psBal = Math.round(r.psCapCe - r.psDemandCE);
-    let psStr = r.psDemandCE === 0 ? '-' : `${Math.round(psPct)}%`;
-    let psCol = psPct < 70 ? 'status-red' : (psPct < 80 ? 'status-yellow' : (psPct < 90 ? 'status-green' : 'status-blue'));
-    let psBarColor = psPct < 70 ? '#ef4444' : (psPct < 80 ? '#eab308' : (psPct < 90 ? '#22c55e' : '#3b82f6'));
-
-    let evPct = r.evDemand > 0 ? (r.evCapCe / r.evDemand) * 100 : 0;
-    let evBal = Math.round(r.evCapCe - r.evDemand);
-    let evStr = r.evDemand === 0 ? '-' : `${Math.round(evPct)}%`;
-    let evCol = evPct < 70 ? 'status-red' : (evPct < 80 ? 'status-yellow' : (evPct < 90 ? 'status-green' : 'status-blue'));
-    let evBarColor = evPct < 70 ? '#ef4444' : (evPct < 80 ? '#eab308' : (evPct < 90 ? '#22c55e' : '#3b82f6'));
-
-    if(r.evDemand > 0) {
-        if(evPct >= 90) countEvBlue++; else if(evPct >= 80) countEvGreen++; else if(evPct >= 70) countEvYellow++; else countEvRed++;
-    }
-
-    return `
-      <tr>
-        <td style="border-right:1px solid #374151;"><strong>${s}</strong></td>
-        <td style="text-align:center; border-right:1px solid #374151; font-weight:700;">${r.apps === 0 ? '-' : fmt(r.apps)}</td>
-        <td style="background:rgba(59,130,246,0.02); text-align:center;">${r.psDemandCE===0?'-':fmt(r.psDemandCE)}</td>
-        <td style="background:rgba(59,130,246,0.02); text-align:center; font-weight:700; color:#93c5fd;">${r.psDemandCE===0?'-':fmt(r.psCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.psDemandCE>0?psCol:''}">${psStr}</span></td>
-        <td style="background:rgba(59,130,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.psDemandCE===0?'':(psBal<0?'status-red':'status-green')}">
-          <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-            <span>${r.psDemandCE===0?'-':(psBal>0?'+':'')+fmt(psBal)}</span>
-            ${r.psDemandCE > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, psPct)}%; background:${psBarColor};"></div></div>` : ''}
-          </div>
-        </td>
-        <td style="background:rgba(139,92,246,0.02); text-align:center;">${r.evDemand===0?'-':fmt(r.evDemand)}</td>
-        <td style="background:rgba(139,92,246,0.02); text-align:center; font-weight:700; color:#c4b5fd;">${r.evDemand===0?'-':fmt(r.evCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.evDemand>0?evCol:''}">${evStr}</span></td>
-        <td style="background:rgba(139,92,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.evDemand===0?'':(evBal<0?'status-red':'status-green')}">
-          <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-            <span>${r.evDemand===0?'-':(evBal>0?'+':'')+fmt(evBal)}</span>
-            ${r.evDemand > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, evPct)}%; background:${evBarColor};"></div></div>` : ''}
-          </div>
-        </td>
-        <td style="text-align:center; color:#94a3b8;">${r.assigned.length}</td>
-      </tr>`;
-  }).join('');
-  document.getElementById('heatmap-body').innerHTML = htmlRows;
-
-  const summaryContainer = document.getElementById('heatmap-summary');
-  if (summaryContainer) {
-      summaryContainer.innerHTML = `
-        <div style="flex:1; background:rgba(59,130,246,0.1); border:1px solid #3b82f6; border-radius:4px; padding:6px; text-align:center;"><div style="font-size:16px; font-weight:700; color:#93c5fd;">${countEvBlue}</div><div style="font-size:8px; color:#60a5fa; text-transform:uppercase; font-weight:bold;">Optimal Eval Cov (≥90%)</div></div>
-        <div style="flex:1; background:rgba(34,197,94,0.1); border:1px solid #22c55e; border-radius:4px; padding:6px; text-align:center;"><div style="font-size:16px; font-weight:700; color:#86efac;">${countEvGreen}</div><div style="font-size:8px; color:#4ade80; text-transform:uppercase; font-weight:bold;">Healthy Eval Cov (80-89%)</div></div>
-        <div style="flex:1; background:rgba(234,179,8,0.1); border:1px solid #eab308; border-radius:4px; padding:6px; text-align:center;"><div style="font-size:16px; font-weight:700; color:#fde047;">${countEvYellow}</div><div style="font-size:8px; color:#facc15; text-transform:uppercase; font-weight:bold;">Warning Eval Cov (70-79%)</div></div>
-        <div style="flex:1; background:rgba(239,68,68,0.1); border:1px solid #ef4444; border-radius:4px; padding:6px; text-align:center;"><div style="font-size:16px; font-weight:700; color:#fca5a5;">${countEvRed}</div><div style="font-size:8px; color:#f87171; text-transform:uppercase; font-weight:bold;">Critical Eval Cov (<70%)</div></div>`;
-  }
-}
-
-function renderMatrix(ceAllocations, stateMetrics) {
-  let head = document.getElementById('matrix-head-row'); let body = document.getElementById('matrix-body-rows'); let foot = document.getElementById('matrix-foot-totals');
-  if(!foot) { const table = document.getElementById('matrix-licensure-table'); if(table) { foot = document.createElement('tfoot'); foot.id = 'matrix-foot-totals'; table.appendChild(foot); } }
-
-  head.innerHTML = `<th style="position:sticky; left:0; top:0; background:#161b22; z-index:30; border-right:1px solid #374151; min-width: 140px;">Licensed CEs</th><th style="position:sticky; top:0; left:140px; background:#161b22; z-index:30; text-align:center; border-right:1px solid #374151; color:#a5b4fc; min-width: 60px;">Active/Total</th>` + MASTER_STATES.map(s => `<th style="position:sticky; top:0; background:#161b22; z-index:20; text-align:center;">${s}</th>`).join('');
-
-  body.innerHTML = ceAllocations.map(ce => {
-    let raw = ROSTER[ce.name] || { profile: [] }; let activeCount = (ce.activeStates || []).length; let totalCount = (raw.profile || []).length;
-    let cells = MASTER_STATES.map(s => {
-      let isMaster = (raw.profile || []).includes(s);
-      if(!isMaster) return `<td class="matrix-cell-empty"></td>`;
-      let isOn = (ce.activeStates || []).includes(s);
-      return `<td style="text-align:center; padding:3px; background:${isOn?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.05)'};"><button class="matrix-btn ${isOn?'matrix-btn-on':'matrix-btn-off'}" onclick="updateMonthlyMixToggle('${ce.name}', '${s}', '${isOn?'Off':'On'}')">${isOn?'ON':'OFF'}</button></td>`;
-    }).join('');
-    return `<tr data-ce-row-id="${ce.name}"><td style="position:sticky; left:0; background:#161b22; z-index:10; border-right:1px solid #374151;"><strong>${ce.name}</strong> <span style="font-size:7px; color:#64748b;">Ld:${Math.round(ce.denom)}</span></td><td style="position:sticky; left:140px; background:#111827; z-index:10; text-align:center; font-weight:bold; color:#93c5fd; border-right:1px solid #374151;">${activeCount} / ${totalCount}</td>${cells}</tr>`;
-  }).join('');
-
-  if(foot) {
-     let footStr = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:20; border-right:1px solid #374151;">Active Dispatched</td><td style="position:sticky; left:140px; background:#0f172a; z-index:20; border-right:1px solid #374151; text-align:center;">-</td>`;
-     MASTER_STATES.forEach(s => { let activeCount = stateMetrics[s] ? stateMetrics[s].assigned.length : 0; footStr += `<td style="text-align:center; color:#86efac; border-top:1px solid #374151; background:#161b22;">${activeCount}</td>`; });
-     foot.innerHTML = footStr + `</tr>`;
-  }
-}
-
-function toggleGroup(cls) { document.querySelectorAll('.'+cls).forEach(el => { el.style.display = el.style.display === 'none' ? 'table-row' : 'none'; }); }
-
-function renderCollapsibleLedger(activeM, wd) {
-  let thead = document.getElementById('pto-ledger-head'); let body = document.getElementById('pto-ledger-body'); let foot = document.getElementById('pto-ledger-foot');
-  let headHtml = `<tr><th rowspan="2" style="position:sticky; left:0; background:#161b22; z-index:2; border-right:1px solid #374151; min-width:160px;">Resource</th><th colspan="2" style="text-align:center; border-right:1px solid #374151;">Quotas</th>`;
-  ACTIVE_TIMELINE.forEach(m => { headHtml += `<th colspan="2" style="text-align:center; border-left:1px solid #374151;">${m.split('_')[0]}</th>`; });
-  headHtml += `</tr><tr><th style="text-align:center;">PS/Day</th><th style="text-align:center; border-right:1px solid #374151;">Ev/Day</th>`;
-  ACTIVE_TIMELINE.forEach(() => { headHtml += `<th style="text-align:center; font-size:8px;">PTO</th><th style="text-align:center; font-size:8px; border-right:1px solid #374151;">CAP</th>`; });
-  thead.innerHTML = headHtml + `</tr>`;
-
-  let groups = { 'LEAD': [], 'CE': [], 'PFA': [] };
-  Object.keys(ROSTER).forEach(n => { let role = ROSTER[n].role || 'CE'; if(groups[role]) groups[role].push(n); });
-
-  let bHtml = '';
-  Object.keys(groups).forEach(role => {
-      if(groups[role].length === 0) return;
-      bHtml += `<tr class="group-header" onclick="toggleGroup('grp-${role}')"><td colspan="100%">▼ ${role === 'PFA' ? 'PFA POOL' : (role === 'LEAD' ? 'LEAD CEs' : 'STANDARD CEs')} (${groups[role].length} Active)</td></tr>`;
-      groups[role].forEach(n => {
-          let r = ROSTER[n];
-          let colHtml = ACTIVE_TIMELINE.map(m => {
-              let pto = r.pto[m] || 0; let mwd = LEDGER[m].wd; let capPs = Math.max(0,(mwd-pto)*r.qPs); let capEv = Math.max(0,(mwd-pto)*r.qEv);
-              let capStr = role === 'PFA' ? `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS</span>` : `<span style="color:#94a3b8; font-weight:bold;">${Math.round(capPs)} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(capEv)} EV</span>`;
-              return `<td><input type="number" step="0.5" value="${pto}" class="ledger-input" onchange="ROSTER['${n}'].pto['${m}']=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;">${capStr}</td>`;
-          }).join('');
-          bHtml += `<tr class="grp-${role}" data-ce-row-id="${n}"><td style="position:sticky; left:0; background:#0b0f19; z-index:1; border-right:1px solid #374151; display:flex; justify-content:space-between; align-items:center;"><strong>${n}</strong> <button class="btn-remove" onclick="promptConfirm('Permanently remove ${n}?', () => deprovisionClinician('${n}'))">×</button></td><td style="text-align:center;"><input type="number" value="${r.qPs}" class="ledger-input" style="color:#93c5fd;" onchange="ROSTER['${n}'].qPs=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td><td style="text-align:center; border-right:1px solid #374151;"><input type="number" value="${r.qEv}" class="ledger-input" style="color:#c4b5fd;" ${role==='PFA'?'disabled':''} onchange="ROSTER['${n}'].qEv=parseFloat(this.value)||0; saveState(); recalculateDashboardMetrics();"></td>${colHtml}</tr>`;
-      });
-  });
-  body.innerHTML = bHtml;
-
-  let ceLeadPto = {}; let ceLeadCapPs = {}; let ceLeadCapEv = {}; let allPto = {}; let allCapPs = {}; let allCapEv = {};
-  ACTIVE_TIMELINE.forEach(m => {
-      ceLeadPto[m] = 0; ceLeadCapPs[m] = 0; ceLeadCapEv[m] = 0; allPto[m] = 0; allCapPs[m] = 0; allCapEv[m] = 0; let mwd = LEDGER[m].wd;
-      Object.keys(ROSTER).forEach(n => {
-          let r = ROSTER[n]; let p = parseFloat(r.pto[m]) || 0; let cps = Math.max(0, (mwd - p) * r.qPs); let cev = Math.max(0, (mwd - p) * r.qEv);
-          allPto[m] += p; allCapPs[m] += cps; allCapEv[m] += cev;
-          if(r.role !== 'PFA') { ceLeadPto[m] += p; ceLeadCapPs[m] += cps; ceLeadCapEv[m] += cev; }
-      });
-  });
-
-  let footHtml = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#c4b5fd;">LICENSED CAPACITY (CE + LEAD)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
-  ACTIVE_TIMELINE.forEach(m => { footHtml += `<td style="text-align:center; color:#fca5a5;">${ceLeadPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(ceLeadCapPs[m])} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(ceLeadCapEv[m])} EV</strong></td>`; });
-  footHtml += `</tr><tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:2; border-right:1px solid #374151; color:#93c5fd;">GLOBAL SYSTEM TOTALS (ALL ROLES)</td><td colspan="2" style="text-align:center; border-right:1px solid #374151;">—</td>`;
-  ACTIVE_TIMELINE.forEach(m => { footHtml += `<td style="text-align:center; color:#ef4444;">${allPto[m]}</td><td style="text-align:center; border-right:1px solid #374151; white-space:nowrap;"><strong style="color:#e2e8f0;">${Math.round(allCapPs[m])} PS <span style="color:#475569; font-weight:normal;">/</span> ${Math.round(allCapEv[m])} EV</strong></td>`; });
-  foot.innerHTML = footHtml + `</tr>`;
-}
-
-function renderDualCharts() {
-  const ctxPs = document.getElementById('wfmPsChart'); const ctxEv = document.getElementById('wfmEvChart');
-  let dLabels = ACTIVE_TIMELINE.map(m => m.split('_')[0]); let psDem=[], psSup=[], evDem=[], evSup=[];
-  let globalAppToEv = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
-
-  ACTIVE_TIMELINE.forEach(m => {
-      let wd = LEDGER[m].wd; let mult = 1+(FUNNEL.volBump/100); let tDemPS=0, tDemEV=0;
-      MASTER_STATES.forEach(s => {
-          let a = (LEDGER[m].apps[s]||0)*mult; tDemPS += (a * (FUNNEL.appToPsRate/100));
-          let convOver = LEDGER[m].conv[s] || 0; tDemEV += (a * (convOver > 0 ? convOver/100 : globalAppToEv));
-      });
-      psDem.push(Math.round(tDemPS)); evDem.push(Math.round(tDemEV));
-
-      let tSupPS=0, tSupEV=0;
-      Object.keys(ROSTER).forEach(n => {
-          let r = ROSTER[n]; let p = parseFloat(r.pto[m])||0; let w = Math.max(0, wd-p);
-          tSupPS += (w * (r.qPs || 0)); tSupEV += (w * (r.qEv || 0));
-      });
-      psSup.push(Math.round(tSupPS)); evSup.push(Math.round(tSupEV));
-  });
-
-  if(chartPs) chartPs.destroy();
-  chartPs = new Chart(ctxPs.getContext('2d'), { type: 'line', data: { labels: dLabels, datasets: [ { label: 'PS Demand', data: psDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 }, { label: 'PS Supply', data: psSup, borderColor: '#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.3 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} } });
-  
-  if(chartEv) chartEv.destroy();
-  chartEv = new Chart(ctxEv.getContext('2d'), { type: 'line', data: { labels: dLabels, datasets: [ { label: 'Eval Demand', data: evDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 }, { label: 'Eval Supply', data: evSup, borderColor: '#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)', fill:true, tension:0.3 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} } });
-}
-
-// --- SYNC ENGINE ---
-async function syncPtoFromGoogleSheets(isSilent = false) {
-  const btn = document.getElementById('sync-pto-btn'); const undoBtn = document.getElementById('undo-sync-btn');
-  const ogText = btn.innerText; if (!isSilent) { btn.innerText = "⏳ FETCHING..."; btn.disabled = true; }
-  try {
-    const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQd7J8oMveRBfBtVb2OxbyVXJg-bW7_DUQdN8fryo-56EmFqxhhICP24tUG7EL3UsxHMCsCil5WJqYz/pub?gid=1443603617&single=true&output=csv&_cb=" + new Date().getTime();
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) throw new Error("Network response error");
-    const csvText = await response.text();
-    localStorage.setItem('funnel_roster_backup', JSON.stringify(ROSTER));
-    if (!isSilent) undoBtn.style.display = 'inline-block';
-    
-    const parseCSVRow = (row) => {
-        const result = []; let insideQuote = false; let currentVal = '';
-        for (let i = 0; i < row.length; i++) { if (row[i] === '"') insideQuote = !insideQuote; else if (row[i] === ',' && !insideQuote) { result.push(currentVal); currentVal = ''; } else { currentVal += row[i]; } }
-        result.push(currentVal); return result;
-    };
-    
-    const rows = csvText.split(/\r\n|\n/).filter(r => r.trim()); if (rows.length < 2) throw new Error("CSV appears empty or malformed");
-    const parsedData = rows.map(r => parseCSVRow(r));
-    let ptoCounts = {}; Object.keys(ROSTER).forEach(ce => { ptoCounts[ce] = {}; ACTIVE_TIMELINE.forEach(m => ptoCounts[ce][m] = 0); });
-
-    let ceColMap = {}; let headerRowIdx = -1;
-    for(let r = 0; r < Math.min(10, parsedData.length); r++) {
-        let matches = 0; parsedData[r].forEach((cell, c) => { let cellName = String(cell).trim().toLowerCase(); let matchedCE = Object.keys(ROSTER).find(ce => ce.toLowerCase() === cellName); if (matchedCE) { ceColMap[c] = matchedCE; matches++; } });
-        if (matches >= 2) { headerRowIdx = r; break; }
-    }
-    if (headerRowIdx === -1) throw new Error("Names not found.");
-
-    let u = 0;
-    for (let r = headerRowIdx + 1; r < parsedData.length; r++) {
-        let row = parsedData[r]; if (!row) continue;
-        let dateVal = null; for (let c = 0; c < 4; c++) { let cellVal = String(row[c]).trim(); if (cellVal && (cellVal.includes('/') || cellVal.includes('-')) && !isNaN(Date.parse(cellVal))) { dateVal = cellVal; break; } }
-        if (dateVal) {
-            let d = new Date(dateVal);
-            if (!isNaN(d.getTime())) {
-                let mName = ALL_KNOWN_MONTHS[d.getMonth()]; let tMonth = ACTIVE_TIMELINE.find(m => m.startsWith(mName));
-                if (tMonth) { Object.keys(ceColMap).forEach(cIdx => { let f = parseFloat(String(row[cIdx]).trim()); if (!isNaN(f) && f > 0) ptoCounts[ceColMap[cIdx]][tMonth] += f; }); }
-            }
-        }
-    }
-
-    Object.keys(ptoCounts).forEach(ce => { Object.keys(ptoCounts[ce]).forEach(m => { if (ptoCounts[ce][m] !== ROSTER[ce].pto[m]) { ROSTER[ce].pto[m] = ptoCounts[ce][m]; u++; } }); });
-    saveState(); recalculateDashboardMetrics(); if (!isSilent) promptAlert(`Sync Complete! ${u} PTO entries updated.`);
-  } catch (err) { console.error("Error fetching or parsing CSV:", err); if (!isSilent) promptAlert("Failed to sync: " + err.message);
-  } finally { if (!isSilent) { btn.innerText = ogText; btn.disabled = false; } }
-}
-
-function undoPtoSync() {
-    let bk = localStorage.getItem('funnel_roster_backup');
-    if (bk) { ROSTER = JSON.parse(bk); saveState(); recalculateDashboardMetrics(); document.getElementById('undo-sync-btn').style.display = 'none'; promptAlert("PTO Sync Undone."); }
-}
-
-window.onload = () => { bootstrapDataEngine(); loadFunnelUI(); buildTimelineControls(); recalculateDashboardMetrics(); try { if (window.self === window.top) syncPtoFromGoogleSheets(true); } catch(e){} };
-</script>
-</body>
-</html>
+            <span onclick="updateMonthlyMixToggle('${ce.name}','${s}', '${ce.activeStates.includes(s) ? 'Off' : 'On'}')">${s}
