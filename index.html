@@ -112,6 +112,7 @@
 
   /* INPUTS & BUTTONS */
   input, select { background: #0f172a; border: 1px solid #374151; color: #f8fafc; padding: 4px; border-radius: 4px; text-align: center; font-size: 10px; transition: 0.2s; }
+  input[type="date"] { color: #93c5fd; background: #0f172a; border: 1px solid #475569; color-scheme: dark; }
   input:focus, select:focus { border-color: #8b5cf6; outline: none; }
   input[type="text"] { text-align: left; padding: 4px 8px; }
   .btn-action { background: #4f46e5; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; white-space: nowrap; transition: 0.2s; }
@@ -199,6 +200,16 @@
 
 <!-- GLOBAL PARAMETER STRIP -->
 <div class="params-strip">
+    <!-- CAPACITY MODEL TOGGLE -->
+    <div class="param-item">
+      <span class="param-lbl">Capacity Model</span>
+      <div style="display: flex; gap: 2px; background: #0f172a; padding: 2px; border-radius: 4px; border: 1px solid #374151; height: 22px; align-items: center;">
+        <button id="btn-cap-strict" onclick="setCapacityModel('strict')" style="background:#3b82f6; color:#fff; border:none; border-radius:3px; padding: 2px 6px; font-size: 8px; font-weight: bold; cursor: pointer;">Strict Quota</button>
+        <button id="btn-cap-fluid" onclick="setCapacityModel('fluid')" style="background:transparent; color:#64748b; border:none; border-radius:3px; padding: 2px 6px; font-size: 8px; font-weight: bold; cursor: pointer;">Fluid Time</button>
+      </div>
+    </div>
+    <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
+    
     <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
     <div class="param-item"><span class="param-lbl">App→PS Route</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
@@ -345,13 +356,17 @@
   <!-- NEW WEEKLY CAPACITY PANEL (BASELINE DENOMINATOR) -->
   <div class="panel full-width">
     <h2 style="align-items: center; display: flex; justify-content: space-between;">
-      <span>Weekly Available Capacity by Provider (Baseline)</span>
+      <div style="display:flex; align-items:center; gap:12px;">
+          <span>Weekly Available Capacity by Provider (Baseline)</span>
+          <button class="btn-action" style="padding: 4px 8px; font-size: 8px; background: #6366f1;" onclick="saveManualWeeks()">💾 SAVE OPERATIONAL WEEKS</button>
+      </div>
       <div style="display: flex; gap: 4px;">
           <button class="matrix-btn matrix-btn-on" id="btn-cap-ps" onclick="setWeeklyCapView('PS')" style="width: 100px;">📞 PS Capacity</button>
           <button class="matrix-btn matrix-btn-off" id="btn-cap-ev" onclick="setWeeklyCapView('EV')" style="width: 100px;">📋 EV Capacity</button>
       </div>
     </h2>
-    <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">Displays strict physical capacity based on daily quotas and synced PTO. This establishes the absolute denominator for future Scheduled vs. Productive Utilization tracking.</p>
+    <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">Define strict operational work weeks. The engine calculates physical capacity by triple-checking physical days against Global Holidays and Exact Clinician PTO.</p>
+    <div id="manual-weeks-container" style="display:flex; gap:10px; margin-bottom:12px; flex-wrap: wrap;"></div>
     <div style="overflow-x: auto; width: 100%; max-height: 400px; overflow-y: auto;">
       <table class="hover-row-trace" style="min-width: 800px; width: 100%;">
         <thead id="weekly-cap-head" style="position: sticky; top: 0; background: #161b22; z-index: 10;"></thead>
@@ -390,9 +405,10 @@
         <p style="margin-bottom: 20px;"><strong style="color: #c4b5fd;">Core Focus:</strong> This is the definitive "Command Center" dashboard that highlights exactly where the pipeline will choke on a monthly and weekly basis. It bridges your marketing numbers with your physical roster limitations.</p>
         <h3 style="color: #f8fafc; font-size: 14px; margin-bottom: 10px; border-bottom: 1px dotted #374151; padding-bottom: 6px;">Key Features & Logic</h3>
         <ul style="padding-left: 24px; list-style-type: disc;">
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">The 50/50 Dual View:</strong> Maps out unconstrained mathematical Demand side-by-side with your roster's true Max Potential Yield at every transition point.</li>
             <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Dynamic Time Flexing (Fluid Time):</strong> It converts rigid task quotas into a Fluid Time bank. Every PS routed to a PFA instantly frees up 30 minutes of clinical time that is immediately reinvested into Evaluation capacity.</li>
             <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Smart Stitching (Cross-Boundary Weeks):</strong> The engine detects weeks that bridge two months. Clicking a Split Week in "God Mode" instantly pulls data from the adjacent month, presenting a unified 5-day continuous view for supervisor triage without corrupting your monthly aggregates.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #93c5fd;">Why PS Numbers Don't Always Change:</strong> Because Phone Screens are the "front door," the math engine prioritizes them. Before a CE can do Evals, they must "pay their PS debt." Once the PS demand is fulfilled, <em>every remaining minute spills into Evaluation capacity</em>. That's why toggling licenses or adjusting PFA routes often swings Eval capacity wildly while PS capacity appears static—the PS bucket is already topped off first!</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Triangulation Sync:</strong> Cloud Sync natively builds a dictionary of Exact PTO dates, ensuring that specific manual date ranges deduct absolute correct capacity values.</li>
         </ul>
     </div>
   </div>
@@ -465,6 +481,14 @@
         <h2 style="margin:0; border:none; color:#fff; font-size:14px;">Global Volume & Parameters Manager</h2>
         <button class="btn-action" style="font-size: 11px; padding: 8px 16px;" onclick="saveGlobalModalParams()">COMMIT & RECALCULATE</button>
     </div>
+    
+    <!-- NEW HOLIDAY ENTRY -->
+    <div style="margin-bottom: 16px; background: rgba(59,130,246,0.05); border: 1px solid #3b82f6; border-radius: 6px; padding: 12px;">
+        <h2 style="margin-bottom: 4px; font-size: 10px; color:#93c5fd;">Global Company Holidays</h2>
+        <p style="font-size: 9px; color:#64748b; margin-bottom: 8px;">Enter exact dates separated by commas (MM/DD/YYYY). The Triangulation Engine will subtract these from operational weeks automatically.</p>
+        <input type="text" id="mod-global-holidays" placeholder="e.g. 11/11/2026, 11/25/2026, 11/26/2026" style="width: 100%; text-align: left;">
+    </div>
+
     <div style="margin-bottom: 16px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
         <h2 style="margin-bottom: 8px; font-size: 10px; color:#94a3b8;">Calendar Working Days</h2>
         <div style="overflow-x: auto;"><table class="compact-modal-table" id="modal-wd-table" style="width: 100%;"></table></div>
@@ -566,7 +590,6 @@ function closeDialog() { document.getElementById('custom-dialog-overlay').style.
 // --- CONSTANTS & CALENDAR LOGIC ---
 const ALL_KNOWN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DEFAULT_STATE_LIST = ["MA","NJ","NH","CT","NY","PA","RI","ME","VA","OH","TX","IL","DC","FL","NC","GA","SC","MD","DE","WV","MO","WI","NV","AZ","CO","NM","MT","OK"];
-const WEEK_LABELS = ["Week 1 (1st-7th)", "Week 2 (8th-14th)", "Week 3 (15th-21st)", "Week 4 (22nd-28th)", "Week 5 (29th+)"];
 const PS_HANDLE = 0.5; // 30 mins
 const EV_HANDLE = 1.0; // 60 mins
 
@@ -609,7 +632,11 @@ function getCalendarWeeks(monthStr) {
             let exists = weeks.find(w => w.start.getTime() === weekStart.getTime());
             if(!exists) {
                 weeks.push({
-                    start: new Date(weekStart), end: new Date(weekEnd), bizStart: bizStart, bizEnd: bizEnd, wd: wdCount
+                    start: new Date(weekStart), 
+                    end: new Date(weekEnd),     
+                    bizStart: bizStart,
+                    bizEnd: bizEnd,
+                    wd: wdCount
                 });
             }
         }
@@ -630,6 +657,7 @@ function getCalendarWeeks(monthStr) {
         if (i === weeks.length - 1 && w.bizEnd.getDay() >= 1 && w.bizEnd.getDay() < 5) label += " ⤄";
         w.label = label;
     }
+    
     return weeks;
 }
 
@@ -641,6 +669,7 @@ function getQuickWeekStats(mName, wIdx) {
     let w_wd = cWeeks[wIdx].wd;
     if(w_wd <= 0) return null;
 
+    let isStrict = (FUNNEL.capacityModel || 'strict') === 'strict';
     let mult = 1 + (FUNNEL.volBump / 100);
     let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
     
@@ -656,7 +685,7 @@ function getQuickWeekStats(mName, wIdx) {
     let w_psDem = m_psDem * (w_wd / wd);
     let w_evDem = m_evDem * (w_wd / wd);
 
-    let w_pfaPsCap = 0, w_ceStrictPsCap = 0, w_ceTotalH = 0, w_cePto = 0, w_pfaPto = 0;
+    let w_pfaPsCap = 0, w_ceStrictPsCap = 0, w_ceStrictEvCap = 0, w_ceTotalH = 0, w_cePto = 0, w_pfaPto = 0;
 
     Object.keys(ROSTER).forEach(n => {
         let r = ROSTER[n];
@@ -671,6 +700,7 @@ function getQuickWeekStats(mName, wIdx) {
             w_pfaPto += w_pto;
         } else {
             w_ceStrictPsCap += (net * qPs);
+            w_ceStrictEvCap += (net * qEv);
             w_ceTotalH += (net * (qPs*PS_HANDLE + qEv*EV_HANDLE));
             w_cePto += w_pto;
         }
@@ -686,7 +716,7 @@ function getQuickWeekStats(mName, wIdx) {
         cePsDem: w_remCePsDem, cePsCap: w_ceStrictPsCap,
         pfaPsDem: w_actualPfaYield, pfaPsCap: w_pfaPsCap,
         ptoCe: w_cePto, ptoPfa: w_pfaPto,
-        evDem: w_evDem, evFluidCap: w_fluidEvCap,
+        evStrictDem: w_evDem, evStrictCap: w_ceStrictEvCap, evFluidCap: isStrict ? w_ceStrictEvCap : w_fluidEvCap,
         bizStart: cWeeks[wIdx].bizStart, bizEnd: cWeeks[wIdx].bizEnd
     };
 }
@@ -707,7 +737,7 @@ function bootstrapDataEngine() {
     ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
     ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
-    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80 };
+    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80, capacityModel: 'strict', holidays: '' };
     MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v2_stat')) || [...DEFAULT_STATE_LIST];
     ARCHIVED_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_archive_time')) || [];
     ARCHIVED_LEDGER = JSON.parse(localStorage.getItem('funnel_v2_archive_ledg')) || {};
@@ -721,6 +751,7 @@ function bootstrapDataEngine() {
 function hydrateDataDefaults() {
     ACTIVE_TIMELINE.forEach((m) => {
       if (!LEDGER[m]) { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
+      if (!LEDGER[m].manualWeeks) { LEDGER[m].manualWeeks = [{start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}]; }
     });
     
     let rosterCount = 0;
@@ -729,6 +760,7 @@ function hydrateDataDefaults() {
         if (!ROSTER[name].pto) ROSTER[name].pto = {};
         if (!ROSTER[name].pto_weekly) ROSTER[name].pto_weekly = {};
         if (!ROSTER[name].mix) ROSTER[name].mix = {};
+        if (!ROSTER[name].exactPto) ROSTER[name].exactPto = {};
         
         let defaultPs = (ROSTER[name].role === 'PFA') ? 10 : (ROSTER[name].role === 'LEAD' ? 3 : 4);
         let defaultEv = (ROSTER[name].role === 'PFA') ? 0 : 3;
@@ -747,6 +779,7 @@ function hydrateDataDefaults() {
 
         ACTIVE_TIMELINE.forEach(m => {
             if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
+            // Silent PTO Migration to Weekly Array fallback
             if (!ROSTER[name].pto_weekly[m]) {
                 ROSTER[name].pto_weekly[m] = [ROSTER[name].pto[m] || 0, 0, 0, 0, 0];
             }
@@ -803,6 +836,9 @@ function loadFunnelUI() {
   document.getElementById('mod-global-ev-sched').value = FUNNEL.evSchedRate;
   document.getElementById('mod-global-ev-comp').value = FUNNEL.evCompRate;
   document.getElementById('mod-global-enroll').value = FUNNEL.enrollRate;
+  
+  let model = FUNNEL.capacityModel || 'strict';
+  setCapacityModelUI(model);
 }
 
 function saveFunnelParams() {
@@ -842,7 +878,8 @@ function moveMonth(idx, dir) {
 function addNewSpecificMonth() {
     let inp = document.getElementById('new-month-input'); let rawVal = inp.value.trim(); if(!rawVal) return;
     let newM = rawVal; if (ACTIVE_TIMELINE.includes(newM) || ARCHIVED_TIMELINE.includes(newM)) newM += `_${Date.now().toString().slice(-4)}`;
-    ACTIVE_TIMELINE.push(newM); LEDGER[newM] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[newM].apps[s] = 0; LEDGER[newM].conv[s] = 0; });
+    ACTIVE_TIMELINE.push(newM); LEDGER[newM] = { wd: 21, apps: {}, conv: {}, manualWeeks: [{start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}] }; 
+    MASTER_STATES.forEach(s => { LEDGER[newM].apps[s] = 0; LEDGER[newM].conv[s] = 0; });
     let refMonth = ACTIVE_TIMELINE[activeMonthIdx];
     Object.keys(ROSTER).forEach(name => { 
         ROSTER[name].pto[newM] = 0; 
@@ -875,7 +912,7 @@ function archiveSpecificMonth(m) {
 
 function restoreArchivedMonth(m) {
     ARCHIVED_TIMELINE = ARCHIVED_TIMELINE.filter(x => x !== m); ACTIVE_TIMELINE.push(m); 
-    if (ARCHIVED_LEDGER[m]) { LEDGER[m] = JSON.parse(JSON.stringify(ARCHIVED_LEDGER[m])); delete ARCHIVED_LEDGER[m]; } else { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
+    if (ARCHIVED_LEDGER[m]) { LEDGER[m] = JSON.parse(JSON.stringify(ARCHIVED_LEDGER[m])); delete ARCHIVED_LEDGER[m]; } else { LEDGER[m] = { wd: 21, apps: {}, conv: {}, manualWeeks: [{start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}] }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
     Object.keys(ROSTER).forEach(name => {
         if (ARCHIVED_ROSTER[name]) {
             if (ARCHIVED_ROSTER[name].pto && ARCHIVED_ROSTER[name].pto[m] !== undefined) { ROSTER[name].pto[m] = ARCHIVED_ROSTER[name].pto[m]; delete ARCHIVED_ROSTER[name].pto[m]; } else { ROSTER[name].pto[m] = 0; }
@@ -921,7 +958,7 @@ function buildTimelineControls() {
         activeMonthIdx = i; 
         window.lastMatrixBackup = null; 
         document.getElementById('undo-opt-btn').style.display = 'none';
-        activeWeekFilter = null; 
+        activeWeekFilter = null; // reset filter on tab change
         buildTimelineControls(); recalculateDashboardMetrics(); 
     };
     container.appendChild(btn);
@@ -929,6 +966,8 @@ function buildTimelineControls() {
 }
 
 function populateGlobalModalViews() {
+  document.getElementById('mod-global-holidays').value = FUNNEL.holidays || '';
+
   const wdTable = document.getElementById('modal-wd-table');
   let html = `<thead><tr><th style="border-right:1px solid #374151;">Metric</th>${ACTIVE_TIMELINE.map(m => `<th>${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody><tr><td style="border-right:1px solid #374151;"><strong>Working Days</strong></td>`;
   ACTIVE_TIMELINE.forEach(m => { html += `<td><input type="number" id="mod-wd-field-${m}" value="${LEDGER[m].wd}"></td>`; });
@@ -972,6 +1011,7 @@ function attachPasteListeners() {
 }
 
 function saveGlobalModalParams() {
+  FUNNEL.holidays = document.getElementById('mod-global-holidays').value || '';
   ACTIVE_TIMELINE.forEach(m => {
     LEDGER[m].wd = parseFloat(document.getElementById(`mod-wd-field-${m}`).value) || 0;
     MASTER_STATES.forEach(s => {
@@ -999,7 +1039,7 @@ function addNewClinicianToRoster() {
   let dPs = role === 'PFA' ? 10 : (role === 'LEAD' ? 3 : 4); let dEv = role === 'PFA' ? 0 : 3;
   let newOrder = Object.keys(ROSTER).length; let qPsObj = {}, qEvObj = {};
   ACTIVE_TIMELINE.forEach(m => { qPsObj[m] = dPs; qEvObj[m] = dEv; });
-  ROSTER[name] = { role: role, qPs: qPsObj, qEv: qEvObj, order: newOrder, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, pto_weekly: {}, mix: {} };
+  ROSTER[name] = { role: role, qPs: qPsObj, qEv: qEvObj, order: newOrder, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, pto_weekly: {}, mix: {}, exactPto: {} };
   ACTIVE_TIMELINE.forEach(m => { ROSTER[name].pto[m] = 0; ROSTER[name].pto_weekly[m] = [0,0,0,0,0]; ROSTER[name].mix[m] = (role === 'PFA' ? [] : [...MASTER_STATES]); });
   document.getElementById('new-clinician-name').value = ''; saveState(); recalculateDashboardMetrics();
 }
@@ -1092,6 +1132,25 @@ function renderVisualBar(label, dem, cap, type) {
     `;
 }
 
+// --- CAPACITY MODEL CONTROL ---
+function setCapacityModel(model) {
+    FUNNEL.capacityModel = model;
+    setCapacityModelUI(model);
+    saveState();
+    recalculateDashboardMetrics();
+}
+
+function setCapacityModelUI(model) {
+    const strictBtn = document.getElementById('btn-cap-strict');
+    const fluidBtn = document.getElementById('btn-cap-fluid');
+    if (strictBtn && fluidBtn) {
+        strictBtn.style.background = model === 'strict' ? '#3b82f6' : 'transparent';
+        strictBtn.style.color = model === 'strict' ? '#fff' : '#64748b';
+        fluidBtn.style.background = model === 'fluid' ? '#3b82f6' : 'transparent';
+        fluidBtn.style.color = model === 'fluid' ? '#fff' : '#64748b';
+    }
+}
+
 // --- OPTIMIZATION ALGORITHM (NATIVE JS SOLVER) ---
 let latestOptimizationResult = null;
 
@@ -1133,22 +1192,27 @@ function scoreMatrix(toggles) {
                 });
             }
         }
-        score += ceOn.length * 0.05; 
+        score += ceOn.length * 0.05; // Gentle Soft Focus Penalty (Unicorn Protection)
     });
     
     window.optContext.states.forEach(s => {
         let st = stAlloc[s.name];
         
+        // ZERO DEMAND RULE
         if (s.apps === 0 || s.reqHours === 0) {
-            if (st.countOn > 0) score += st.countOn * 50000; 
+            if (st.countOn > 0) {
+                score += st.countOn * 50000; // Force them off
+            }
         } else {
             let variance = st.ceHours - s.reqHours;
+            
             if(variance < 0) {
-                score += Math.pow(Math.abs(variance), 2) * 10; 
+                score += Math.pow(Math.abs(variance), 2) * 10; // High quadratic penalty for deficits
             } else {
-                score += variance * 0.5; 
+                score += variance * 0.5; // Light linear penalty for surplus (waste)
             }
             
+            // Dynamic Bench Strength: More demand = more CE options needed
             let desiredBench = Math.max(2, Math.min(st.countLic, Math.ceil(s.apps / 80) + 1));
             if(st.countOn < desiredBench) {
                 score += (desiredBench - st.countOn) * 10000;
@@ -1169,8 +1233,11 @@ function runOptimizerEngine() {
     let bestToggles = JSON.parse(JSON.stringify(currentToggles));
     let bestScore = baselineScore;
     
+    // Run 50 Scenarios
     for(let i=0; i<50; i++) {
         let testToggles = JSON.parse(JSON.stringify(currentToggles));
+        
+        // Random Restart Kicks
         if (i > 0) {
             let flips = Math.floor(Math.random() * 3) + 1;
             for(let f=0; f<flips; f++) {
@@ -1182,6 +1249,7 @@ function runOptimizerEngine() {
             }
         }
         
+        // Greedy Hill Climb
         let improved = true;
         let loops = 0;
         while(improved && loops < 30) {
@@ -1190,7 +1258,7 @@ function runOptimizerEngine() {
             for(let ce of window.optContext.ces) {
                 for(let s of ce.profile) {
                     let orig = testToggles[ce.name][s];
-                    testToggles[ce.name][s] = !orig; 
+                    testToggles[ce.name][s] = !orig; // flip
                     let newScore = scoreMatrix(testToggles);
                     
                     if(newScore < bestScore) {
@@ -1198,7 +1266,7 @@ function runOptimizerEngine() {
                         bestToggles = JSON.parse(JSON.stringify(testToggles));
                         improved = true;
                     } else {
-                        testToggles[ce.name][s] = orig; 
+                        testToggles[ce.name][s] = orig; // revert
                     }
                 }
             }
@@ -1240,6 +1308,7 @@ document.getElementById('opt-apply-btn').addEventListener('click', function() {
     if(!latestOptimizationResult) return;
     let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
     
+    // Create Backup for Undo functionality
     window.lastMatrixBackup = {};
     Object.keys(ROSTER).forEach(ce => {
         if(ROSTER[ce].role !== 'PFA') {
@@ -1372,8 +1441,8 @@ function setHeatmapView(mode) {
     document.getElementById('btn-view-mo').className = mode === 'mo' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off';
     document.getElementById('btn-view-wk').className = mode === 'wk' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off';
     if(mode === 'mo') {
-        activeWeekFilter = null; 
-        recalculateDashboardMetrics(); 
+        activeWeekFilter = null; // Exit God Mode when returning to monthly
+        recalculateDashboardMetrics(); // Force rerender of top boxes
     } else {
         renderDualHeatmap(); 
     }
@@ -1395,6 +1464,146 @@ function setWeeklyCapView(mode) {
     renderWeeklyCapacityByProvider();
 }
 
+function saveManualWeeks() {
+    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    if(!LEDGER[activeMonth].manualWeeks) LEDGER[activeMonth].manualWeeks = [];
+    for(let i=0; i<5; i++) {
+        let sEl = document.getElementById(`man-wk-s-${i}`);
+        let eEl = document.getElementById(`man-wk-e-${i}`);
+        if(!LEDGER[activeMonth].manualWeeks[i]) LEDGER[activeMonth].manualWeeks[i] = {};
+        LEDGER[activeMonth].manualWeeks[i].start = sEl ? sEl.value : "";
+        LEDGER[activeMonth].manualWeeks[i].end = eEl ? eEl.value : "";
+    }
+    saveState();
+    renderWeeklyCapacityByProvider();
+    promptAlert("Operational weeks saved successfully!");
+}
+
+function getNetBusinessDays(startStr, endStr, ceExactPto) {
+    if (!startStr || !endStr) return { netDays: 0, bizDays: 0, pto: 0, hols: 0 };
+    
+    let sParts = startStr.split('-');
+    let startD = new Date(parseInt(sParts[0]), parseInt(sParts[1])-1, parseInt(sParts[2]));
+    let eParts = endStr.split('-');
+    let endD = new Date(parseInt(eParts[0]), parseInt(eParts[1])-1, parseInt(eParts[2]));
+    
+    if (endD < startD) return { netDays: 0, bizDays: 0, pto: 0, hols: 0 };
+
+    let holidayStrs = (FUNNEL.holidays || '').split(',').map(h => h.trim()).filter(h => h);
+    let holidays = holidayStrs.map(hStr => {
+        let parts = hStr.split('/');
+        if(parts.length === 3) {
+            return new Date(parseInt(parts[2]), parseInt(parts[0])-1, parseInt(parts[1])).getTime();
+        }
+        return 0;
+    });
+
+    let bizDays = 0; let hols = 0; let pto = 0;
+    
+    let curr = new Date(startD);
+    while(curr <= endD) {
+        let day = curr.getDay();
+        if (day !== 0 && day !== 6) {
+            bizDays++;
+            let currTime = curr.getTime();
+            let dKey = curr.getFullYear() + '-' + String(curr.getMonth()+1).padStart(2,'0') + '-' + String(curr.getDate()).padStart(2,'0');
+            
+            if (holidays.includes(currTime)) {
+                hols++;
+            } else if (ceExactPto && ceExactPto[dKey]) {
+                pto += ceExactPto[dKey];
+            }
+        }
+        curr.setDate(curr.getDate() + 1);
+    }
+    
+    let netDays = Math.max(0, bizDays - hols - pto);
+    return { netDays, bizDays, pto, hols };
+}
+
+function renderWeeklyCapacityByProvider() {
+    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    if (!activeMonth) return;
+    
+    let manualWeeks = LEDGER[activeMonth].manualWeeks || [{start:'', end:''}, {start:'', end:''}, {start:'', end:''}, {start:'', end:''}, {start:'', end:''}];
+    
+    let container = document.getElementById('manual-weeks-container');
+    if (container) {
+        let html = '';
+        for(let i=0; i<5; i++) {
+            let w = manualWeeks[i] || {start:'', end:''};
+            html += `<div style="background:#1e293b; padding:6px; border-radius:4px; border:1px solid #374151; font-size:9px;">
+                <div style="color:#a5b4fc; margin-bottom:4px; font-weight:bold; font-size:10px;">Week ${i+1}</div>
+                <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;"><span style="color:#64748b; width:25px;">Start:</span><input type="date" id="man-wk-s-${i}" value="${w.start}" style="width:105px; padding:2px; font-size:10px;"></div>
+                <div style="display:flex; align-items:center; gap:4px;"><span style="color:#64748b; width:25px;">End:</span><input type="date" id="man-wk-e-${i}" value="${w.end}" style="width:105px; padding:2px; font-size:10px;"></div>
+            </div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    let thead = document.getElementById('weekly-cap-head');
+    let tbody = document.getElementById('weekly-cap-body');
+    let tfoot = document.getElementById('weekly-cap-foot');
+    if(!thead || !tbody || !tfoot) return;
+
+    let isPS = weeklyCapacityViewMode === 'PS';
+
+    let headHtml = `<tr><th style="position:sticky; left:0; background:#161b22; z-index:20; border-right:1px solid #374151; min-width:160px;">Provider</th>`;
+    for(let w=0; w<5; w++) {
+        let lw = manualWeeks[w];
+        let label = (lw.start && lw.end) ? `Wk ${w+1} (${lw.start.slice(5)} to ${lw.end.slice(5)})` : `Week ${w+1}`;
+        headHtml += `<th style="text-align:center; color:${isPS ? '#93c5fd' : '#c4b5fd'};">${label}</th>`;
+    }
+    headHtml += `<th style="text-align:center; border-left:1px solid #374151;">WINDOW TOTAL</th></tr>`;
+    thead.innerHTML = headHtml;
+
+    let sortedCEs = Object.keys(ROSTER).sort((a,b) => {
+        let rA = ROSTER[a], rB = ROSTER[b];
+        let roleA = rA.role || '', roleB = rB.role || '';
+        let isPfaA = roleA.toUpperCase().includes('PFA'), isPfaB = roleB.toUpperCase().includes('PFA');
+        if (isPfaA && !isPfaB) return 1;
+        if (!isPfaA && isPfaB) return -1;
+        return (rA.order||0) - (rB.order||0);
+    });
+    
+    let weeklyTotals = [0, 0, 0, 0, 0];
+    let monthGrandTotal = 0;
+
+    tbody.innerHTML = sortedCEs.map(ce => {
+        let r = ROSTER[ce];
+        if (!isPS && r.role === 'PFA') return '';
+
+        let quota = isPS ? (parseFloat(r.qPs[activeMonth]) || 0) : (parseFloat(r.qEv[activeMonth]) || 0);
+
+        let rowHtml = `<tr><td style="position:sticky; left:0; background:#161b22; z-index:10; border-right:1px solid #374151;"><strong>${ce}</strong> <span style="font-size:8px; color:#64748b; margin-left:4px;">(${r.role})</span></td>`;
+        
+        let ceMonthTotal = 0;
+        for(let w=0; w<5; w++) {
+            let lw = manualWeeks[w];
+            let stats = getNetBusinessDays(lw.start, lw.end, r.exactPto);
+            let cap = stats.netDays * quota;
+            
+            ceMonthTotal += cap;
+            weeklyTotals[w] += cap;
+            
+            let capStr = cap > 0 ? Math.round(cap) : '-';
+            let colorStr = cap > 0 ? (isPS ? '#60a5fa' : '#a78bfa') : '#475569';
+            
+            rowHtml += `<td style="text-align:center; font-weight:bold; color:${colorStr};">${capStr}</td>`;
+        }
+        monthGrandTotal += ceMonthTotal;
+        rowHtml += `<td style="text-align:center; border-left:1px solid #374151; font-weight:bold; color:#f8fafc;">${Math.round(ceMonthTotal)}</td></tr>`;
+        return rowHtml;
+    }).join('');
+
+    let footHtml = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:20; border-right:1px solid #374151; color:#e2e8f0;">ROSTER BASELINE CAPACITY</td>`;
+    for(let w=0; w<5; w++) {
+        footHtml += `<td style="text-align:center; color:#10b981;">${Math.round(weeklyTotals[w])}</td>`;
+    }
+    footHtml += `<td style="text-align:center; border-left:1px solid #374151; color:#10b981; font-size:12px;">${Math.round(monthGrandTotal)}</td></tr>`;
+    tfoot.innerHTML = footHtml;
+}
+
 // --- CORE MATH ENGINE (DYNAMIC TIME FLEXING & WEEKLY DISTRIBUTION) ---
 function recalculateDashboardMetrics() {
   let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
@@ -1403,6 +1612,8 @@ function recalculateDashboardMetrics() {
   let wd = LEDGER[activeMonth].wd;
   let mult = 1 + (FUNNEL.volBump / 100);
   let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+  
+  let isStrict = (FUNNEL.capacityModel || 'strict') === 'strict';
 
   // Dynamic Calendar Boundaries
   let calWeeks = getCalendarWeeks(activeMonth);
@@ -1465,7 +1676,7 @@ function recalculateDashboardMetrics() {
     
     sysGrossPsDemand += statePsDemandFull; sysGrossEvDemand += stateEvDemand;
     stateMetrics[s] = { apps: bumpedApps, psDemandFull: statePsDemandFull, evDemand: stateEvDemand, psCapCe: 0, evCapCe: 0, allocatedCeHours: 0, assigned: [], weekly: [] };
-    for(let w=0; w<5; w++) stateMetrics[s].weekly.push({ evDemand: 0, allocatedCeHours: 0, evCapCe: 0 });
+    for(let w=0; w<5; w++) stateMetrics[s].weekly.push({ evDemand: 0, allocatedCeHours: 0, evCapCe: 0, strictEvCap: 0, strictPsCap: 0 });
   });
 
   let targetPfaDemand = sysGrossPsDemand * (FUNNEL.pfaRouteRate / 100);
@@ -1486,7 +1697,7 @@ function recalculateDashboardMetrics() {
 
   let p_apps = d_bumped; let p_psSched = maxSystemPsCapacity; let p_psComp = p_psSched * (FUNNEL.psCompRate/100);
   let p_scrIn = p_psComp * (FUNNEL.screenInRate/100); let p_yldEvDem = p_scrIn * (FUNNEL.evSchedRate/100); 
-  let p_evSched = Math.min(p_yldEvDem, ceFluidEvCap); 
+  let p_evSched = Math.min(p_yldEvDem, isStrict ? ceStrictEvCap : ceFluidEvCap); 
   let p_evComp = p_evSched * (FUNNEL.evCompRate/100); let p_enroll = p_evComp * (FUNNEL.enrollRate/100);
 
   // --- WEEKLY VOLATILITY CALCULATIONS ---
@@ -1494,9 +1705,11 @@ function recalculateDashboardMetrics() {
       let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0;
       let netDays = Math.max(0, wd - pto); let qPs = parseFloat(r.qPs[activeMonth]) || 0; let qEv = parseFloat(r.qEv[activeMonth]) || 0;
       let totalH = netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE);
+      let strictEv = netDays * qEv;
+      let strictPs = netDays * qPs;
       let activeSt = r.mix[activeMonth] || []; let loadDenomApps = 0;
       activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); });
-      return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, totalHours: totalH };
+      return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, totalHours: totalH, strictEv, strictPs };
   });
 
   // Calculate Macro Monthly Heatmap Allocations
@@ -1507,17 +1720,27 @@ function recalculateDashboardMetrics() {
             let weight = stateMetrics[s].apps / ce.denom; 
             stateMetrics[s].allocatedCeHours += (ce.totalHours * weight); 
             stateMetrics[s].assigned.push(ce.name); 
+            
+            if (!stateMetrics[s].strictEvCap) stateMetrics[s].strictEvCap = 0;
+            if (!stateMetrics[s].strictPsCap) stateMetrics[s].strictPsCap = 0;
+            stateMetrics[s].strictEvCap += (ce.strictEv * weight);
+            stateMetrics[s].strictPsCap += (ce.strictPs * weight);
         }
       });
     }
   });
 
   MASTER_STATES.forEach(s => {
-      let st = stateMetrics[s];
-      st.psDemandCE = st.psDemandFull * (1 - pfaEffectiveSweepRate);
-      let reqPsH = st.psDemandCE * PS_HANDLE;
-      if (st.allocatedCeHours >= reqPsH) { st.psCapCe = st.psDemandCE; st.evCapCe = (st.allocatedCeHours - reqPsH) / EV_HANDLE; } 
-      else { st.psCapCe = st.allocatedCeHours / PS_HANDLE; st.evCapCe = 0; }
+        let st = stateMetrics[s];
+        if (isStrict) {
+            st.psCapCe = st.strictPsCap || 0;
+            st.evCapCe = st.strictEvCap || 0;
+        } else {
+            st.psDemandCE = st.psDemandFull * (1 - pfaEffectiveSweepRate);
+            let reqPsH = st.psDemandCE * PS_HANDLE;
+            if (st.allocatedCeHours >= reqPsH) { st.psCapCe = st.psDemandCE; st.evCapCe = (st.allocatedCeHours - reqPsH) / EV_HANDLE; } 
+            else { st.psCapCe = st.allocatedCeHours / PS_HANDLE; st.evCapCe = 0; }
+        }
   });
 
   let sysWeeklyMetrics = [];
@@ -1534,7 +1757,7 @@ function recalculateDashboardMetrics() {
       let w_sysGrossEvDemand = sysGrossEvDemand * (w_wd / wd);
       
       let w_pfaPsCap = 0;
-      let w_ceStrictPsCap = 0, w_ceTotalHours = 0, w_cePtoTotal = 0;
+      let w_ceStrictPsCap = 0, w_ceStrictEvCap = 0, w_ceTotalHours = 0, w_cePtoTotal = 0;
       
       Object.keys(ROSTER).forEach(n => {
           let r = ROSTER[n]; 
@@ -1548,6 +1771,7 @@ function recalculateDashboardMetrics() {
               w_pfaPsCap += (w_netDays * qPs);
           } else {
               w_ceStrictPsCap += (w_netDays * qPs);
+              w_ceStrictEvCap += (w_netDays * qEv);
               w_ceTotalHours += (w_netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE));
               w_cePtoTotal += w_pto;
           }
@@ -1566,8 +1790,9 @@ function recalculateDashboardMetrics() {
           apps: sysTotalApps * (w_wd / wd),
           psUtil: (w_ceStrictPsCap + w_pfaPsCap) > 0 ? ((w_remainingCePsDemand + w_actualPfaPsYield) / (w_ceStrictPsCap + w_pfaPsCap)) * 100 : 0,
           ptoCe: w_cePtoTotal, ptoPfa: pfaPtoWeekly[w] || 0,
-          evStrictDem: w_sysGrossEvDemand,
-          evFluidCap: w_ceFluidEvCap,
+          evStrictDem: w_sysGrossEvDemand, evStrictCap: w_ceStrictEvCap,
+          evFluidCap: isStrict ? w_ceStrictEvCap : w_ceFluidEvCap,
+          evUtil: (isStrict ? w_ceStrictEvCap : w_ceFluidEvCap) > 0 ? (w_sysGrossEvDemand / (isStrict ? w_ceStrictEvCap : w_ceFluidEvCap)) * 100 : 0,
           cePsDemand: w_remainingCePsDemand, cePsCap: w_ceStrictPsCap,
           pfaPsDemand: w_actualPfaPsYield, pfaPsCap: w_pfaPsCap
       });
@@ -1583,12 +1808,18 @@ function recalculateDashboardMetrics() {
           let qPs = parseFloat(r.qPs[activeMonth]) || 0; let qEv = parseFloat(r.qEv[activeMonth]) || 0;
           let w_netDays = Math.max(0, w_wd - w_pto);
           let w_totalH = w_netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE);
+          let w_strictEv = w_netDays * qEv;
+          let w_strictPs = w_netDays * qPs;
           
           if(ce.denom > 0) {
               ce.activeStates.forEach(s => {
                   if (stateMetrics[s]) { 
                       let weight = stateMetrics[s].apps / ce.denom; 
                       stateMetrics[s].weekly[w].allocatedCeHours += (w_totalH * weight); 
+                      if (!stateMetrics[s].weekly[w].strictEvCap) stateMetrics[s].weekly[w].strictEvCap = 0;
+                      if (!stateMetrics[s].weekly[w].strictPsCap) stateMetrics[s].weekly[w].strictPsCap = 0;
+                      stateMetrics[s].weekly[w].strictEvCap += (w_strictEv * weight);
+                      stateMetrics[s].weekly[w].strictPsCap += (w_strictPs * weight);
                   }
               });
           }
@@ -1596,9 +1827,13 @@ function recalculateDashboardMetrics() {
 
       MASTER_STATES.forEach(s => {
           let st = stateMetrics[s]; let w_st = st.weekly[w];
-          let w_psDemandCE = (st.psDemandFull * (w_wd / wd)) * (1 - w_pfaEffectiveSweepRate);
-          let w_reqPsH = w_psDemandCE * PS_HANDLE;
-          if (w_st.allocatedCeHours >= w_reqPsH) { w_st.evCapCe = (w_st.allocatedCeHours - w_reqPsH) / EV_HANDLE; } else { w_st.evCapCe = 0; }
+          if (isStrict) {
+              w_st.evCapCe = w_st.strictEvCap || 0;
+          } else {
+              let w_psDemandCE = (st.psDemandFull * (w_wd / wd)) * (1 - w_pfaEffectiveSweepRate);
+              let w_reqPsH = w_psDemandCE * PS_HANDLE;
+              if (w_st.allocatedCeHours >= w_reqPsH) { w_st.evCapCe = (w_st.allocatedCeHours - w_reqPsH) / EV_HANDLE; } else { w_st.evCapCe = 0; }
+          }
       });
   }
 
@@ -1621,15 +1856,17 @@ function recalculateDashboardMetrics() {
   // DYNAMIC RENDER OF TOP 4 BOXES (Monthly vs God Mode + Smart Stitching)
   let sysPsUtilPct = (ceStrictPsCap + pfaPsCap) > 0 ? ((remainingCePsDemand + actualPfaPsYield) / (ceStrictPsCap + pfaPsCap)) * 100 : 0;
   let fluidEvUtilPct = ceFluidEvCap > 0 ? (sysGrossEvDemand / ceFluidEvCap) * 100 : 0;
+  let strictEvUtilPct = ceStrictEvCap > 0 ? (sysGrossEvDemand / ceStrictEvCap) * 100 : 0;
   
   let d_apps = sysTotalApps;
   let d_psUtilPct = sysPsUtilPct;
   let d_cePsDem = remainingCePsDemand; let d_cePsCap = ceStrictPsCap;
   let d_pfaPsDem = actualPfaPsYield; let d_pfaPsCap = pfaPsCap;
   let d_ptoCe = cePtoTotal; let d_ptoPfa = pfaPtoTotal;
-  let d_evUtilPct = fluidEvUtilPct;
+  let d_evUtilPct = isStrict ? strictEvUtilPct : fluidEvUtilPct;
   let d_evDem = sysGrossEvDemand; 
-  let d_evFluidCap = ceFluidEvCap;
+  let d_evStrictCap = ceStrictEvCap; 
+  let d_evFluidCap = isStrict ? ceStrictEvCap : ceFluidEvCap;
 
   let unifiedTitle = null;
   let dateRangeStr = "";
@@ -1637,6 +1874,7 @@ function recalculateDashboardMetrics() {
   if (activeWeekFilter !== null && calWeeks[activeWeekFilter]) {
       let aw = calWeeks[activeWeekFilter];
       
+      // Load base stats for the current week slice
       d_apps = sysWeeklyMetrics[activeWeekFilter].apps;
       d_cePsDem = sysWeeklyMetrics[activeWeekFilter].cePsDemand;
       d_cePsCap = sysWeeklyMetrics[activeWeekFilter].cePsCap;
@@ -1645,8 +1883,10 @@ function recalculateDashboardMetrics() {
       d_ptoCe = sysWeeklyMetrics[activeWeekFilter].ptoCe;
       d_ptoPfa = sysWeeklyMetrics[activeWeekFilter].ptoPfa;
       d_evDem = sysWeeklyMetrics[activeWeekFilter].evStrictDem;
-      d_evFluidCap = sysWeeklyMetrics[activeWeekFilter].evFluidCap;
+      d_evStrictCap = sysWeeklyMetrics[activeWeekFilter].evStrictCap;
+      d_evFluidCap = isStrict ? sysWeeklyMetrics[activeWeekFilter].evStrictCap : sysWeeklyMetrics[activeWeekFilter].evFluidCap;
 
+      // Smart Stitching Logic for Cross-Boundary Weeks
       let forwardSplit = aw.bizEnd.getDay() >= 1 && aw.bizEnd.getDay() < 5;
       let backwardSplit = aw.bizStart.getDay() > 1 && aw.bizStart.getDay() <= 5;
       
@@ -1660,12 +1900,13 @@ function recalculateDashboardMetrics() {
       }
 
       if (stitch) {
+          // Merge stats across month boundary to create unified operational 5-day week
           d_apps += stitch.apps;
           d_cePsDem += stitch.cePsDem; d_cePsCap += stitch.cePsCap;
           d_pfaPsDem += stitch.pfaPsDem; d_pfaPsCap += stitch.pfaPsCap;
           d_ptoCe += stitch.ptoCe; d_ptoPfa += stitch.ptoPfa;
-          d_evDem += stitch.evStrictDem;  
-          d_evFluidCap += stitch.evFluidCap;
+          d_evDem += stitch.evStrictDem; d_evStrictCap += stitch.evStrictCap; 
+          d_evFluidCap += isStrict ? stitch.evStrictCap : stitch.evFluidCap;
           
           unifiedTitle = `UNIFIED SPLIT-WEEK VIEW`;
           
@@ -1676,6 +1917,7 @@ function recalculateDashboardMetrics() {
           dateRangeStr = `${aw.bizStart.getMonth()+1}/${aw.bizStart.getDate()} - ${aw.bizEnd.getMonth()+1}/${aw.bizEnd.getDate()}`;
       }
 
+      // Recalculate Combined Utilizations
       d_psUtilPct = (d_cePsCap + d_pfaPsCap) > 0 ? ((d_cePsDem + d_pfaPsDem) / (d_cePsCap + d_pfaPsCap)) * 100 : 0;
       d_evUtilPct = d_evFluidCap > 0 ? (d_evDem / d_evFluidCap) * 100 : 0;
   }
@@ -1707,7 +1949,8 @@ function recalculateDashboardMetrics() {
     <div class="stat-card-modern">
       <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Shows the impact of dynamic time-flexing versus your rigid quotas.</span></div></span></div>
       <div class="util-pct">${Math.round(d_evUtilPct)}%</div>
-      ${renderVisualBar('Fluid Time', d_evDem, d_evFluidCap, 'cap')}
+      ${renderVisualBar('Strict Quota', d_evDem, d_evStrictCap, 'cap')}
+      ${renderVisualBar(isStrict ? 'Strict Limit' : 'Fluid Time', d_evDem, d_evFluidCap, 'cap')}
     </div>
   `;
 
@@ -1718,74 +1961,6 @@ function recalculateDashboardMetrics() {
   renderSidebarProfileManager(ceAllocations); 
   renderDualCharts();
   renderWeeklyCapacityByProvider();
-}
-
-function renderWeeklyCapacityByProvider() {
-    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
-    if (!activeMonth || !window.stateMetricsCache || !window.stateMetricsCache.wdArray) return;
-    
-    let wdArray = window.stateMetricsCache.wdArray;
-    let weekLabels = window.stateMetricsCache.weekLabels;
-
-    let thead = document.getElementById('weekly-cap-head');
-    let tbody = document.getElementById('weekly-cap-body');
-    let tfoot = document.getElementById('weekly-cap-foot');
-    if(!thead || !tbody || !tfoot) return;
-
-    let isPS = weeklyCapacityViewMode === 'PS';
-
-    // Build Headers
-    let headHtml = `<tr><th style="position:sticky; left:0; background:#161b22; z-index:20; border-right:1px solid #374151; min-width:160px;">Provider</th>`;
-    for(let w=0; w<5; w++) {
-        if(wdArray[w] > 0) headHtml += `<th style="text-align:center; color:${isPS ? '#93c5fd' : '#c4b5fd'};">${weekLabels[w]}</th>`;
-    }
-    headHtml += `<th style="text-align:center; border-left:1px solid #374151;">MONTH TOTAL</th></tr>`;
-    thead.innerHTML = headHtml;
-
-    let sortedCEs = Object.keys(ROSTER).sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0));
-    let weeklyTotals = [0, 0, 0, 0, 0];
-    let monthGrandTotal = 0;
-
-    // Build Body
-    tbody.innerHTML = sortedCEs.map(ce => {
-        let r = ROSTER[ce];
-        // Hide PFAs if we are looking at Evaluation capacity
-        if (!isPS && r.role === 'PFA') return '';
-
-        let quota = isPS ? (parseFloat(r.qPs[activeMonth]) || 0) : (parseFloat(r.qEv[activeMonth]) || 0);
-        let ptoArr = r.pto_weekly[activeMonth] || [0,0,0,0,0];
-
-        let rowHtml = `<tr><td style="position:sticky; left:0; background:#161b22; z-index:10; border-right:1px solid #374151;"><strong>${ce}</strong> <span style="font-size:8px; color:#64748b; margin-left:4px;">(${r.role})</span></td>`;
-        
-        let ceMonthTotal = 0;
-        for(let w=0; w<5; w++) {
-            if(wdArray[w] > 0) {
-                let w_wd = wdArray[w];
-                let w_pto = ptoArr[w] || 0;
-                let netDays = Math.max(0, w_wd - w_pto);
-                let cap = netDays * quota;
-                
-                ceMonthTotal += cap;
-                weeklyTotals[w] += cap;
-                
-                let capStr = cap > 0 ? Math.round(cap) : '-';
-                let colorStr = cap > 0 ? (isPS ? '#60a5fa' : '#a78bfa') : '#475569';
-                
-                rowHtml += `<td style="text-align:center; font-weight:bold; color:${colorStr};">${capStr}</td>`;
-            }
-        }
-        monthGrandTotal += ceMonthTotal;
-        rowHtml += `<td style="text-align:center; border-left:1px solid #374151; font-weight:bold; color:#f8fafc;">${Math.round(ceMonthTotal)}</td></tr>`;
-        return rowHtml;
-    }).join('');
-
-    // Build Footer
-    let footHtml = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a; z-index:20; border-right:1px solid #374151; color:#e2e8f0;">ROSTER TOTAL CAPACITY</td>`;
-    for(let w=0; w<5; w++) {
-        if(wdArray[w] > 0) footHtml += `<td style="text-align:center; color:#10b981;">${Math.round(weeklyTotals[w])}</td>`;
-    }
-    footHtml += `<td style="text-align:center; border-left:1px solid #374151; color:#10b981; font-size:12px;">${Math.round(monthGrandTotal)}</td></tr>`;
-    tfoot.innerHTML = footHtml;
 }
 
 function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr) {
@@ -2061,9 +2236,9 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
     const rows = csvText.split(/\r\n|\n/).filter(r => r.trim()); if (rows.length < 2) throw new Error("CSV appears empty or malformed");
     const parsedData = rows.map(r => parseCSVRow(r));
     
-    let ptoCounts = {}; 
+    let ptoCounts = {}; let exactPtoData = {};
     Object.keys(ROSTER).forEach(ce => { 
-        ptoCounts[ce] = {}; 
+        ptoCounts[ce] = {}; exactPtoData[ce] = {};
         ACTIVE_TIMELINE.forEach(m => ptoCounts[ce][m] = { total: 0, weekly: [0,0,0,0,0] }); 
     });
 
@@ -2081,11 +2256,16 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
         if (dateVal) {
             let d = new Date(dateVal);
             if (!isNaN(d.getTime())) {
+                let exactKey = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
                 let mName = ALL_KNOWN_MONTHS[d.getMonth()]; let tMonth = ACTIVE_TIMELINE.find(m => m.startsWith(mName));
-                if (tMonth) { 
-                    Object.keys(ceColMap).forEach(cIdx => { 
-                        let f = parseFloat(String(row[cIdx]).trim()); 
-                        if (!isNaN(f) && f > 0) {
+                
+                Object.keys(ceColMap).forEach(cIdx => { 
+                    let f = parseFloat(String(row[cIdx]).trim()); 
+                    if (!isNaN(f) && f > 0) {
+                        let ceName = ceColMap[cIdx];
+                        exactPtoData[ceName][exactKey] = (exactPtoData[ceName][exactKey] || 0) + f;
+
+                        if (tMonth) { 
                             let calWeeks = getCalendarWeeks(tMonth);
                             let weekIdx = -1;
                             
@@ -2099,16 +2279,17 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
                             if (weekIdx === -1) { weekIdx = Math.floor((d.getDate() - 1) / 7); }
                             if (weekIdx > 4) weekIdx = 4;
                             
-                            ptoCounts[ceColMap[cIdx]][tMonth].total += f;
-                            ptoCounts[ceColMap[cIdx]][tMonth].weekly[weekIdx] += f;
+                            ptoCounts[ceName][tMonth].total += f;
+                            ptoCounts[ceName][tMonth].weekly[weekIdx] += f;
                         }
-                    }); 
-                }
+                    }
+                }); 
             }
         }
     }
 
     Object.keys(ptoCounts).forEach(ce => { 
+        ROSTER[ce].exactPto = exactPtoData[ce];
         Object.keys(ptoCounts[ce]).forEach(m => { 
             let currentTotal = ROSTER[ce].pto[m] || 0;
             let currentWeekly = ROSTER[ce].pto_weekly[m] || [0,0,0,0,0];
@@ -2125,7 +2306,7 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
         }); 
     });
     
-    saveState(); recalculateDashboardMetrics(); if (!isSilent) promptAlert(`Sync Complete! ${u} PTO entries updated.`);
+    saveState(); recalculateDashboardMetrics(); if (!isSilent) promptAlert(`Sync Complete! ${u} Monthly/Weekly PTO entries updated, and Exact Date dictionary fully synced.`);
   } catch (err) { console.error("Error fetching or parsing CSV:", err); if (!isSilent) promptAlert("Failed to sync: " + err.message);
   } finally { if (!isSilent) { btn.innerText = ogText; btn.disabled = false; } }
 }
