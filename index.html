@@ -1099,24 +1099,54 @@ function saveGlobalModalParams() {
 
 // --- SORTING ENGINE ---
 function moveClinicianOrder(name, direction) {
-    let sortedNames = Object.keys(ROSTER).sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0));
-    let currIdx = sortedNames.indexOf(name);
+    if (!ROSTER[name]) return;
+    
+    // 1. Separate clinicians safely by role to prevent CEs from incorrectly swapping order indices with hidden PFAs
+    let ceNames = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0));
+    let pfaNames = Object.keys(ROSTER).filter(n => ROSTER[n].role === 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0));
+    
+    // 2. Normalize and flatten orders mathematically to eliminate identical overlapping indices (e.g. from roster deletions)
+    ceNames.forEach((n, i) => { ROSTER[n].order = i * 10; });
+    pfaNames.forEach((n, i) => { ROSTER[n].order = (i * 10) + 10000; }); // Safely push PFAs to the bottom of global index hierarchy
+    
+    // 3. Determine specific operational boundary for swap
+    let targetList = ROSTER[name].role === 'PFA' ? pfaNames : ceNames;
+    let currIdx = targetList.indexOf(name);
     let targetIdx = currIdx + direction;
-    if(targetIdx < 0 || targetIdx >= sortedNames.length) return;
-    let targetName = sortedNames[targetIdx];
-    let tempOrder = ROSTER[name].order; ROSTER[name].order = ROSTER[targetName].order; ROSTER[targetName].order = tempOrder;
+    
+    // 4. Perform identical assignment swap
+    if (targetIdx >= 0 && targetIdx < targetList.length) {
+        let targetName = targetList[targetIdx];
+        let tempOrder = ROSTER[name].order;
+        ROSTER[name].order = ROSTER[targetName].order;
+        ROSTER[targetName].order = tempOrder;
+    }
+    
     saveState(); recalculateDashboardMetrics();
 }
 
 function addNewClinicianToRoster() {
-  const name = document.getElementById('new-clinician-name').value.trim(); const role = document.getElementById('new-clinician-role').value;
-  if (!name) return; if (ROSTER[name]) { promptAlert("Resource already exists."); return; }
-  let dPs = role === 'PFA' ? 10 : (role === 'LEAD' ? 3 : 4); let dEv = role === 'PFA' ? 0 : 3;
-  let newOrder = Object.keys(ROSTER).length; let qPsObj = {}, qEvObj = {};
+  const name = document.getElementById('new-clinician-name').value.trim(); 
+  const role = document.getElementById('new-clinician-role').value;
+  
+  if (!name) return; 
+  if (ROSTER[name]) { promptAlert("Resource already exists."); return; }
+  
+  let dPs = role === 'PFA' ? 10 : (role === 'LEAD' ? 3 : 4); 
+  let dEv = role === 'PFA' ? 0 : 3;
+  
+  // Calculate trailing order cleanly to guarantee uninhibited placement
+  let maxOrder = 0;
+  Object.keys(ROSTER).forEach(n => { if((ROSTER[n].order||0) > maxOrder) maxOrder = ROSTER[n].order; });
+  let newOrder = maxOrder + 10; 
+  
+  let qPsObj = {}, qEvObj = {};
   ACTIVE_TIMELINE.forEach(m => { qPsObj[m] = dPs; qEvObj[m] = dEv; });
   ROSTER[name] = { role: role, qPs: qPsObj, qEv: qEvObj, order: newOrder, profile: (role === 'PFA' ? [] : [...MASTER_STATES]), pto: {}, pto_weekly: {}, mix: {}, exactPto: {} };
   ACTIVE_TIMELINE.forEach(m => { ROSTER[name].pto[m] = 0; ROSTER[name].pto_weekly[m] = [0,0,0,0,0]; ROSTER[name].mix[m] = (role === 'PFA' ? [] : [...MASTER_STATES]); });
-  document.getElementById('new-clinician-name').value = ''; saveState(); recalculateDashboardMetrics();
+  
+  document.getElementById('new-clinician-name').value = ''; 
+  saveState(); recalculateDashboardMetrics();
 }
 
 function deprovisionClinician(name) { if(ROSTER[name]) { delete ROSTER[name]; saveState(); recalculateDashboardMetrics(); } }
