@@ -200,16 +200,6 @@
 
 <!-- GLOBAL PARAMETER STRIP -->
 <div class="params-strip">
-    <!-- CAPACITY MODEL TOGGLE -->
-    <div class="param-item">
-      <span class="param-lbl">Capacity Model</span>
-      <div style="display: flex; gap: 2px; background: #0f172a; padding: 2px; border-radius: 4px; border: 1px solid #374151; height: 22px; align-items: center;">
-        <button id="btn-cap-strict" onclick="setCapacityModel('strict')" style="background:#3b82f6; color:#fff; border:none; border-radius:3px; padding: 2px 6px; font-size: 8px; font-weight: bold; cursor: pointer;">Strict Quota</button>
-        <button id="btn-cap-fluid" onclick="setCapacityModel('fluid')" style="background:transparent; color:#64748b; border:none; border-radius:3px; padding: 2px 6px; font-size: 8px; font-weight: bold; cursor: pointer;">Fluid Time</button>
-      </div>
-    </div>
-    <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    
     <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
     <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
     <div class="param-item"><span class="param-lbl">App→PS Route</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
@@ -228,9 +218,7 @@
     <!-- LEFT HALF: Narrative & High-Level Metrics -->
     <div class="top-left">
         <div class="insight-banner" id="executive-insight-banner"></div>
-        <div class="stat-grid" id="top-stats-container">
-            <!-- Dynamically populated stat grid goes here -->
-        </div>
+        <div class="stat-grid" id="top-stats-container"></div>
     </div>
 
     <!-- RIGHT HALF: Unified Bottom-Up Funnel -->
@@ -288,9 +276,7 @@
     <div id="heatmap-summary" style="display: flex; gap: 8px; margin-bottom: 12px;"></div>
     <div style="overflow-y: auto; max-height: 380px;">
         <table id="heatmap-table" class="hover-row-trace">
-        <thead id="heatmap-thead" style="position: sticky; top: 0; background: #161b22; z-index: 10;">
-            <!-- Rendered via JS based on toggle -->
-        </thead>
+        <thead id="heatmap-thead" style="position: sticky; top: 0; background: #161b22; z-index: 10;"></thead>
         <tbody id="heatmap-body"></tbody>
         </table>
     </div>
@@ -353,7 +339,7 @@
     </div>
   </div>
 
-  <!-- NEW WEEKLY CAPACITY PANEL (BASELINE DENOMINATOR) -->
+  <!-- WEEKLY CAPACITY PANEL (BASELINE DENOMINATOR) -->
   <div class="panel full-width">
     <h2 style="align-items: center; display: flex; justify-content: space-between;">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -365,7 +351,7 @@
           <button class="matrix-btn matrix-btn-off" id="btn-cap-ev" onclick="setWeeklyCapView('EV')" style="width: 100px;">📋 EV Capacity</button>
       </div>
     </h2>
-    <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">Define strict operational work weeks. The engine calculates physical capacity by triple-checking physical days against Global Holidays and Exact Clinician PTO.</p>
+    <p style="font-size: 9px; color: #64748b; margin-bottom: 8px;">Define strict operational work weeks. The engine calculates physical capacity by cross-referencing working days against Global Holidays and Exact Clinician PTO.</p>
     <div id="manual-weeks-container" style="display:flex; gap:10px; margin-bottom:12px; flex-wrap: wrap;"></div>
     <div style="overflow-x: auto; width: 100%; max-height: 400px; overflow-y: auto;">
       <table class="hover-row-trace" style="min-width: 800px; width: 100%;">
@@ -383,9 +369,7 @@
   <div class="dialog-box" style="width: 400px;">
     <h3 style="color: #c4b5fd; margin-bottom: 16px; font-size: 14px;" id="pto-modal-title">Edit Weekly PTO</h3>
     <p style="font-size: 11px; color: #94a3b8; margin-bottom: 16px;">Distribute PTO days into specific weeks to calculate accurate localized capacity bottlenecks.</p>
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left;" id="pto-weekly-inputs">
-        <!-- Rendered via JS -->
-    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left;" id="pto-weekly-inputs"></div>
     <div class="dialog-btns">
       <button class="btn-action" style="background: #475569;" onclick="closePtoWeeklyModal()">Cancel</button>
       <button class="btn-action" style="background: #10b981;" onclick="savePtoWeeklyModal()">Save Distribution</button>
@@ -402,13 +386,14 @@
     </div>
     <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
         <p style="margin-bottom: 14px;"><strong style="color: #93c5fd;">What it does:</strong> End-to-end tactical alignment (Demand Pipeline vs. Maximum Capacity Potential).</p>
-        <p style="margin-bottom: 20px;"><strong style="color: #c4b5fd;">Core Focus:</strong> This is the definitive "Command Center" dashboard that highlights exactly where the pipeline will choke on a monthly and weekly basis. It bridges your marketing numbers with your physical roster limitations.</p>
+        <p style="margin-bottom: 20px;"><strong style="color: #c4b5fd;">Core Focus:</strong> This is the definitive "Command Center" dashboard that highlights exactly where the pipeline will choke on a monthly and weekly basis.</p>
         <h3 style="color: #f8fafc; font-size: 14px; margin-bottom: 10px; border-bottom: 1px dotted #374151; padding-bottom: 6px;">Key Features & Logic</h3>
         <ul style="padding-left: 24px; list-style-type: disc;">
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">The 50/50 Dual View:</strong> Maps out unconstrained mathematical Demand side-by-side with your roster's true Max Potential Yield at every transition point.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Dynamic Time Flexing (Fluid Time):</strong> It converts rigid task quotas into a Fluid Time bank. Every PS routed to a PFA instantly frees up 30 minutes of clinical time that is immediately reinvested into Evaluation capacity.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Smart Stitching (Cross-Boundary Weeks):</strong> The engine detects weeks that bridge two months. Clicking a Split Week in "God Mode" instantly pulls data from the adjacent month, presenting a unified 5-day continuous view for supervisor triage without corrupting your monthly aggregates.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Triangulation Sync:</strong> Cloud Sync natively builds a dictionary of Exact PTO dates, ensuring that specific manual date ranges deduct absolute correct capacity values.</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">The 50/50 Dual View:</strong> Maps unconstrained mathematical Demand side-by-side with your roster's true Max Potential Yield.</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Dynamic Time Flexing (Fluid Time):</strong> Converts rigid task quotas into a Fluid Time bank. Every PS routed to a PFA frees up 30 minutes of clinical time that is immediately reinvested into Evaluation capacity.</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Smart Stitching (Cross-Boundary Weeks):</strong> The engine detects weeks that bridge two months. Clicking a Split Week in "God Mode" instantly presents a unified 5-day continuous view without corrupting monthly aggregates.</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Triangulation Sync:</strong> Cloud Sync natively builds a dictionary of Exact PTO dates, subtracting company holidays and specific clinician dates for accurate operational denominators.</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Omnipresent Territory Management:</strong> Adding a state postal code in Global Parameters automatically provisions demand rows, matrix columns, and heatmap tracking everywhere.</li>
         </ul>
     </div>
   </div>
@@ -446,7 +431,7 @@
     
     <div style="background: #0f172a; padding: 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 16px;">
         <h3 style="color: #93c5fd; font-size: 11px; text-transform: uppercase; margin-bottom: 8px;">Optimization Results</h3>
-        <p style="color: #cbd5e1; font-size: 12px; margin-bottom: 12px;">The engine ran 1,500 scenarios using Quadratic Variance to prioritize critical deficits, enforced Dynamic Bench Strength (scaling CE options based on state volume), penalized allocations to zero-demand states, and applied a Soft Focus Penalty to protect Unicorns from hoarding.</p>
+        <p style="color: #cbd5e1; font-size: 12px; margin-bottom: 12px;">The engine ran 1,500 scenarios using Quadratic Variance to prioritize critical deficits, enforced Dynamic Bench Strength, penalized allocations to zero-demand states, and applied Soft Focus Penalties.</p>
         
         <div style="display:flex; gap:16px;">
             <div style="flex:1; background: #1e293b; padding: 10px; border-radius: 4px; text-align:center; border: 1px solid #475569;">
@@ -474,25 +459,43 @@
   </div>
 </div>
 
-<!-- GLOBAL PARAMS MODAL -->
+<!-- GLOBAL PARAMS MODAL (WITH PERMANENT STATE MANAGEMENT) -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal-content">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
         <h2 style="margin:0; border:none; color:#fff; font-size:14px;">Global Volume & Parameters Manager</h2>
         <button class="btn-action" style="font-size: 11px; padding: 8px 16px;" onclick="saveGlobalModalParams()">COMMIT & RECALCULATE</button>
     </div>
+
+    <!-- PERMANENT TERRITORY & STATE MANAGEMENT WIDGET -->
+    <div style="margin-bottom: 16px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div>
+                <h2 style="margin:0; font-size: 10px; color:#93c5fd; text-transform:uppercase;">Active State Territories (<span id="territory-count">28</span>)</h2>
+                <p style="font-size: 9px; color:#64748b; margin-top: 2px;">Add new states to automatically expand matrix columns, application demand rows, and heatmap tracking.</p>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <input type="text" id="new-master-state-inp" placeholder="e.g. CA" maxlength="2" style="width: 55px; text-transform: uppercase; font-weight:bold; letter-spacing:1px; padding:4px;">
+                <button class="btn-action" style="background:#10b981; padding: 5px 12px; font-size: 10px;" onclick="addNewTerritoryState()">+ ADD STATE</button>
+            </div>
+        </div>
+        <div id="territory-pills-container" style="display:flex; flex-wrap:wrap; gap:4px; max-height: 80px; overflow-y: auto; padding: 6px; background:#161b22; border-radius:4px; border:1px solid #1e293b;"></div>
+    </div>
     
-    <!-- NEW HOLIDAY ENTRY -->
+    <!-- GLOBAL HOLIDAYS ENTRY -->
     <div style="margin-bottom: 16px; background: rgba(59,130,246,0.05); border: 1px solid #3b82f6; border-radius: 6px; padding: 12px;">
         <h2 style="margin-bottom: 4px; font-size: 10px; color:#93c5fd;">Global Company Holidays</h2>
         <p style="font-size: 9px; color:#64748b; margin-bottom: 8px;">Enter exact dates separated by commas (MM/DD/YYYY). The Triangulation Engine will subtract these from operational weeks automatically.</p>
         <input type="text" id="mod-global-holidays" placeholder="e.g. 11/11/2026, 11/25/2026, 11/26/2026" style="width: 100%; text-align: left;">
     </div>
 
+    <!-- CALENDAR WORKING DAYS -->
     <div style="margin-bottom: 16px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
         <h2 style="margin-bottom: 8px; font-size: 10px; color:#94a3b8;">Calendar Working Days</h2>
         <div style="overflow-x: auto;"><table class="compact-modal-table" id="modal-wd-table" style="width: 100%;"></table></div>
     </div>
+
+    <!-- DEMAND & CONVERSION TABLES -->
     <div style="display: flex; flex-direction: column; gap: 16px;">
       <div style="background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
           <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
@@ -590,6 +593,7 @@ function closeDialog() { document.getElementById('custom-dialog-overlay').style.
 // --- CONSTANTS & CALENDAR LOGIC ---
 const ALL_KNOWN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DEFAULT_STATE_LIST = ["MA","NJ","NH","CT","NY","PA","RI","ME","VA","OH","TX","IL","DC","FL","NC","GA","SC","MD","DE","WV","MO","WI","NV","AZ","CO","NM","MT","OK"];
+const WEEK_LABELS = ["Week 1 (1st-7th)", "Week 2 (8th-14th)", "Week 3 (15th-21st)", "Week 4 (22nd-28th)", "Week 5 (29th+)"];
 const PS_HANDLE = 0.5; // 30 mins
 const EV_HANDLE = 1.0; // 60 mins
 
@@ -632,11 +636,7 @@ function getCalendarWeeks(monthStr) {
             let exists = weeks.find(w => w.start.getTime() === weekStart.getTime());
             if(!exists) {
                 weeks.push({
-                    start: new Date(weekStart), 
-                    end: new Date(weekEnd),     
-                    bizStart: bizStart,
-                    bizEnd: bizEnd,
-                    wd: wdCount
+                    start: new Date(weekStart), end: new Date(weekEnd), bizStart: bizStart, bizEnd: bizEnd, wd: wdCount
                 });
             }
         }
@@ -657,7 +657,6 @@ function getCalendarWeeks(monthStr) {
         if (i === weeks.length - 1 && w.bizEnd.getDay() >= 1 && w.bizEnd.getDay() < 5) label += " ⤄";
         w.label = label;
     }
-    
     return weeks;
 }
 
@@ -669,7 +668,6 @@ function getQuickWeekStats(mName, wIdx) {
     let w_wd = cWeeks[wIdx].wd;
     if(w_wd <= 0) return null;
 
-    let isStrict = (FUNNEL.capacityModel || 'strict') === 'strict';
     let mult = 1 + (FUNNEL.volBump / 100);
     let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
     
@@ -685,7 +683,7 @@ function getQuickWeekStats(mName, wIdx) {
     let w_psDem = m_psDem * (w_wd / wd);
     let w_evDem = m_evDem * (w_wd / wd);
 
-    let w_pfaPsCap = 0, w_ceStrictPsCap = 0, w_ceStrictEvCap = 0, w_ceTotalH = 0, w_cePto = 0, w_pfaPto = 0;
+    let w_pfaPsCap = 0, w_ceStrictPsCap = 0, w_ceTotalH = 0, w_cePto = 0, w_pfaPto = 0;
 
     Object.keys(ROSTER).forEach(n => {
         let r = ROSTER[n];
@@ -700,7 +698,6 @@ function getQuickWeekStats(mName, wIdx) {
             w_pfaPto += w_pto;
         } else {
             w_ceStrictPsCap += (net * qPs);
-            w_ceStrictEvCap += (net * qEv);
             w_ceTotalH += (net * (qPs*PS_HANDLE + qEv*EV_HANDLE));
             w_cePto += w_pto;
         }
@@ -716,28 +713,27 @@ function getQuickWeekStats(mName, wIdx) {
         cePsDem: w_remCePsDem, cePsCap: w_ceStrictPsCap,
         pfaPsDem: w_actualPfaYield, pfaPsCap: w_pfaPsCap,
         ptoCe: w_cePto, ptoPfa: w_pfaPto,
-        evStrictDem: w_evDem, evStrictCap: w_ceStrictEvCap, evFluidCap: isStrict ? w_ceStrictEvCap : w_fluidEvCap,
+        evDem: w_evDem, evFluidCap: w_fluidEvCap,
         bizStart: cWeeks[wIdx].bizStart, bizEnd: cWeeks[wIdx].bizEnd
     };
 }
-
 
 // --- INITIAL STATE ---
 let ACTIVE_TIMELINE = []; let LEDGER = {}; let ROSTER = {}; let FUNNEL = {}; let MASTER_STATES = [];
 let activeMonthIdx = 0; let chartPs = null; let chartEv = null;
 let ARCHIVED_TIMELINE = []; let ARCHIVED_LEDGER = {}; let ARCHIVED_ROSTER = {};
 let lastMatrixBackup = null; 
-let heatmapViewMode = 'mo'; // 'mo' or 'wk'
-let stateMetricsCache = {}; // Cache for weekly re-renders
-let activeWeekFilter = null; // null = monthly aggregate, 0-4 = specific week drill-down
-let weeklyCapacityViewMode = 'PS'; // 'PS' or 'EV'
+let heatmapViewMode = 'mo'; 
+let stateMetricsCache = {}; 
+let activeWeekFilter = null; 
+let weeklyCapacityViewMode = 'PS'; 
 
 // --- BOOTSTRAP: OPTIMISTIC LOCAL-FIRST UI ---
 function bootstrapDataEngine() {
     ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
     ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
-    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80, capacityModel: 'strict', holidays: '' };
+    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80, holidays: '' };
     MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v2_stat')) || [...DEFAULT_STATE_LIST];
     ARCHIVED_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_archive_time')) || [];
     ARCHIVED_LEDGER = JSON.parse(localStorage.getItem('funnel_v2_archive_ledg')) || {};
@@ -750,7 +746,13 @@ function bootstrapDataEngine() {
 
 function hydrateDataDefaults() {
     ACTIVE_TIMELINE.forEach((m) => {
-      if (!LEDGER[m]) { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
+      if (!LEDGER[m]) { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; }
+      if (!LEDGER[m].apps) LEDGER[m].apps = {};
+      if (!LEDGER[m].conv) LEDGER[m].conv = {};
+      MASTER_STATES.forEach(s => { 
+          if (LEDGER[m].apps[s] === undefined) LEDGER[m].apps[s] = 0; 
+          if (LEDGER[m].conv[s] === undefined) LEDGER[m].conv[s] = 0; 
+      });
       if (!LEDGER[m].manualWeeks) { LEDGER[m].manualWeeks = [{start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}]; }
     });
     
@@ -779,7 +781,6 @@ function hydrateDataDefaults() {
 
         ACTIVE_TIMELINE.forEach(m => {
             if (ROSTER[name].pto[m] === undefined) ROSTER[name].pto[m] = 0;
-            // Silent PTO Migration to Weekly Array fallback
             if (!ROSTER[name].pto_weekly[m]) {
                 ROSTER[name].pto_weekly[m] = [ROSTER[name].pto[m] || 0, 0, 0, 0, 0];
             }
@@ -836,9 +837,6 @@ function loadFunnelUI() {
   document.getElementById('mod-global-ev-sched').value = FUNNEL.evSchedRate;
   document.getElementById('mod-global-ev-comp').value = FUNNEL.evCompRate;
   document.getElementById('mod-global-enroll').value = FUNNEL.enrollRate;
-  
-  let model = FUNNEL.capacityModel || 'strict';
-  setCapacityModelUI(model);
 }
 
 function saveFunnelParams() {
@@ -870,7 +868,7 @@ function moveMonth(idx, dir) {
     
     window.lastMatrixBackup = null; 
     document.getElementById('undo-opt-btn').style.display = 'none';
-    activeWeekFilter = null; // reset god mode
+    activeWeekFilter = null; 
 
     saveState(); renderMonthManagerUI(); buildTimelineControls(); recalculateDashboardMetrics();
 }
@@ -958,15 +956,92 @@ function buildTimelineControls() {
         activeMonthIdx = i; 
         window.lastMatrixBackup = null; 
         document.getElementById('undo-opt-btn').style.display = 'none';
-        activeWeekFilter = null; // reset filter on tab change
+        activeWeekFilter = null; 
         buildTimelineControls(); recalculateDashboardMetrics(); 
     };
     container.appendChild(btn);
   });
 }
 
+// --- TERRITORY STATE LIFECYCLE (PERMANENT MANAGEMENT) ---
+function addNewTerritoryState() {
+    const inp = document.getElementById('new-master-state-inp');
+    if (!inp) return;
+    const s = inp.value.trim().toUpperCase();
+    
+    if (!s || s.length !== 2 || !/^[A-Z]{2}$/.test(s)) {
+        promptAlert("Please enter a valid 2-letter US state postal code (e.g. CA, WA, TN).");
+        return;
+    }
+    if (MASTER_STATES.includes(s)) {
+        promptAlert(`State territory '${s}' is already active.`);
+        return;
+    }
+    
+    MASTER_STATES.push(s);
+    
+    // Provision zero-values across all months (active and archived)
+    [...ACTIVE_TIMELINE, ...ARCHIVED_TIMELINE].forEach(m => {
+        if (LEDGER[m]) {
+            if (!LEDGER[m].apps) LEDGER[m].apps = {};
+            if (!LEDGER[m].conv) LEDGER[m].conv = {};
+            if (LEDGER[m].apps[s] === undefined) LEDGER[m].apps[s] = 0;
+            if (LEDGER[m].conv[s] === undefined) LEDGER[m].conv[s] = 0;
+        }
+        if (ARCHIVED_LEDGER[m]) {
+            if (!ARCHIVED_LEDGER[m].apps) ARCHIVED_LEDGER[m].apps = {};
+            if (!ARCHIVED_LEDGER[m].conv) ARCHIVED_LEDGER[m].conv = {};
+            if (ARCHIVED_LEDGER[m].apps[s] === undefined) ARCHIVED_LEDGER[m].apps[s] = 0;
+            if (ARCHIVED_LEDGER[m].conv[s] === undefined) ARCHIVED_LEDGER[m].conv[s] = 0;
+        }
+    });
+    
+    inp.value = '';
+    saveState();
+    populateGlobalModalViews();
+    recalculateDashboardMetrics();
+    promptAlert(`State '${s}' successfully added!\n\nIt is now active across the Licensure Matrix, Application Projections, and Cascading Heatmap.`);
+}
+
+function removeTerritoryState(s) {
+    promptConfirm(`Are you sure you want to remove '${s}' from active territories? This will remove its matrix columns and projected app volume.`, () => {
+        MASTER_STATES = MASTER_STATES.filter(st => st !== s);
+        [...ACTIVE_TIMELINE, ...ARCHIVED_TIMELINE].forEach(m => {
+            if (LEDGER[m]) {
+                if (LEDGER[m].apps) delete LEDGER[m].apps[s];
+                if (LEDGER[m].conv) delete LEDGER[m].conv[s];
+            }
+        });
+        Object.keys(ROSTER).forEach(name => {
+            if (ROSTER[name].profile) ROSTER[name].profile = ROSTER[name].profile.filter(st => st !== s);
+            if (ROSTER[name].mix) {
+                Object.keys(ROSTER[name].mix).forEach(m => {
+                    ROSTER[name].mix[m] = ROSTER[name].mix[m].filter(st => st !== s);
+                });
+            }
+        });
+        saveState();
+        populateGlobalModalViews();
+        recalculateDashboardMetrics();
+        promptAlert(`State territory '${s}' has been removed.`);
+    });
+}
+
 function populateGlobalModalViews() {
   document.getElementById('mod-global-holidays').value = FUNNEL.holidays || '';
+
+  // Render Territory Pills & Count
+  const pillsContainer = document.getElementById('territory-pills-container');
+  const countEl = document.getElementById('territory-count');
+  if (countEl) countEl.innerText = MASTER_STATES.length;
+  if (pillsContainer) {
+      pillsContainer.innerHTML = MASTER_STATES.map(s => `
+          <span style="display:inline-flex; align-items:center; gap:4px; background:#1e293b; color:#93c5fd; border:1px solid #334155; padding:2px 6px; border-radius:3px; font-size:9px; font-weight:bold;">
+              ${s}
+              <span style="color:#ef4444; cursor:pointer; font-size:10px; margin-left:2px;" title="Remove ${s}" onclick="removeTerritoryState('${s}')">×</span>
+          </span>
+      `).join('');
+  }
 
   const wdTable = document.getElementById('modal-wd-table');
   let html = `<thead><tr><th style="border-right:1px solid #374151;">Metric</th>${ACTIVE_TIMELINE.map(m => `<th>${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody><tr><td style="border-right:1px solid #374151;"><strong>Working Days</strong></td>`;
@@ -1096,7 +1171,8 @@ function renderSidebarProfileManager(ceAllocations) {
 function addLicenseToProfile(name) {
   const inp = document.getElementById(`add-${name.replace(/\s/g, '')}`); if(!inp) return;
   const state = inp.value.toUpperCase().trim();
-  if (state && MASTER_STATES.includes(state)) {
+  if (!state) return;
+  if (MASTER_STATES.includes(state)) {
     if(!ROSTER[name].profile) ROSTER[name].profile = [];
     if (!ROSTER[name].profile.includes(state)) {
       ROSTER[name].profile.push(state);
@@ -1106,6 +1182,8 @@ function addLicenseToProfile(name) {
       });
       saveState(); recalculateDashboardMetrics();
     }
+  } else {
+    promptAlert(`State '${state}' is not in active territories. Please add it first in Global Volume & Parameters.`);
   }
   inp.value = '';
 }
@@ -1130,25 +1208,6 @@ function renderVisualBar(label, dem, cap, type) {
         <div class="bar-bg"><div class="bar-fill ${colorClass}" style="width: ${wPct}%;"></div></div>
       </div>
     `;
-}
-
-// --- CAPACITY MODEL CONTROL ---
-function setCapacityModel(model) {
-    FUNNEL.capacityModel = model;
-    setCapacityModelUI(model);
-    saveState();
-    recalculateDashboardMetrics();
-}
-
-function setCapacityModelUI(model) {
-    const strictBtn = document.getElementById('btn-cap-strict');
-    const fluidBtn = document.getElementById('btn-cap-fluid');
-    if (strictBtn && fluidBtn) {
-        strictBtn.style.background = model === 'strict' ? '#3b82f6' : 'transparent';
-        strictBtn.style.color = model === 'strict' ? '#fff' : '#64748b';
-        fluidBtn.style.background = model === 'fluid' ? '#3b82f6' : 'transparent';
-        fluidBtn.style.color = model === 'fluid' ? '#fff' : '#64748b';
-    }
 }
 
 // --- OPTIMIZATION ALGORITHM (NATIVE JS SOLVER) ---
@@ -1192,27 +1251,20 @@ function scoreMatrix(toggles) {
                 });
             }
         }
-        score += ceOn.length * 0.05; // Gentle Soft Focus Penalty (Unicorn Protection)
+        score += ceOn.length * 0.05; 
     });
     
     window.optContext.states.forEach(s => {
         let st = stAlloc[s.name];
-        
-        // ZERO DEMAND RULE
         if (s.apps === 0 || s.reqHours === 0) {
-            if (st.countOn > 0) {
-                score += st.countOn * 50000; // Force them off
-            }
+            if (st.countOn > 0) score += st.countOn * 50000; 
         } else {
             let variance = st.ceHours - s.reqHours;
-            
             if(variance < 0) {
-                score += Math.pow(Math.abs(variance), 2) * 10; // High quadratic penalty for deficits
+                score += Math.pow(Math.abs(variance), 2) * 10; 
             } else {
-                score += variance * 0.5; // Light linear penalty for surplus (waste)
+                score += variance * 0.5; 
             }
-            
-            // Dynamic Bench Strength: More demand = more CE options needed
             let desiredBench = Math.max(2, Math.min(st.countLic, Math.ceil(s.apps / 80) + 1));
             if(st.countOn < desiredBench) {
                 score += (desiredBench - st.countOn) * 10000;
@@ -1233,11 +1285,8 @@ function runOptimizerEngine() {
     let bestToggles = JSON.parse(JSON.stringify(currentToggles));
     let bestScore = baselineScore;
     
-    // Run 50 Scenarios
     for(let i=0; i<50; i++) {
         let testToggles = JSON.parse(JSON.stringify(currentToggles));
-        
-        // Random Restart Kicks
         if (i > 0) {
             let flips = Math.floor(Math.random() * 3) + 1;
             for(let f=0; f<flips; f++) {
@@ -1249,7 +1298,6 @@ function runOptimizerEngine() {
             }
         }
         
-        // Greedy Hill Climb
         let improved = true;
         let loops = 0;
         while(improved && loops < 30) {
@@ -1258,7 +1306,7 @@ function runOptimizerEngine() {
             for(let ce of window.optContext.ces) {
                 for(let s of ce.profile) {
                     let orig = testToggles[ce.name][s];
-                    testToggles[ce.name][s] = !orig; // flip
+                    testToggles[ce.name][s] = !orig; 
                     let newScore = scoreMatrix(testToggles);
                     
                     if(newScore < bestScore) {
@@ -1266,7 +1314,7 @@ function runOptimizerEngine() {
                         bestToggles = JSON.parse(JSON.stringify(testToggles));
                         improved = true;
                     } else {
-                        testToggles[ce.name][s] = orig; // revert
+                        testToggles[ce.name][s] = orig; 
                     }
                 }
             }
@@ -1274,7 +1322,6 @@ function runOptimizerEngine() {
     }
     
     latestOptimizationResult = bestToggles;
-    
     document.getElementById('opt-current-score').innerText = Math.round(baselineScore).toLocaleString();
     document.getElementById('opt-new-score').innerText = Math.round(bestScore).toLocaleString();
     
@@ -1298,7 +1345,6 @@ function runOptimizerEngine() {
     } else {
         document.getElementById('opt-apply-btn').disabled = false;
     }
-    
     document.getElementById('opt-recommendations-tbody').innerHTML = changesHtml;
 }
 
@@ -1308,7 +1354,6 @@ document.getElementById('opt-apply-btn').addEventListener('click', function() {
     if(!latestOptimizationResult) return;
     let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
     
-    // Create Backup for Undo functionality
     window.lastMatrixBackup = {};
     Object.keys(ROSTER).forEach(ce => {
         if(ROSTER[ce].role !== 'PFA') {
@@ -1328,7 +1373,6 @@ document.getElementById('opt-apply-btn').addEventListener('click', function() {
     });
     
     document.getElementById('undo-opt-btn').style.display = 'inline-block';
-    
     saveState();
     recalculateDashboardMetrics();
     closeOptimizerModal();
@@ -1346,7 +1390,6 @@ function undoOptimization() {
     
     window.lastMatrixBackup = null;
     document.getElementById('undo-opt-btn').style.display = 'none';
-    
     saveState();
     recalculateDashboardMetrics();
 }
@@ -1379,8 +1422,7 @@ function exportMatrixToClipboard() {
     el.select();
     document.execCommand('copy');
     document.body.removeChild(el);
-    
-    promptAlert("✅ Matrix copied to clipboard!\n\nSelect the top-left CE name cell in your Google Sheet and press Ctrl+V to perfectly overwrite the matrix with this active configuration.");
+    promptAlert("✅ Matrix copied to clipboard!\n\nSelect the top-left CE name cell in your Google Sheet and press Ctrl+V to overwrite.");
 }
 
 // --- PTO WEEKLY MODAL LOGIC ---
@@ -1394,7 +1436,6 @@ function openPtoModal(ceName, month) {
     let weeklyPtoArr = r.pto_weekly[month] || [0,0,0,0,0];
     
     document.getElementById('pto-modal-title').innerText = `Edit PTO: ${ceName} (${month.split('_')[0]})`;
-    
     let labels = window.stateMetricsCache && window.stateMetricsCache.weekLabels ? window.stateMetricsCache.weekLabels : WEEK_LABELS;
     
     let inputsHtml = '';
@@ -1406,7 +1447,6 @@ function openPtoModal(ceName, month) {
             </div>
         `;
     }
-    
     document.getElementById('pto-weekly-inputs').innerHTML = inputsHtml;
     document.getElementById('pto-weekly-modal').style.display = 'flex';
 }
@@ -1430,7 +1470,6 @@ function savePtoWeeklyModal() {
     
     ROSTER[activePtoEditCe].pto_weekly[activePtoEditMonth] = newWeekly;
     ROSTER[activePtoEditCe].pto[activePtoEditMonth] = total;
-    
     saveState();
     recalculateDashboardMetrics();
     closePtoWeeklyModal();
@@ -1441,8 +1480,8 @@ function setHeatmapView(mode) {
     document.getElementById('btn-view-mo').className = mode === 'mo' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off';
     document.getElementById('btn-view-wk').className = mode === 'wk' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off';
     if(mode === 'mo') {
-        activeWeekFilter = null; // Exit God Mode when returning to monthly
-        recalculateDashboardMetrics(); // Force rerender of top boxes
+        activeWeekFilter = null; 
+        recalculateDashboardMetrics(); 
     } else {
         renderDualHeatmap(); 
     }
@@ -1450,7 +1489,7 @@ function setHeatmapView(mode) {
 
 function setWeekFilter(weekIdx) {
     if(activeWeekFilter === weekIdx) {
-        activeWeekFilter = null; // Toggle off
+        activeWeekFilter = null; 
     } else {
         activeWeekFilter = weekIdx;
     }
@@ -1557,6 +1596,7 @@ function renderWeeklyCapacityByProvider() {
     headHtml += `<th style="text-align:center; border-left:1px solid #374151;">WINDOW TOTAL</th></tr>`;
     thead.innerHTML = headHtml;
 
+    // Put PFAs at the bottom
     let sortedCEs = Object.keys(ROSTER).sort((a,b) => {
         let rA = ROSTER[a], rB = ROSTER[b];
         let roleA = rA.role || '', roleB = rB.role || '';
@@ -1574,7 +1614,6 @@ function renderWeeklyCapacityByProvider() {
         if (!isPS && r.role === 'PFA') return '';
 
         let quota = isPS ? (parseFloat(r.qPs[activeMonth]) || 0) : (parseFloat(r.qEv[activeMonth]) || 0);
-
         let rowHtml = `<tr><td style="position:sticky; left:0; background:#161b22; z-index:10; border-right:1px solid #374151;"><strong>${ce}</strong> <span style="font-size:8px; color:#64748b; margin-left:4px;">(${r.role})</span></td>`;
         
         let ceMonthTotal = 0;
@@ -1588,7 +1627,6 @@ function renderWeeklyCapacityByProvider() {
             
             let capStr = cap > 0 ? Math.round(cap) : '-';
             let colorStr = cap > 0 ? (isPS ? '#60a5fa' : '#a78bfa') : '#475569';
-            
             rowHtml += `<td style="text-align:center; font-weight:bold; color:${colorStr};">${capStr}</td>`;
         }
         monthGrandTotal += ceMonthTotal;
@@ -1612,8 +1650,6 @@ function recalculateDashboardMetrics() {
   let wd = LEDGER[activeMonth].wd;
   let mult = 1 + (FUNNEL.volBump / 100);
   let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
-  
-  let isStrict = (FUNNEL.capacityModel || 'strict') === 'strict';
 
   // Dynamic Calendar Boundaries
   let calWeeks = getCalendarWeeks(activeMonth);
@@ -1640,7 +1676,6 @@ function recalculateDashboardMetrics() {
   // --- MONTHLY AGGREGATE CALCULATIONS ---
   let pfaTotalHours = 0, pfaPtoTotal = 0, pfaPsCap = 0;
   let ceTotalHours = 0, cePtoTotal = 0, ceStrictPsCap = 0, ceStrictEvCap = 0;
-  
   let pfaPtoWeekly = [0,0,0,0,0];
 
   Object.keys(ROSTER).forEach(name => {
@@ -1649,7 +1684,6 @@ function recalculateDashboardMetrics() {
     let qPs = parseFloat(r.qPs[activeMonth]) || 0;
     let qEv = parseFloat(r.qEv[activeMonth]) || 0;
     let netDays = Math.max(0, wd - pto);
-    
     let weeklyPtoArr = r.pto_weekly[activeMonth] || [0,0,0,0,0];
 
     if (r.role === 'PFA') { 
@@ -1676,7 +1710,7 @@ function recalculateDashboardMetrics() {
     
     sysGrossPsDemand += statePsDemandFull; sysGrossEvDemand += stateEvDemand;
     stateMetrics[s] = { apps: bumpedApps, psDemandFull: statePsDemandFull, evDemand: stateEvDemand, psCapCe: 0, evCapCe: 0, allocatedCeHours: 0, assigned: [], weekly: [] };
-    for(let w=0; w<5; w++) stateMetrics[s].weekly.push({ evDemand: 0, allocatedCeHours: 0, evCapCe: 0, strictEvCap: 0, strictPsCap: 0 });
+    for(let w=0; w<5; w++) stateMetrics[s].weekly.push({ evDemand: 0, allocatedCeHours: 0, evCapCe: 0 });
   });
 
   let targetPfaDemand = sysGrossPsDemand * (FUNNEL.pfaRouteRate / 100);
@@ -1697,7 +1731,7 @@ function recalculateDashboardMetrics() {
 
   let p_apps = d_bumped; let p_psSched = maxSystemPsCapacity; let p_psComp = p_psSched * (FUNNEL.psCompRate/100);
   let p_scrIn = p_psComp * (FUNNEL.screenInRate/100); let p_yldEvDem = p_scrIn * (FUNNEL.evSchedRate/100); 
-  let p_evSched = Math.min(p_yldEvDem, isStrict ? ceStrictEvCap : ceFluidEvCap); 
+  let p_evSched = Math.min(p_yldEvDem, ceFluidEvCap); 
   let p_evComp = p_evSched * (FUNNEL.evCompRate/100); let p_enroll = p_evComp * (FUNNEL.enrollRate/100);
 
   // --- WEEKLY VOLATILITY CALCULATIONS ---
@@ -1705,14 +1739,11 @@ function recalculateDashboardMetrics() {
       let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0;
       let netDays = Math.max(0, wd - pto); let qPs = parseFloat(r.qPs[activeMonth]) || 0; let qEv = parseFloat(r.qEv[activeMonth]) || 0;
       let totalH = netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE);
-      let strictEv = netDays * qEv;
-      let strictPs = netDays * qPs;
       let activeSt = r.mix[activeMonth] || []; let loadDenomApps = 0;
       activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); });
-      return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, totalHours: totalH, strictEv, strictPs };
+      return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, totalHours: totalH };
   });
 
-  // Calculate Macro Monthly Heatmap Allocations
   ceAllocations.forEach(ce => {
     if(ce.denom > 0) {
       ce.activeStates.forEach(s => {
@@ -1720,32 +1751,21 @@ function recalculateDashboardMetrics() {
             let weight = stateMetrics[s].apps / ce.denom; 
             stateMetrics[s].allocatedCeHours += (ce.totalHours * weight); 
             stateMetrics[s].assigned.push(ce.name); 
-            
-            if (!stateMetrics[s].strictEvCap) stateMetrics[s].strictEvCap = 0;
-            if (!stateMetrics[s].strictPsCap) stateMetrics[s].strictPsCap = 0;
-            stateMetrics[s].strictEvCap += (ce.strictEv * weight);
-            stateMetrics[s].strictPsCap += (ce.strictPs * weight);
         }
       });
     }
   });
 
   MASTER_STATES.forEach(s => {
-        let st = stateMetrics[s];
-        if (isStrict) {
-            st.psCapCe = st.strictPsCap || 0;
-            st.evCapCe = st.strictEvCap || 0;
-        } else {
-            st.psDemandCE = st.psDemandFull * (1 - pfaEffectiveSweepRate);
-            let reqPsH = st.psDemandCE * PS_HANDLE;
-            if (st.allocatedCeHours >= reqPsH) { st.psCapCe = st.psDemandCE; st.evCapCe = (st.allocatedCeHours - reqPsH) / EV_HANDLE; } 
-            else { st.psCapCe = st.allocatedCeHours / PS_HANDLE; st.evCapCe = 0; }
-        }
+      let st = stateMetrics[s];
+      st.psDemandCE = st.psDemandFull * (1 - pfaEffectiveSweepRate);
+      let reqPsH = st.psDemandCE * PS_HANDLE;
+      if (st.allocatedCeHours >= reqPsH) { st.psCapCe = st.psDemandCE; st.evCapCe = (st.allocatedCeHours - reqPsH) / EV_HANDLE; } 
+      else { st.psCapCe = st.allocatedCeHours / PS_HANDLE; st.evCapCe = 0; }
   });
 
   let sysWeeklyMetrics = [];
 
-  // Loop through the 5 weeks to calculate Micro Allocations & God Mode Stats
   for(let w=0; w<5; w++) {
       let w_wd = wdArray[w];
       if(w_wd <= 0) {
@@ -1755,9 +1775,8 @@ function recalculateDashboardMetrics() {
       
       let w_sysGrossPsDemand = sysGrossPsDemand * (w_wd / wd);
       let w_sysGrossEvDemand = sysGrossEvDemand * (w_wd / wd);
-      
       let w_pfaPsCap = 0;
-      let w_ceStrictPsCap = 0, w_ceStrictEvCap = 0, w_ceTotalHours = 0, w_cePtoTotal = 0;
+      let w_ceStrictPsCap = 0, w_ceTotalHours = 0, w_cePtoTotal = 0;
       
       Object.keys(ROSTER).forEach(n => {
           let r = ROSTER[n]; 
@@ -1771,7 +1790,6 @@ function recalculateDashboardMetrics() {
               w_pfaPsCap += (w_netDays * qPs);
           } else {
               w_ceStrictPsCap += (w_netDays * qPs);
-              w_ceStrictEvCap += (w_netDays * qEv);
               w_ceTotalHours += (w_netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE));
               w_cePtoTotal += w_pto;
           }
@@ -1780,19 +1798,16 @@ function recalculateDashboardMetrics() {
       let w_targetPfaDemand = w_sysGrossPsDemand * (FUNNEL.pfaRouteRate / 100);
       let w_actualPfaPsYield = Math.min(w_targetPfaDemand, w_pfaPsCap);
       let w_pfaEffectiveSweepRate = w_sysGrossPsDemand > 0 ? (w_actualPfaPsYield / w_sysGrossPsDemand) : 0;
-      
       let w_remainingCePsDemand = w_sysGrossPsDemand - w_actualPfaPsYield;
       let w_reqCePsHours = w_remainingCePsDemand * PS_HANDLE;
       let w_ceFluidEvCap = Math.max(0, w_ceTotalHours - w_reqCePsHours) / EV_HANDLE;
 
-      // Save drill-down metrics
       sysWeeklyMetrics.push({
           apps: sysTotalApps * (w_wd / wd),
           psUtil: (w_ceStrictPsCap + w_pfaPsCap) > 0 ? ((w_remainingCePsDemand + w_actualPfaPsYield) / (w_ceStrictPsCap + w_pfaPsCap)) * 100 : 0,
           ptoCe: w_cePtoTotal, ptoPfa: pfaPtoWeekly[w] || 0,
-          evStrictDem: w_sysGrossEvDemand, evStrictCap: w_ceStrictEvCap,
-          evFluidCap: isStrict ? w_ceStrictEvCap : w_ceFluidEvCap,
-          evUtil: (isStrict ? w_ceStrictEvCap : w_ceFluidEvCap) > 0 ? (w_sysGrossEvDemand / (isStrict ? w_ceStrictEvCap : w_ceFluidEvCap)) * 100 : 0,
+          evStrictDem: w_sysGrossEvDemand,
+          evFluidCap: w_ceFluidEvCap,
           cePsDemand: w_remainingCePsDemand, cePsCap: w_ceStrictPsCap,
           pfaPsDemand: w_actualPfaPsYield, pfaPsCap: w_pfaPsCap
       });
@@ -1806,20 +1821,13 @@ function recalculateDashboardMetrics() {
           let weeklyPtoArr = r.pto_weekly[activeMonth] || [0,0,0,0,0];
           let w_pto = weeklyPtoArr[w] || 0;
           let qPs = parseFloat(r.qPs[activeMonth]) || 0; let qEv = parseFloat(r.qEv[activeMonth]) || 0;
-          let w_netDays = Math.max(0, w_wd - w_pto);
-          let w_totalH = w_netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE);
-          let w_strictEv = w_netDays * qEv;
-          let w_strictPs = w_netDays * qPs;
+          let w_totalH = Math.max(0, w_wd - w_pto) * (qPs * PS_HANDLE + qEv * EV_HANDLE);
           
           if(ce.denom > 0) {
               ce.activeStates.forEach(s => {
                   if (stateMetrics[s]) { 
                       let weight = stateMetrics[s].apps / ce.denom; 
                       stateMetrics[s].weekly[w].allocatedCeHours += (w_totalH * weight); 
-                      if (!stateMetrics[s].weekly[w].strictEvCap) stateMetrics[s].weekly[w].strictEvCap = 0;
-                      if (!stateMetrics[s].weekly[w].strictPsCap) stateMetrics[s].weekly[w].strictPsCap = 0;
-                      stateMetrics[s].weekly[w].strictEvCap += (w_strictEv * weight);
-                      stateMetrics[s].weekly[w].strictPsCap += (w_strictPs * weight);
                   }
               });
           }
@@ -1827,17 +1835,12 @@ function recalculateDashboardMetrics() {
 
       MASTER_STATES.forEach(s => {
           let st = stateMetrics[s]; let w_st = st.weekly[w];
-          if (isStrict) {
-              w_st.evCapCe = w_st.strictEvCap || 0;
-          } else {
-              let w_psDemandCE = (st.psDemandFull * (w_wd / wd)) * (1 - w_pfaEffectiveSweepRate);
-              let w_reqPsH = w_psDemandCE * PS_HANDLE;
-              if (w_st.allocatedCeHours >= w_reqPsH) { w_st.evCapCe = (w_st.allocatedCeHours - w_reqPsH) / EV_HANDLE; } else { w_st.evCapCe = 0; }
-          }
+          let w_psDemandCE = (st.psDemandFull * (w_wd / wd)) * (1 - w_pfaEffectiveSweepRate);
+          let w_reqPsH = w_psDemandCE * PS_HANDLE;
+          if (w_st.allocatedCeHours >= w_reqPsH) { w_st.evCapCe = (w_st.allocatedCeHours - w_reqPsH) / EV_HANDLE; } else { w_st.evCapCe = 0; }
       });
   }
 
-  // --- CACHE & RENDER ---
   window.stateMetricsCache = { metrics: stateMetrics, wdArray: wdArray, weekLabels: weekLabels };
   
   // Update DOM elements
@@ -1853,20 +1856,18 @@ function recalculateDashboardMetrics() {
 
   window.optContext = { stateMap: stateMetrics, states: MASTER_STATES.map(s => { return { name: s, apps: stateMetrics[s].apps, reqHours: (stateMetrics[s].psDemandFull * (1 - pfaEffectiveSweepRate) * PS_HANDLE) + (stateMetrics[s].evDemand * EV_HANDLE) }; }), ces: ceAllocations.map(ce => { return { name: ce.name, profile: ce.masterProfile, totalHours: ce.totalHours, currentMix: ce.activeStates } }) };
 
-  // DYNAMIC RENDER OF TOP 4 BOXES (Monthly vs God Mode + Smart Stitching)
+  // TOP METRIC STATS
   let sysPsUtilPct = (ceStrictPsCap + pfaPsCap) > 0 ? ((remainingCePsDemand + actualPfaPsYield) / (ceStrictPsCap + pfaPsCap)) * 100 : 0;
   let fluidEvUtilPct = ceFluidEvCap > 0 ? (sysGrossEvDemand / ceFluidEvCap) * 100 : 0;
-  let strictEvUtilPct = ceStrictEvCap > 0 ? (sysGrossEvDemand / ceStrictEvCap) * 100 : 0;
   
   let d_apps = sysTotalApps;
   let d_psUtilPct = sysPsUtilPct;
   let d_cePsDem = remainingCePsDemand; let d_cePsCap = ceStrictPsCap;
   let d_pfaPsDem = actualPfaPsYield; let d_pfaPsCap = pfaPsCap;
   let d_ptoCe = cePtoTotal; let d_ptoPfa = pfaPtoTotal;
-  let d_evUtilPct = isStrict ? strictEvUtilPct : fluidEvUtilPct;
+  let d_evUtilPct = fluidEvUtilPct;
   let d_evDem = sysGrossEvDemand; 
-  let d_evStrictCap = ceStrictEvCap; 
-  let d_evFluidCap = isStrict ? ceStrictEvCap : ceFluidEvCap;
+  let d_evFluidCap = ceFluidEvCap;
 
   let unifiedTitle = null;
   let dateRangeStr = "";
@@ -1874,7 +1875,6 @@ function recalculateDashboardMetrics() {
   if (activeWeekFilter !== null && calWeeks[activeWeekFilter]) {
       let aw = calWeeks[activeWeekFilter];
       
-      // Load base stats for the current week slice
       d_apps = sysWeeklyMetrics[activeWeekFilter].apps;
       d_cePsDem = sysWeeklyMetrics[activeWeekFilter].cePsDemand;
       d_cePsCap = sysWeeklyMetrics[activeWeekFilter].cePsCap;
@@ -1883,10 +1883,8 @@ function recalculateDashboardMetrics() {
       d_ptoCe = sysWeeklyMetrics[activeWeekFilter].ptoCe;
       d_ptoPfa = sysWeeklyMetrics[activeWeekFilter].ptoPfa;
       d_evDem = sysWeeklyMetrics[activeWeekFilter].evStrictDem;
-      d_evStrictCap = sysWeeklyMetrics[activeWeekFilter].evStrictCap;
-      d_evFluidCap = isStrict ? sysWeeklyMetrics[activeWeekFilter].evStrictCap : sysWeeklyMetrics[activeWeekFilter].evFluidCap;
+      d_evFluidCap = sysWeeklyMetrics[activeWeekFilter].evFluidCap;
 
-      // Smart Stitching Logic for Cross-Boundary Weeks
       let forwardSplit = aw.bizEnd.getDay() >= 1 && aw.bizEnd.getDay() < 5;
       let backwardSplit = aw.bizStart.getDay() > 1 && aw.bizStart.getDay() <= 5;
       
@@ -1900,16 +1898,14 @@ function recalculateDashboardMetrics() {
       }
 
       if (stitch) {
-          // Merge stats across month boundary to create unified operational 5-day week
           d_apps += stitch.apps;
           d_cePsDem += stitch.cePsDem; d_cePsCap += stitch.cePsCap;
           d_pfaPsDem += stitch.pfaPsDem; d_pfaPsCap += stitch.pfaPsCap;
           d_ptoCe += stitch.ptoCe; d_ptoPfa += stitch.ptoPfa;
-          d_evDem += stitch.evStrictDem; d_evStrictCap += stitch.evStrictCap; 
-          d_evFluidCap += isStrict ? stitch.evStrictCap : stitch.evFluidCap;
+          d_evDem += stitch.evDem;  
+          d_evFluidCap += stitch.evFluidCap;
           
           unifiedTitle = `UNIFIED SPLIT-WEEK VIEW`;
-          
           let minStart = aw.bizStart < stitch.bizStart ? aw.bizStart : stitch.bizStart;
           let maxEnd = aw.bizEnd > stitch.bizEnd ? aw.bizEnd : stitch.bizEnd;
           dateRangeStr = `${minStart.getMonth()+1}/${minStart.getDate()} - ${maxEnd.getMonth()+1}/${maxEnd.getDate()}`;
@@ -1917,7 +1913,6 @@ function recalculateDashboardMetrics() {
           dateRangeStr = `${aw.bizStart.getMonth()+1}/${aw.bizStart.getDate()} - ${aw.bizEnd.getMonth()+1}/${aw.bizEnd.getDate()}`;
       }
 
-      // Recalculate Combined Utilizations
       d_psUtilPct = (d_cePsCap + d_pfaPsCap) > 0 ? ((d_cePsDem + d_pfaPsDem) / (d_cePsCap + d_pfaPsCap)) * 100 : 0;
       d_evUtilPct = d_evFluidCap > 0 ? (d_evDem / d_evFluidCap) * 100 : 0;
   }
@@ -1949,8 +1944,7 @@ function recalculateDashboardMetrics() {
     <div class="stat-card-modern">
       <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Shows the impact of dynamic time-flexing versus your rigid quotas.</span></div></span></div>
       <div class="util-pct">${Math.round(d_evUtilPct)}%</div>
-      ${renderVisualBar('Strict Quota', d_evDem, d_evStrictCap, 'cap')}
-      ${renderVisualBar(isStrict ? 'Strict Limit' : 'Fluid Time', d_evDem, d_evFluidCap, 'cap')}
+      ${renderVisualBar('Fluid Time', d_evDem, d_evFluidCap, 'cap')}
     </div>
   `;
 
@@ -2268,7 +2262,6 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
                         if (tMonth) { 
                             let calWeeks = getCalendarWeeks(tMonth);
                             let weekIdx = -1;
-                            
                             if (calWeeks && calWeeks.length > 0) {
                                 for(let i=0; i<calWeeks.length; i++) {
                                     let wStart = new Date(calWeeks[i].start); wStart.setHours(0,0,0,0);
@@ -2297,7 +2290,6 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
             let newWeekly = ptoCounts[ce][m].weekly || [0,0,0,0,0];
 
             let isDifferent = (currentTotal !== newTotal) || (currentWeekly.join(',') !== newWeekly.join(','));
-
             if (isDifferent) { 
                 ROSTER[ce].pto[m] = newTotal; 
                 ROSTER[ce].pto_weekly[m] = newWeekly;
@@ -2306,7 +2298,7 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
         }); 
     });
     
-    saveState(); recalculateDashboardMetrics(); if (!isSilent) promptAlert(`Sync Complete! ${u} Monthly/Weekly PTO entries updated, and Exact Date dictionary fully synced.`);
+    saveState(); recalculateDashboardMetrics(); if (!isSilent) promptAlert(`Sync Complete! ${u} PTO entries updated and Exact Dates synced.`);
   } catch (err) { console.error("Error fetching or parsing CSV:", err); if (!isSilent) promptAlert("Failed to sync: " + err.message);
   } finally { if (!isSilent) { btn.innerText = ogText; btn.disabled = false; } }
 }
