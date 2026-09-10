@@ -2280,18 +2280,40 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
         if (dateVal) {
             let d = new Date(dateVal);
             if (!isNaN(d.getTime())) {
-                let exactKey = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-                let mName = ALL_KNOWN_MONTHS[d.getMonth()]; let tMonth = ACTIVE_TIMELINE.find(m => m.startsWith(mName));
-                
-                Object.keys(ceColMap).forEach(cIdx => { 
-                    let f = parseFloat(String(row[cIdx]).trim()); 
-                    if (!isNaN(f) && f > 0) {
-                        let ceName = ceColMap[cIdx];
-                        exactPtoData[ceName][exactKey] = (exactPtoData[ceName][exactKey] || 0) + f;
+                let dYear = d.getFullYear();
+                let mName = ALL_KNOWN_MONTHS[d.getMonth()]; 
 
-                        if (tMonth) { 
+                // Prioritize matching both the month name and the exact 4-digit year
+                let tMonth = ACTIVE_TIMELINE.find(m => {
+                    let clean = m.split('_')[0].trim();
+                    let matchesMonth = clean.toLowerCase().startsWith(mName.toLowerCase());
+                    let yearMatch = clean.match(/\d{4}/);
+                    let mYear = yearMatch ? parseInt(yearMatch[0]) : null;
+                    return matchesMonth && mYear === dYear;
+                });
+
+                // Fallback: If a tab doesn't have an explicit year (e.g. legacy "January"), match if no specific year was specified
+                if (!tMonth) {
+                    tMonth = ACTIVE_TIMELINE.find(m => {
+                        let clean = m.split('_')[0].trim();
+                        let matchesMonth = clean.toLowerCase().startsWith(mName.toLowerCase());
+                        let yearMatch = clean.match(/\d{4}/);
+                        return matchesMonth && !yearMatch;
+                    });
+                }
+
+                if (tMonth) { 
+                    Object.keys(ceColMap).forEach(cIdx => { 
+                        let f = parseFloat(String(row[cIdx]).trim()); 
+                        if (!isNaN(f) && f > 0) {
+                            let dKey = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                            let ceName = ceColMap[cIdx];
+                            if (!exactPtoData[ceName]) exactPtoData[ceName] = {};
+                            exactPtoData[ceName][dKey] = (exactPtoData[ceName][dKey] || 0) + f;
+
                             let calWeeks = getCalendarWeeks(tMonth);
                             let weekIdx = -1;
+                            
                             if (calWeeks && calWeeks.length > 0) {
                                 for(let i=0; i<calWeeks.length; i++) {
                                     let wStart = new Date(calWeeks[i].start); wStart.setHours(0,0,0,0);
@@ -2302,11 +2324,11 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
                             if (weekIdx === -1) { weekIdx = Math.floor((d.getDate() - 1) / 7); }
                             if (weekIdx > 4) weekIdx = 4;
                             
-                            ptoCounts[ceName][tMonth].total += f;
-                            ptoCounts[ceName][tMonth].weekly[weekIdx] += f;
+                            ptoCounts[ceColMap[cIdx]][tMonth].total += f;
+                            ptoCounts[ceColMap[cIdx]][tMonth].weekly[weekIdx] += f;
                         }
-                    }
-                }); 
+                    }); 
+                }
             }
         }
     }
