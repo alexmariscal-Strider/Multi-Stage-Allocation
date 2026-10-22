@@ -730,7 +730,7 @@ let weeklyCapacityViewMode = 'PS';
 
 // --- BOOTSTRAP: OPTIMISTIC LOCAL-FIRST UI ---
 function bootstrapDataEngine() {
-    ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December"];
+    ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December","January 2027","February 2027","March 2027"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
     ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
     FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80, holidays: '' };
@@ -910,7 +910,7 @@ function archiveSpecificMonth(m) {
 
 function restoreArchivedMonth(m) {
     ARCHIVED_TIMELINE = ARCHIVED_TIMELINE.filter(x => x !== m); ACTIVE_TIMELINE.push(m); 
-    if (ARCHIVED_LEDGER[m]) { LEDGER[m] = JSON.parse(JSON.stringify(ARCHIVED_LEDGER[m])); delete ARCHIVED_LEDGER[m]; } else { LEDGER[m] = { wd: 21, apps: {}, conv: {}, manualWeeks: [{start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}] }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
+    if (ARCHIVED_LEDGER[m]) { LEDGER[m] = JSON.parse(JSON.stringify(ARCHIVED_LEDGER[m])); delete ARCHIVED_LEDGER[m]; } else { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; MASTER_STATES.forEach(s => { LEDGER[m].apps[s] = 0; LEDGER[m].conv[s] = 0; }); }
     Object.keys(ROSTER).forEach(name => {
         if (ARCHIVED_ROSTER[name]) {
             if (ARCHIVED_ROSTER[name].pto && ARCHIVED_ROSTER[name].pto[m] !== undefined) { ROSTER[name].pto[m] = ARCHIVED_ROSTER[name].pto[m]; delete ARCHIVED_ROSTER[name].pto[m]; } else { ROSTER[name].pto[m] = 0; }
@@ -1886,9 +1886,9 @@ function recalculateDashboardMetrics() {
 
   window.optContext = { stateMap: stateMetrics, states: MASTER_STATES.map(s => { return { name: s, apps: stateMetrics[s].apps, reqHours: (stateMetrics[s].psDemandFull * (1 - pfaEffectiveSweepRate) * PS_HANDLE) + (stateMetrics[s].evDemand * EV_HANDLE) }; }), ces: ceAllocations.map(ce => { return { name: ce.name, profile: ce.masterProfile, totalHours: ce.totalHours, currentMix: ce.activeStates } }) };
 
-  // TOP METRIC STATS
+  // TOP METRIC STATS - WIRED DIRECTLY TO LIVE PIPELINE FUNNEL (d_evSched = 901)
   let sysPsUtilPct = (ceStrictPsCap + pfaPsCap) > 0 ? ((remainingCePsDemand + actualPfaPsYield) / (ceStrictPsCap + pfaPsCap)) * 100 : 0;
-  let fluidEvUtilPct = ceFluidEvCap > 0 ? (sysGrossEvDemand / ceFluidEvCap) * 100 : 0;
+  let fluidEvUtilPct = ceFluidEvCap > 0 ? (d_evSched / ceFluidEvCap) * 100 : 0;
   
   let d_apps = sysTotalApps;
   let d_psUtilPct = sysPsUtilPct;
@@ -1896,7 +1896,7 @@ function recalculateDashboardMetrics() {
   let d_pfaPsDem = actualPfaPsYield; let d_pfaPsCap = pfaPsCap;
   let d_ptoCe = cePtoTotal; let d_ptoPfa = pfaPtoTotal;
   let d_evUtilPct = fluidEvUtilPct;
-  let d_evDem = sysGrossEvDemand; 
+  let d_evDem = d_evSched; // Fix: strictly use the true pipeline demand (901)
   let d_evFluidCap = ceFluidEvCap;
 
   let unifiedTitle = null;
@@ -1972,7 +1972,7 @@ function recalculateDashboardMetrics() {
     </div>
 
     <div class="stat-card-modern">
-      <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Shows the impact of dynamic time-flexing versus your rigid quotas.</span></div></span></div>
+      <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Calculated as true Funnel Pipeline Demand (${fmt(d_evDem)}) divided by Schedulable Capacity (${fmt(d_evFluidCap)}).</span></div></span></div>
       <div class="util-pct">${Math.round(d_evUtilPct)}%</div>
       ${renderVisualBar('Fluid Time', d_evDem, d_evFluidCap, 'cap')}
     </div>
@@ -2283,7 +2283,6 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
                 let dYear = d.getFullYear();
                 let mName = ALL_KNOWN_MONTHS[d.getMonth()]; 
 
-                // Prioritize matching both the month name and the exact 4-digit year
                 let tMonth = ACTIVE_TIMELINE.find(m => {
                     let clean = m.split('_')[0].trim();
                     let matchesMonth = clean.toLowerCase().startsWith(mName.toLowerCase());
@@ -2292,7 +2291,6 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
                     return matchesMonth && mYear === dYear;
                 });
 
-                // Fallback: If a tab doesn't have an explicit year (e.g. legacy "January"), match if no specific year was specified
                 if (!tMonth) {
                     tMonth = ACTIVE_TIMELINE.find(m => {
                         let clean = m.split('_')[0].trim();
