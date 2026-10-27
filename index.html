@@ -1886,18 +1886,18 @@ function recalculateDashboardMetrics() {
 
   window.optContext = { stateMap: stateMetrics, states: MASTER_STATES.map(s => { return { name: s, apps: stateMetrics[s].apps, reqHours: (stateMetrics[s].psDemandFull * (1 - pfaEffectiveSweepRate) * PS_HANDLE) + (stateMetrics[s].evDemand * EV_HANDLE) }; }), ces: ceAllocations.map(ce => { return { name: ce.name, profile: ce.masterProfile, totalHours: ce.totalHours, currentMix: ce.activeStates } }) };
 
-  // TOP METRIC STATS - WIRED DIRECTLY TO LIVE PIPELINE FUNNEL (d_evSched = 901)
+  // DYNAMIC RENDER OF TOP 4 BOXES (Monthly vs God Mode + Smart Stitching)
   let sysPsUtilPct = (ceStrictPsCap + pfaPsCap) > 0 ? ((remainingCePsDemand + actualPfaPsYield) / (ceStrictPsCap + pfaPsCap)) * 100 : 0;
-  let fluidEvUtilPct = ceFluidEvCap > 0 ? (d_evSched / ceFluidEvCap) * 100 : 0;
+  let strictEvUtilPct = ceStrictEvCap > 0 ? (d_evSched / ceStrictEvCap) * 100 : 0;
   
   let d_apps = sysTotalApps;
   let d_psUtilPct = sysPsUtilPct;
   let d_cePsDem = remainingCePsDemand; let d_cePsCap = ceStrictPsCap;
   let d_pfaPsDem = actualPfaPsYield; let d_pfaPsCap = pfaPsCap;
   let d_ptoCe = cePtoTotal; let d_ptoPfa = pfaPtoTotal;
-  let d_evUtilPct = fluidEvUtilPct;
-  let d_evDem = d_evSched; // Fix: strictly use the true pipeline demand (901)
-  let d_evFluidCap = ceFluidEvCap;
+  let d_evUtilPct = strictEvUtilPct;
+  let d_evDem = d_evSched; 
+  let d_evStrictCap = ceStrictEvCap; 
 
   let unifiedTitle = null;
   let dateRangeStr = "";
@@ -1913,7 +1913,7 @@ function recalculateDashboardMetrics() {
       d_ptoCe = sysWeeklyMetrics[activeWeekFilter].ptoCe;
       d_ptoPfa = sysWeeklyMetrics[activeWeekFilter].ptoPfa;
       d_evDem = sysWeeklyMetrics[activeWeekFilter].evStrictDem;
-      d_evFluidCap = sysWeeklyMetrics[activeWeekFilter].evFluidCap;
+      d_evStrictCap = sysWeeklyMetrics[activeWeekFilter].evFluidCap;
 
       let forwardSplit = aw.bizEnd.getDay() >= 1 && aw.bizEnd.getDay() < 5;
       let backwardSplit = aw.bizStart.getDay() > 1 && aw.bizStart.getDay() <= 5;
@@ -1933,7 +1933,7 @@ function recalculateDashboardMetrics() {
           d_pfaPsDem += stitch.pfaPsDem; d_pfaPsCap += stitch.pfaPsCap;
           d_ptoCe += stitch.ptoCe; d_ptoPfa += stitch.ptoPfa;
           d_evDem += stitch.evDem;  
-          d_evFluidCap += stitch.evFluidCap;
+          d_evStrictCap += stitch.evFluidCap;
           
           unifiedTitle = `UNIFIED SPLIT-WEEK VIEW`;
           let minStart = aw.bizStart < stitch.bizStart ? aw.bizStart : stitch.bizStart;
@@ -1944,12 +1944,12 @@ function recalculateDashboardMetrics() {
       }
 
       d_psUtilPct = (d_cePsCap + d_pfaPsCap) > 0 ? ((d_cePsDem + d_pfaPsDem) / (d_cePsCap + d_pfaPsCap)) * 100 : 0;
-      d_evUtilPct = d_evFluidCap > 0 ? (d_evDem / d_evFluidCap) * 100 : 0;
+      d_evUtilPct = d_evStrictCap > 0 ? (d_evDem / d_evStrictCap) * 100 : 0;
   }
 
   let enrollRate = FUNNEL.enrollRate / 100;
   let finalYield = activeWeekFilter !== null 
-      ? Math.min(d_evDem, d_evFluidCap) * (FUNNEL.evCompRate / 100) * enrollRate
+      ? Math.min(d_evDem, d_evStrictCap) * (FUNNEL.evCompRate / 100) * enrollRate
       : Math.min(d_enroll, p_enroll);
 
   document.getElementById('top-stats-container').innerHTML = `
@@ -1972,13 +1972,13 @@ function recalculateDashboardMetrics() {
     </div>
 
     <div class="stat-card-modern">
-      <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Calculated as true Funnel Pipeline Demand (${fmt(d_evDem)}) divided by Schedulable Capacity (${fmt(d_evFluidCap)}).</span></div></span></div>
+      <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Calculated as true Funnel Pipeline Demand (${fmt(d_evDem)}) divided by Schedulable Capacity (${fmt(d_evStrictCap)}).</span></div></span></div>
       <div class="util-pct">${Math.round(d_evUtilPct)}%</div>
-      ${renderVisualBar('Fluid Time', d_evDem, d_evFluidCap, 'cap')}
+      ${renderVisualBar('Schedulable Quota', d_evDem, d_evStrictCap, 'cap')}
     </div>
   `;
 
-  renderExecutiveBanner(d_evDem, d_evFluidCap, finalYield, activeMonth, unifiedTitle, dateRangeStr);
+  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr);
   renderDualHeatmap(); 
   renderMatrix(ceAllocations, stateMetrics);
   renderCollapsibleLedger(activeMonth, wd); 
@@ -1998,7 +1998,7 @@ function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitl
 
   container.innerHTML = `
     <h3>${title}</h3>
-    <p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. Using dynamically flexed clinical hours, the CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>
+    <p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. Based on strict clinician quotas (3/day), the CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>
     ${evShort > 0 ? `<p style="color:#fca5a5; margin-top:6px;">⚠️ Mid-Funnel Deficit: We are short ${fmt(evShort)} Evaluation slots compared to baseline demand.</p>` : `<p style="color:#86efac; margin-top:6px;">✅ Eval Queue is adequately staffed.</p>`}
     <p style="margin-top: 6px;"><strong>Actual Enrollment Yield:</strong> Constraining the pipeline by physical PS limits and EV limits, the system projects <strong>${fmt(finalYield)} Actual Enrollments</strong> for this ${activeWeekFilter !== null ? 'timeframe' : 'cohort'}.</p>
   `;
