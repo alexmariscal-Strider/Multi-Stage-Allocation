@@ -40,12 +40,34 @@
   .param-inp-wrap span { color: #64748b; font-size: 10px; margin-left: 2px; }
 
   /* COMPACT RIGHT-SIDE FUNNEL PARAMETER STRIP */
-  .params-strip-funnel { display: flex; gap: 6px; flex-wrap: wrap; background: #0f172a; padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 10px; align-items: center; justify-content: space-between; width: 100%; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
-  .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .params-strip-funnel .param-lbl { font-size: 7.5px; color: #94a3b8; text-transform: uppercase; font-weight: 700; text-align: center; letter-spacing: 0.02em; }
-  .params-strip-funnel .param-inp-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 1px 3px; height: 20px; }
-  .params-strip-funnel .param-inp-wrap input { background: transparent; border: none; color: #a5b4fc; width: 30px; text-align: center; font-size: 10.5px; font-weight: 700; padding: 0; outline: none; }
-  .params-strip-funnel .param-inp-wrap span { color: #64748b; font-size: 9px; margin-left: 1px; }
+  .params-strip-funnel { 
+    display: flex; 
+    gap: 4px; 
+    flex-wrap: wrap; 
+    background: #0f172a; 
+    padding: 6px 8px; 
+    border-radius: 6px; 
+    border: 1px solid #334155; 
+    margin-bottom: 10px; 
+    align-items: center; 
+    justify-content: flex-start; 
+    width: 100%; 
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); 
+  }
+  .param-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(30, 41, 59, 0.5);
+    padding: 3px 5px;
+    border-radius: 4px;
+    border: 1px solid #1e293b;
+  }
+  .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .params-strip-funnel .param-lbl { font-size: 7px; color: #94a3b8; text-transform: uppercase; font-weight: 700; text-align: center; letter-spacing: 0.02em; }
+  .params-strip-funnel .param-inp-wrap { display: flex; align-items: center; background: #0b0f19; border: 1px solid #475569; border-radius: 3px; padding: 0 3px; height: 19px; }
+  .params-strip-funnel .param-inp-wrap input { background: transparent; border: none; color: #a5b4fc; width: 28px; text-align: center; font-size: 10px; font-weight: 700; padding: 0; outline: none; }
+  .params-strip-funnel .param-inp-wrap span { color: #64748b; font-size: 8.5px; margin-left: 1px; }
 
   /* UNIFIED FUNNEL TABLE */
   .unified-funnel { width: 100%; border-collapse: collapse; }
@@ -232,17 +254,22 @@
         <!-- PARAMETER STRIP RELOCATED OVER THE FUNNEL FOR EASY SINGLE-FRAME SCREENSHOTS -->
         <div id="unified-funnel-wrapper" style="margin-top: 10px;">
             <div class="params-strip-funnel">
-                <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
-                <div style="width: 1px; height: 16px; background: #334155;"></div>
-                <div class="param-item"><span class="param-lbl">App→PS</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
-                <div class="param-item"><span class="param-lbl">PFA Alloc</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="triggerUpdate()"><span>%</span></div></div>
-                <div style="width: 1px; height: 16px; background: #334155;"></div>
-                <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="triggerUpdate()"><span>%</span></div></div>
-                <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="triggerUpdate()"><span>%</span></div></div>
-                <div style="width: 1px; height: 16px; background: #334155;"></div>
-                <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="triggerUpdate()"><span>%</span></div></div>
-                <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="triggerUpdate()"><span>%</span></div></div>
-                <div class="param-item"><span class="param-lbl">Enroll</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div class="param-group">
+                    <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
+                </div>
+                <div class="param-group">
+                    <div class="param-item"><span class="param-lbl">App→PS</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
+                    <div class="param-item"><span class="param-lbl">PFA Alloc</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="triggerUpdate()"><span>%</span></div></div>
+                </div>
+                <div class="param-group">
+                    <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+                    <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="triggerUpdate()"><span>%</span></div></div>
+                </div>
+                <div class="param-group">
+                    <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="triggerUpdate()"><span>%</span></div></div>
+                    <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+                    <div class="param-item"><span class="param-lbl">Enroll</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="triggerUpdate()"><span>%</span></div></div>
+                </div>
             </div>
 
             <table class="unified-funnel">
@@ -2027,22 +2054,37 @@ function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitl
           let r = metrics[s];
           if (!r) return;
           let psBal = Math.round(r.psCapCe - r.psDemandCE);
-          if (r.psDemandFull > 0) {
+          if (r.psDemandFull > 0 || r.apps > 0) {
               if (psBal < 0) {
-                  overflowStates.push(s);
+                  overflowStates.push({ state: s, deficit: Math.abs(psBal), apps: r.apps });
               } else if (r.assigned.length > 0 && r.assigned.length <= 2) {
-                  shieldStates.push(s);
+                  shieldStates.push({ state: s, count: r.assigned.length, apps: r.apps });
               }
           }
       });
   }
 
+  // Sort by operational priority: highest volume / strain first
+  overflowStates.sort((a, b) => b.deficit - a.deficit || b.apps - a.apps);
+  shieldStates.sort((a, b) => a.count - b.count || b.apps - a.apps);
+
   let pfaGuidance = '';
   if (overflowStates.length > 0 || shieldStates.length > 0) {
+      let ofList = overflowStates.map(o => o.state);
+      let shList = shieldStates.map(s => s.state);
+
+      let ofDisplay = ofList.length > 6 
+        ? `${ofList.slice(0, 5).join(', ')} <span style="font-weight:normal; color:#94a3b8;">(+${ofList.length - 5} more)</span>` 
+        : ofList.join(', ');
+
+      let shDisplay = shList.length > 6 
+        ? `${shList.slice(0, 5).join(', ')} <span style="font-weight:normal; color:#94a3b8;">(+${shList.length - 5} more)</span>` 
+        : shList.join(', ');
+
       pfaGuidance = `<p style="margin-top:6px; font-size:10.5px; color:#cbd5e1; border-top:1px dashed #374151; padding-top:6px;">
           <strong style="color:#93c5fd;">PFA Intake Directives:</strong>
-          ${overflowStates.length > 0 ? `Prioritize front-door overflow in <span style="color:#fca5a5; font-weight:bold;">${overflowStates.slice(0, 5).join(', ')}${overflowStates.length > 5 ? '...' : ''}</span> (CEs at max capacity). ` : ''}
-          ${shieldStates.length > 0 ? `Route screens in <span style="color:#fcd34d; font-weight:bold;">${shieldStates.slice(0, 4).join(', ')}</span> to shield rare clinical licenses.` : ''}
+          ${overflowStates.length > 0 ? `Prioritize front-door overflow in <span style="color:#fca5a5; font-weight:bold;">${ofDisplay}</span> (CEs at max capacity). ` : ''}
+          ${shieldStates.length > 0 ? `Route screens in <span style="color:#fcd34d; font-weight:bold;">${shDisplay}</span> to shield ${shieldStates.length} scarce clinical territory${shieldStates.length > 1 ? 'ies' : ''}.` : ''}
       </p>`;
   }
 
