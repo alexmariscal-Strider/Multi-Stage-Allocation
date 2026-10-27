@@ -39,6 +39,14 @@
   .param-inp-wrap input { background: transparent; border: none; color: #a5b4fc; width: 35px; text-align: center; font-size: 11px; font-weight: 700; padding: 0; outline: none; }
   .param-inp-wrap span { color: #64748b; font-size: 10px; margin-left: 2px; }
 
+  /* COMPACT RIGHT-SIDE FUNNEL PARAMETER STRIP */
+  .params-strip-funnel { display: flex; gap: 6px; flex-wrap: wrap; background: #0f172a; padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 10px; align-items: center; justify-content: space-between; width: 100%; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+  .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .params-strip-funnel .param-lbl { font-size: 7.5px; color: #94a3b8; text-transform: uppercase; font-weight: 700; text-align: center; letter-spacing: 0.02em; }
+  .params-strip-funnel .param-inp-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 1px 3px; height: 20px; }
+  .params-strip-funnel .param-inp-wrap input { background: transparent; border: none; color: #a5b4fc; width: 30px; text-align: center; font-size: 10.5px; font-weight: 700; padding: 0; outline: none; }
+  .params-strip-funnel .param-inp-wrap span { color: #64748b; font-size: 9px; margin-left: 1px; }
+
   /* UNIFIED FUNNEL TABLE */
   .unified-funnel { width: 100%; border-collapse: collapse; }
   .unified-funnel th { background: #0f172a; padding: 8px 10px; text-align: right; border-bottom: 2px solid #334155; color: #94a3b8; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -109,6 +117,12 @@
   .matrix-btn-off { background: #374151; color: #94a3b8; border: 1px solid #4b5563; }
   .matrix-btn-off:hover { background: #4b5563; color: #f1f5f9; }
   .matrix-cell-empty { background: #0f172a; text-align: center; color: #334155; font-size: 10px; }
+
+  /* PFA ROUTING BADGES */
+  .pfa-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; }
+  .pfa-badge-overflow { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+  .pfa-badge-shield { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
+  .pfa-badge-std { background: rgba(51,65,85,0.4); color: #94a3b8; border: 1px solid #475569; }
 
   /* INPUTS & BUTTONS */
   input, select { background: #0f172a; border: 1px solid #374151; color: #f8fafc; padding: 4px; border-radius: 4px; text-align: center; font-size: 10px; transition: 0.2s; }
@@ -198,21 +212,6 @@
   </div>
 </div>
 
-<!-- GLOBAL PARAMETER STRIP -->
-<div class="params-strip">
-    <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
-    <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">App→PS Route</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">PFA Allocation</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="triggerUpdate()"><span>%</span></div></div>
-    <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="triggerUpdate()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="triggerUpdate()"><span>%</span></div></div>
-    <div style="width: 1px; height: 20px; background: #374151; margin: 0 4px;"></div>
-    <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="triggerUpdate()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="triggerUpdate()"><span>%</span></div></div>
-    <div class="param-item"><span class="param-lbl">Enrollment</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="triggerUpdate()"><span>%</span></div></div>
-</div>
-
 <!-- 50/50 SPLIT ARCHITECTURE -->
 <div class="top-50-50">
     <!-- LEFT HALF: Narrative & High-Level Metrics -->
@@ -221,7 +220,7 @@
         <div class="stat-grid" id="top-stats-container"></div>
     </div>
 
-    <!-- RIGHT HALF: Unified Bottom-Up Funnel -->
+    <!-- RIGHT HALF: Unified Bottom-Up Funnel with Parameters Shifted Above -->
     <div class="top-right panel">
         <h2 style="cursor: pointer; margin-bottom: 0;" onclick="toggleFunnelCollapse()">
             <span style="display:flex; align-items:center; gap:6px;">
@@ -229,7 +228,23 @@
             </span>
             <span style="font-size: 8px; color: #64748b; font-weight: normal;">Bottom-Up Capacity Logic</span>
         </h2>
+
+        <!-- PARAMETER STRIP RELOCATED OVER THE FUNNEL FOR EASY SINGLE-FRAME SCREENSHOTS -->
         <div id="unified-funnel-wrapper" style="margin-top: 10px;">
+            <div class="params-strip-funnel">
+                <div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div style="width: 1px; height: 16px; background: #334155;"></div>
+                <div class="param-item"><span class="param-lbl">App→PS</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div class="param-item"><span class="param-lbl">PFA Alloc</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div style="width: 1px; height: 16px; background: #334155;"></div>
+                <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div class="param-item"><span class="param-lbl">Screen-In</span><div class="param-inp-wrap"><input type="number" id="mod-global-scr-in" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div style="width: 1px; height: 16px; background: #334155;"></div>
+                <div class="param-item"><span class="param-lbl">Eval Sched</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-sched" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div class="param-item"><span class="param-lbl">Eval Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ev-comp" onchange="triggerUpdate()"><span>%</span></div></div>
+                <div class="param-item"><span class="param-lbl">Enroll</span><div class="param-inp-wrap"><input type="number" id="mod-global-enroll" onchange="triggerUpdate()"><span>%</span></div></div>
+            </div>
+
             <table class="unified-funnel">
                 <thead><tr><th>Funnel Stage</th><th style="color: #93c5fd;">Demand (Math)</th><th style="color: #86efac;">Max Potential</th><th>Variance</th></tr></thead>
                 <tbody>
@@ -386,14 +401,21 @@
     </div>
     <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
         <p style="margin-bottom: 14px;"><strong style="color: #93c5fd;">What it does:</strong> End-to-end tactical alignment (Demand Pipeline vs. Maximum Capacity Potential).</p>
-        <p style="margin-bottom: 20px;"><strong style="color: #c4b5fd;">Core Focus:</strong> This is the definitive "Command Center" dashboard that highlights exactly where the pipeline will choke on a monthly and weekly basis.</p>
-        <h3 style="color: #f8fafc; font-size: 14px; margin-bottom: 10px; border-bottom: 1px dotted #374151; padding-bottom: 6px;">Key Features & Logic</h3>
-        <ul style="padding-left: 24px; list-style-type: disc;">
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">The 50/50 Dual View:</strong> Maps unconstrained mathematical Demand side-by-side with your roster's true Max Potential Yield.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Dynamic Time Flexing (Fluid Time):</strong> Converts rigid task quotas into a Fluid Time bank. Every PS routed to a PFA frees up 30 minutes of clinical time that is immediately reinvested into Evaluation capacity.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Smart Stitching (Cross-Boundary Weeks):</strong> The engine detects weeks that bridge two months. Clicking a Split Week in "God Mode" instantly presents a unified 5-day continuous view without corrupting monthly aggregates.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Triangulation Sync:</strong> Cloud Sync natively builds a dictionary of Exact PTO dates, subtracting company holidays and specific clinician dates for accurate operational denominators.</li>
-            <li style="margin-bottom: 10px;"><strong style="color: #e2e8f0;">Omnipresent Territory Management:</strong> Adding a state postal code in Global Parameters automatically provisions demand rows, matrix columns, and heatmap tracking everywhere.</li>
+        <p style="margin-bottom: 16px;"><strong style="color: #c4b5fd;">Core Focus:</strong> Definitive Command Center tracking where pipeline demand collides with strict clinical capacity.</p>
+        
+        <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">Strategic PFA Routing Directives (State Heatmap)</h3>
+        <p style="font-size: 11.5px; color:#94a3b8; margin-bottom: 8px;">Because licensed CEs are anchored to strict daily quotas (3 Evals/day), the PFA pool must be routed strategically rather than randomly to prevent front-door dropoff and protect scarce clinical licenses:</p>
+        <ul style="padding-left: 20px; list-style-type: none; margin-bottom: 16px;">
+            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-overflow" style="font-size:9px;">🚨 PFA: PS OVERFLOW</span> <strong style="color:#f8fafc;">(Tier 1 Priority):</strong> Triggered when CE Phone Screen balance is negative (<code style="color:#fca5a5;">PS Bal &lt; 0</code>). Assigned CEs physically cannot absorb front-door screening demand within their 4 PS/day quota. Intake must route screens to PFAs to prevent prospective patient drop-off.</li>
+            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-shield" style="font-size:9px;">⭐ PFA: SHIELD LICENSURE</span> <strong style="color:#f8fafc;">(Tier 2 Priority):</strong> Triggered when a territory has active demand but <code style="color:#fcd34d;">≤ 2 assigned CEs</code> (rare or PsyPact licenses). PFAs absorb intake screens so these rare clinicians reserve 100% of their calendars for specialized Evaluations.</li>
+            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-std" style="font-size:9px;">📞 CE STANDARD</span> <strong style="color:#f8fafc;">(Tier 3 Standard):</strong> The state has healthy CE bench strength and positive PS capacity. Salaried CEs fulfill their standard 4 PS/day quota here so PFA hours are not spent unnecessarily.</li>
+        </ul>
+
+        <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">Key Engine Capabilities</h3>
+        <ul style="padding-left: 20px; list-style-type: disc;">
+            <li style="margin-bottom: 8px;"><strong style="color: #e2e8f0;">Strict-First Capacity Realism:</strong> Denominators are firmly anchored to physical CE quotas (3 Evals/day, net of exact PTO) to match live EHR booking templates.</li>
+            <li style="margin-bottom: 8px;"><strong style="color: #e2e8f0;">Smart Stitching (Cross-Boundary Weeks):</strong> Clicking a Split Week in "God Mode" stitches Monday-to-Friday continuous data across month transitions without corrupting monthly aggregates.</li>
+            <li style="margin-bottom: 8px;"><strong style="color: #e2e8f0;">Triangulation Sync:</strong> Cloud Sync natively builds a dictionary of Exact PTO dates, automatically subtracting company holidays and specific clinician dates for accurate operational denominators.</li>
         </ul>
     </div>
   </div>
@@ -1996,11 +2018,40 @@ function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitl
   
   if (activeWeekFilter !== null) container.classList.add('wk-mode'); else container.classList.remove('wk-mode');
 
+  // Calculate High-Priority PFA Routing Targets
+  let overflowStates = [];
+  let shieldStates = [];
+  if (window.stateMetricsCache && window.stateMetricsCache.metrics) {
+      let metrics = window.stateMetricsCache.metrics;
+      MASTER_STATES.forEach(s => {
+          let r = metrics[s];
+          if (!r) return;
+          let psBal = Math.round(r.psCapCe - r.psDemandCE);
+          if (r.psDemandFull > 0) {
+              if (psBal < 0) {
+                  overflowStates.push(s);
+              } else if (r.assigned.length > 0 && r.assigned.length <= 2) {
+                  shieldStates.push(s);
+              }
+          }
+      });
+  }
+
+  let pfaGuidance = '';
+  if (overflowStates.length > 0 || shieldStates.length > 0) {
+      pfaGuidance = `<p style="margin-top:6px; font-size:10.5px; color:#cbd5e1; border-top:1px dashed #374151; padding-top:6px;">
+          <strong style="color:#93c5fd;">PFA Intake Directives:</strong>
+          ${overflowStates.length > 0 ? `Prioritize front-door overflow in <span style="color:#fca5a5; font-weight:bold;">${overflowStates.slice(0, 5).join(', ')}${overflowStates.length > 5 ? '...' : ''}</span> (CEs at max capacity). ` : ''}
+          ${shieldStates.length > 0 ? `Route screens in <span style="color:#fcd34d; font-weight:bold;">${shieldStates.slice(0, 4).join(', ')}</span> to shield rare clinical licenses.` : ''}
+      </p>`;
+  }
+
   container.innerHTML = `
     <h3>${title}</h3>
     <p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. Based on strict clinician quotas (3/day), the CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>
     ${evShort > 0 ? `<p style="color:#fca5a5; margin-top:6px;">⚠️ Mid-Funnel Deficit: We are short ${fmt(evShort)} Evaluation slots compared to baseline demand.</p>` : `<p style="color:#86efac; margin-top:6px;">✅ Eval Queue is adequately staffed.</p>`}
     <p style="margin-top: 6px;"><strong>Actual Enrollment Yield:</strong> Constraining the pipeline by physical PS limits and EV limits, the system projects <strong>${fmt(finalYield)} Actual Enrollments</strong> for this ${activeWeekFilter !== null ? 'timeframe' : 'cohort'}.</p>
+    ${pfaGuidance}
   `;
 }
 
@@ -2019,6 +2070,7 @@ function renderDualHeatmap() {
         <tr>
         <th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th>
         <th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Apps</th>
+        <th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th>
         <th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #93c5fd; background: rgba(59,130,246,0.05);">📞 PHONE SCREENS (CE)</th>
         <th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #c4b5fd; background: rgba(139,92,246,0.05);">📋 EVALUATIONS</th>
         <th rowspan="2" style="text-align:center;">Assigned</th>
@@ -2039,9 +2091,22 @@ function renderDualHeatmap() {
 
         if(r.evDemand > 0) { if(evPct >= 90) countEvBlue++; else if(evPct >= 80) countEvGreen++; else if(evPct >= 70) countEvYellow++; else countEvRed++; }
 
+        // PFA ROUTING DIRECTIVE LOGIC
+        let pfaDirectiveHtml = '<span style="color:#475569;">—</span>';
+        if (r.apps > 0 || r.psDemandFull > 0) {
+            if (psBal < 0) {
+                pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-overflow" title="CEs are at max quota. Route screens to PFA to clear front-door backlog.">🚨 PFA: PS Overflow</span>`;
+            } else if (r.assigned.length > 0 && r.assigned.length <= 2) {
+                pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-shield" title="Scarce territory (≤2 CEs). Route screens to PFA to reserve rare clinicians for evaluations.">⭐ PFA: Shield Licensure</span>`;
+            } else if (r.assigned.length > 2) {
+                pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-std" title="Healthy CE capacity. CEs fulfill their standard 4 PS/day quota.">📞 CE Standard</span>`;
+            }
+        }
+
         return `<tr>
             <td style="border-right:1px solid #374151;"><strong>${s}</strong></td>
             <td style="text-align:center; border-right:1px solid #374151; font-weight:700;">${r.apps === 0 ? '-' : fmt(r.apps)}</td>
+            <td style="text-align:center; border-right:1px solid #374151;">${pfaDirectiveHtml}</td>
             <td style="background:rgba(59,130,246,0.02); text-align:center;">${r.psDemandCE===0?'-':fmt(r.psDemandCE)}</td>
             <td style="background:rgba(59,130,246,0.02); text-align:center; font-weight:700; color:#93c5fd;">${r.psDemandCE===0?'-':fmt(r.psCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.psDemandCE>0?psCol:''}">${psStr}</span></td>
             <td style="background:rgba(59,130,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.psDemandCE===0?'':(psBal<0?'status-red':'status-green')}"><div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><span>${r.psDemandCE===0?'-':(psBal>0?'+':'')+fmt(psBal)}</span>${r.psDemandCE > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, psPct)}%; background:${psBarColor};"></div></div>` : ''}</div></td>
