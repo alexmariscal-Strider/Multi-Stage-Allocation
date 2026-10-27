@@ -31,43 +31,36 @@
   .top-left { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 10px; }
   .top-right { flex: 1; min-width: 400px; display: flex; flex-direction: column; }
 
-  /* PARAMETER STRIP */
-  .params-strip { display: flex; gap: 8px; flex-wrap: wrap; background: #111827; padding: 10px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 16px; align-items: center; justify-content: center; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-  .param-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .param-lbl { font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 700; text-align: center; }
-  .param-inp-wrap { display: flex; align-items: center; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 2px 4px; height: 22px; }
-  .param-inp-wrap input { background: transparent; border: none; color: #a5b4fc; width: 35px; text-align: center; font-size: 11px; font-weight: 700; padding: 0; outline: none; }
-  .param-inp-wrap span { color: #64748b; font-size: 10px; margin-left: 2px; }
-
   /* COMPACT RIGHT-SIDE FUNNEL PARAMETER STRIP */
   .params-strip-funnel { 
     display: flex; 
-    gap: 4px; 
+    gap: 6px; 
     flex-wrap: wrap; 
     background: #0f172a; 
-    padding: 6px 8px; 
+    padding: 8px 12px; 
     border-radius: 6px; 
     border: 1px solid #334155; 
-    margin-bottom: 10px; 
+    margin: 0 auto 12px auto; 
     align-items: center; 
-    justify-content: flex-start; 
+    justify-content: center; 
     width: 100%; 
+    max-width: 650px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); 
   }
   .param-group {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(30, 41, 59, 0.5);
-    padding: 3px 5px;
+    gap: 5px;
+    background: rgba(30, 41, 59, 0.6);
+    padding: 3px 6px;
     border-radius: 4px;
     border: 1px solid #1e293b;
   }
-  .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-  .params-strip-funnel .param-lbl { font-size: 7px; color: #94a3b8; text-transform: uppercase; font-weight: 700; text-align: center; letter-spacing: 0.02em; }
-  .params-strip-funnel .param-inp-wrap { display: flex; align-items: center; background: #0b0f19; border: 1px solid #475569; border-radius: 3px; padding: 0 3px; height: 19px; }
-  .params-strip-funnel .param-inp-wrap input { background: transparent; border: none; color: #a5b4fc; width: 28px; text-align: center; font-size: 10px; font-weight: 700; padding: 0; outline: none; }
-  .params-strip-funnel .param-inp-wrap span { color: #64748b; font-size: 8.5px; margin-left: 1px; }
+  .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .params-strip-funnel .param-lbl { font-size: 7.5px; color: #94a3b8; text-transform: uppercase; font-weight: 700; text-align: center; letter-spacing: 0.02em; }
+  .params-strip-funnel .param-inp-wrap { display: flex; align-items: center; background: #0b0f19; border: 1px solid #475569; border-radius: 3px; padding: 0 4px; height: 21px; }
+  .params-strip-funnel .param-inp-wrap input { background: transparent; border: none; color: #a5b4fc; width: 44px; text-align: center; font-size: 11px; font-weight: 700; padding: 0; outline: none; }
+  .params-strip-funnel .param-inp-wrap span { color: #64748b; font-size: 9px; margin-left: 2px; }
 
   /* UNIFIED FUNNEL TABLE */
   .unified-funnel { width: 100%; border-collapse: collapse; }
@@ -242,7 +235,7 @@
         <div class="stat-grid" id="top-stats-container"></div>
     </div>
 
-    <!-- RIGHT HALF: Unified Bottom-Up Funnel with Parameters Shifted Above -->
+    <!-- RIGHT HALF: Unified Bottom-Up Funnel with Parameters Shifted & Centered Above -->
     <div class="top-right panel">
         <h2 style="cursor: pointer; margin-bottom: 0;" onclick="toggleFunnelCollapse()">
             <span style="display:flex; align-items:center; gap:6px;">
@@ -251,7 +244,7 @@
             <span style="font-size: 8px; color: #64748b; font-weight: normal;">Bottom-Up Capacity Logic</span>
         </h2>
 
-        <!-- PARAMETER STRIP RELOCATED OVER THE FUNNEL FOR EASY SINGLE-FRAME SCREENSHOTS -->
+        <!-- PARAMETER STRIP CENTERED WITH 3-DIGIT INPUT CAPACITY -->
         <div id="unified-funnel-wrapper" style="margin-top: 10px;">
             <div class="params-strip-funnel">
                 <div class="param-group">
@@ -316,7 +309,7 @@
         </div>
     </h2>
     <div id="heatmap-summary" style="display: flex; gap: 8px; margin-bottom: 12px;"></div>
-    <div style="overflow-y: auto; max-height: 380px;">
+    <div style="overflow-y: auto; max-height: 420px;">
         <table id="heatmap-table" class="hover-row-trace">
         <thead id="heatmap-thead" style="position: sticky; top: 0; background: #161b22; z-index: 10;"></thead>
         <tbody id="heatmap-body"></tbody>
@@ -421,7 +414,7 @@
 
 <!-- DASHBOARD SUMMARY MODAL -->
 <div class="modal-overlay" id="summary-modal">
-  <div class="modal-content" style="max-width: 650px; overflow-wrap: break-word;">
+  <div class="modal-content" style="max-width: 680px; overflow-wrap: break-word;">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
         <h2 style="margin:0; border:none; color:#fff; font-size:15px;">ℹ️ Dashboard Summary & Architecture</h2>
         <button class="btn-action" style="background:#475569; padding: 6px 16px; font-size: 10px;" onclick="toggleModal('summary-modal')">CLOSE</button>
@@ -437,6 +430,9 @@
             <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-shield" style="font-size:9px;">⭐ PFA: SHIELD LICENSURE</span> <strong style="color:#f8fafc;">(Tier 2 Priority):</strong> Triggered when a territory has active demand but <code style="color:#fcd34d;">≤ 2 assigned CEs</code> (rare or PsyPact licenses). PFAs absorb intake screens so these rare clinicians reserve 100% of their calendars for specialized Evaluations.</li>
             <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-std" style="font-size:9px;">📞 CE STANDARD</span> <strong style="color:#f8fafc;">(Tier 3 Standard):</strong> The state has healthy CE bench strength and positive PS capacity. Salaried CEs fulfill their standard 4 PS/day quota here so PFA hours are not spent unnecessarily.</li>
         </ul>
+
+        <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">Gross vs. CE Net Subtraction</h3>
+        <p style="font-size: 11.5px; color:#94a3b8; margin-bottom: 16px;">In the State Heatmap, the Phone Screen column displays <code style="color:#93c5fd;">Gross → CE Net</code> (e.g. 334 → 268). This makes it immediately transparent that 66 screens were routed to the PFA target pool, leaving 268 net screens for assigned CEs.</p>
 
         <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">Key Engine Capabilities</h3>
         <ul style="padding-left: 20px; list-style-type: disc;">
@@ -1110,7 +1106,7 @@ function populateGlobalModalViews() {
   let cHtml = `<thead><tr><th style="position:sticky; left:0; top:0; background:#1f2937; z-index:3; border-right:1px solid #374151;">Territory</th>${ACTIVE_TIMELINE.map(m => `<th style="position:sticky; top:0; background:#1f2937; z-index:2;">${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody>`;
   MASTER_STATES.forEach((s, rIdx) => {
     cHtml += `<tr><td style="position:sticky; left:0; background:#161b22; z-index:1; border-right:1px solid #374151;"><strong>${s}</strong></td>`;
-    ACTIVE_TIMELINE.forEach((m, cIdx) => { cHtml += `<td><input type="number" class="paste-target" data-table="conv" data-row="${rIdx}" data-col="${cIdx}" id="mod-cnv-${s}-${m}" value="${LEDGER[m].conv[s]}" style="color:#c4b5fd;"></td>`; });
+    ACTIVE_TIMELINE.forEach((m, cIdx) => { aHtml += `<td><input type="number" class="paste-target" data-table="conv" data-row="${rIdx}" data-col="${cIdx}" id="mod-cnv-${s}-${m}" value="${LEDGER[m].conv[s]}" style="color:#c4b5fd;"></td>`; });
     cHtml += `</tr>`;
   });
   convTable.innerHTML = cHtml + '</tbody>';
@@ -1150,20 +1146,16 @@ function saveGlobalModalParams() {
 function moveClinicianOrder(name, direction) {
     if (!ROSTER[name]) return;
     
-    // 1. Separate clinicians safely by role to prevent CEs from incorrectly swapping order indices with hidden PFAs
     let ceNames = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0));
     let pfaNames = Object.keys(ROSTER).filter(n => ROSTER[n].role === 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0));
     
-    // 2. Normalize and flatten orders mathematically to eliminate identical overlapping indices (e.g. from roster deletions)
     ceNames.forEach((n, i) => { ROSTER[n].order = i * 10; });
-    pfaNames.forEach((n, i) => { ROSTER[n].order = (i * 10) + 10000; }); // Safely push PFAs to the bottom of global index hierarchy
+    pfaNames.forEach((n, i) => { ROSTER[n].order = (i * 10) + 10000; });
     
-    // 3. Determine specific operational boundary for swap
     let targetList = ROSTER[name].role === 'PFA' ? pfaNames : ceNames;
     let currIdx = targetList.indexOf(name);
     let targetIdx = currIdx + direction;
     
-    // 4. Perform identical assignment swap
     if (targetIdx >= 0 && targetIdx < targetList.length) {
         let targetName = targetList[targetIdx];
         let tempOrder = ROSTER[name].order;
@@ -1184,7 +1176,6 @@ function addNewClinicianToRoster() {
   let dPs = role === 'PFA' ? 10 : (role === 'LEAD' ? 3 : 4); 
   let dEv = role === 'PFA' ? 0 : 3;
   
-  // Calculate trailing order cleanly to guarantee uninhibited placement
   let maxOrder = 0;
   Object.keys(ROSTER).forEach(n => { if((ROSTER[n].order||0) > maxOrder) maxOrder = ROSTER[n].order; });
   let newOrder = maxOrder + 10; 
@@ -1305,7 +1296,6 @@ function openOptimizerModal() {
     setTimeout(() => { runOptimizerEngine(); }, 100);
 }
 
-// --- SCORE MATRIX WITH ZERO-DEMAND RESTRICTION ---
 function scoreMatrix(toggles) {
     let stAlloc = {};
     window.optContext.states.forEach(s => stAlloc[s.name] = { ceHours: 0, countOn: 0, countLic: 0, apps: s.apps, reqHours: s.reqHours });
@@ -1675,7 +1665,6 @@ function renderWeeklyCapacityByProvider() {
     headHtml += `<th style="text-align:center; border-left:1px solid #374151;">WINDOW TOTAL</th></tr>`;
     thead.innerHTML = headHtml;
 
-    // Put PFAs at the bottom
     let sortedCEs = Object.keys(ROSTER).sort((a,b) => {
         let rA = ROSTER[a], rB = ROSTER[b];
         let roleA = rA.role || '', roleB = rB.role || '';
@@ -1730,7 +1719,6 @@ function recalculateDashboardMetrics() {
   let mult = 1 + (FUNNEL.volBump / 100);
   let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
 
-  // Dynamic Calendar Boundaries
   let calWeeks = getCalendarWeeks(activeMonth);
   let wdArray = [0,0,0,0,0];
   let weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
@@ -1752,7 +1740,7 @@ function recalculateDashboardMetrics() {
       }
   }
 
-  // --- MONTHLY AGGREGATE CALCULATIONS ---
+  // MONTHLY AGGREGATE CALCULATIONS
   let pfaTotalHours = 0, pfaPtoTotal = 0, pfaPsCap = 0;
   let ceTotalHours = 0, cePtoTotal = 0, ceStrictPsCap = 0, ceStrictEvCap = 0;
   let pfaPtoWeekly = [0,0,0,0,0];
@@ -1788,8 +1776,19 @@ function recalculateDashboardMetrics() {
     let stateEvDemand = bumpedApps * effectiveAppToEvRate;
     
     sysGrossPsDemand += statePsDemandFull; sysGrossEvDemand += stateEvDemand;
-    stateMetrics[s] = { apps: bumpedApps, psDemandFull: statePsDemandFull, evDemand: stateEvDemand, psCapCe: 0, evCapCe: 0, allocatedCeHours: 0, assigned: [], weekly: [] };
-    for(let w=0; w<5; w++) stateMetrics[s].weekly.push({ evDemand: 0, allocatedCeHours: 0, evCapCe: 0 });
+    stateMetrics[s] = { 
+        apps: bumpedApps, 
+        psDemandFull: statePsDemandFull, 
+        evDemand: stateEvDemand, 
+        pfaTargetPs: 0, 
+        psDemandCE: 0,
+        psCapCe: 0, 
+        evCapCe: 0, 
+        allocatedCeHours: 0, 
+        assigned: [], 
+        weekly: [] 
+    };
+    for(let w=0; w<5; w++) stateMetrics[s].weekly.push({ evDemand: 0, allocatedCeHours: 0, evCapCe: 0, pfaTargetPs: 0 });
   });
 
   let targetPfaDemand = sysGrossPsDemand * (FUNNEL.pfaRouteRate / 100);
@@ -1813,7 +1812,7 @@ function recalculateDashboardMetrics() {
   let p_evSched = Math.min(p_yldEvDem, ceFluidEvCap); 
   let p_evComp = p_evSched * (FUNNEL.evCompRate/100); let p_enroll = p_evComp * (FUNNEL.enrollRate/100);
 
-  // --- WEEKLY VOLATILITY CALCULATIONS ---
+  // Clinician Allocations
   let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0)).map(name => {
       let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0;
       let netDays = Math.max(0, wd - pto); let qPs = parseFloat(r.qPs[activeMonth]) || 0; let qEv = parseFloat(r.qEv[activeMonth]) || 0;
@@ -1837,10 +1836,16 @@ function recalculateDashboardMetrics() {
 
   MASTER_STATES.forEach(s => {
       let st = stateMetrics[s];
-      st.psDemandCE = st.psDemandFull * (1 - pfaEffectiveSweepRate);
+      st.pfaTargetPs = st.psDemandFull * pfaEffectiveSweepRate;
+      st.psDemandCE = st.psDemandFull - st.pfaTargetPs;
       let reqPsH = st.psDemandCE * PS_HANDLE;
-      if (st.allocatedCeHours >= reqPsH) { st.psCapCe = st.psDemandCE; st.evCapCe = (st.allocatedCeHours - reqPsH) / EV_HANDLE; } 
-      else { st.psCapCe = st.allocatedCeHours / PS_HANDLE; st.evCapCe = 0; }
+      if (st.allocatedCeHours >= reqPsH) { 
+          st.psCapCe = st.psDemandCE; 
+          st.evCapCe = (st.allocatedCeHours - reqPsH) / EV_HANDLE; 
+      } else { 
+          st.psCapCe = st.allocatedCeHours / PS_HANDLE; 
+          st.evCapCe = 0; 
+      }
   });
 
   let sysWeeklyMetrics = [];
@@ -1893,6 +1898,7 @@ function recalculateDashboardMetrics() {
 
       MASTER_STATES.forEach(s => {
           stateMetrics[s].weekly[w].evDemand = stateMetrics[s].evDemand * (w_wd / wd);
+          stateMetrics[s].weekly[w].pfaTargetPs = stateMetrics[s].pfaTargetPs * (w_wd / wd);
       });
 
       ceAllocations.forEach(ce => {
@@ -1922,7 +1928,7 @@ function recalculateDashboardMetrics() {
 
   window.stateMetricsCache = { metrics: stateMetrics, wdArray: wdArray, weekLabels: weekLabels };
   
-  // Update DOM elements
+  // Update Funnel Table
   document.getElementById('tbl-dem-apps').innerText = fmt(d_bumped); document.getElementById('tbl-pot-apps').innerText = fmt(p_apps); document.getElementById('tbl-var-apps').innerHTML = formatVar(0);
   document.getElementById('tbl-dem-ps-sched').innerText = fmt(d_psSched); document.getElementById('tbl-pot-ps-sched').innerText = fmt(p_psSched); document.getElementById('tbl-var-ps-sched').innerHTML = formatVar(p_psSched - d_psSched);
   document.getElementById('tbl-dem-ps-comp').innerText = fmt(d_psComp); document.getElementById('tbl-pot-ps-comp').innerText = fmt(p_psComp); document.getElementById('tbl-var-ps-comp').innerHTML = formatVar(p_psComp - d_psComp);
@@ -1935,7 +1941,7 @@ function recalculateDashboardMetrics() {
 
   window.optContext = { stateMap: stateMetrics, states: MASTER_STATES.map(s => { return { name: s, apps: stateMetrics[s].apps, reqHours: (stateMetrics[s].psDemandFull * (1 - pfaEffectiveSweepRate) * PS_HANDLE) + (stateMetrics[s].evDemand * EV_HANDLE) }; }), ces: ceAllocations.map(ce => { return { name: ce.name, profile: ce.masterProfile, totalHours: ce.totalHours, currentMix: ce.activeStates } }) };
 
-  // DYNAMIC RENDER OF TOP 4 BOXES (Monthly vs God Mode + Smart Stitching)
+  // TOP METRIC STATS - STRICT QUOTA FIRST (OPTION B)
   let sysPsUtilPct = (ceStrictPsCap + pfaPsCap) > 0 ? ((remainingCePsDemand + actualPfaPsYield) / (ceStrictPsCap + pfaPsCap)) * 100 : 0;
   let strictEvUtilPct = ceStrictEvCap > 0 ? (d_evSched / ceStrictEvCap) * 100 : 0;
   
@@ -2027,7 +2033,7 @@ function recalculateDashboardMetrics() {
     </div>
   `;
 
-  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr);
+  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr, actualPfaPsYield);
   renderDualHeatmap(); 
   renderMatrix(ceAllocations, stateMetrics);
   renderCollapsibleLedger(activeMonth, wd); 
@@ -2036,7 +2042,7 @@ function recalculateDashboardMetrics() {
   renderWeeklyCapacityByProvider();
 }
 
-function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr) {
+function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr, totalPfaPool) {
   const container = document.getElementById('executive-insight-banner'); if (!container) return;
   let evShort = Math.max(0, evDem - evSup);
   
@@ -2045,47 +2051,63 @@ function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitl
   
   if (activeWeekFilter !== null) container.classList.add('wk-mode'); else container.classList.remove('wk-mode');
 
-  // Calculate High-Priority PFA Routing Targets
   let overflowStates = [];
   let shieldStates = [];
+  let sweepStates = [];
+
   if (window.stateMetricsCache && window.stateMetricsCache.metrics) {
       let metrics = window.stateMetricsCache.metrics;
       MASTER_STATES.forEach(s => {
           let r = metrics[s];
           if (!r) return;
           let psBal = Math.round(r.psCapCe - r.psDemandCE);
+          let target = Math.round(r.pfaTargetPs);
+
           if (r.psDemandFull > 0 || r.apps > 0) {
               if (psBal < 0) {
-                  overflowStates.push({ state: s, deficit: Math.abs(psBal), apps: r.apps });
+                  overflowStates.push({ state: s, deficit: Math.abs(psBal), target: target, apps: r.apps, tier: 1 });
               } else if (r.assigned.length > 0 && r.assigned.length <= 2) {
-                  shieldStates.push({ state: s, count: r.assigned.length, apps: r.apps });
+                  shieldStates.push({ state: s, count: r.assigned.length, target: target, apps: r.apps, tier: 2 });
+              } else {
+                  sweepStates.push({ state: s, target: target, apps: r.apps, tier: 3 });
               }
           }
       });
   }
 
-  // Sort by operational priority: highest volume / strain first
+  // Sort overflow by biggest deficit, shield states by highest volume
   overflowStates.sort((a, b) => b.deficit - a.deficit || b.apps - a.apps);
-  shieldStates.sort((a, b) => a.count - b.count || b.apps - a.apps);
+  shieldStates.sort((a, b) => b.apps - a.apps || a.count - b.count);
+  sweepStates.sort((a, b) => b.apps - a.apps);
+
+  let top5 = [...overflowStates, ...shieldStates].slice(0, 5);
+  let top5Sum = top5.reduce((sum, item) => sum + item.target, 0);
+  let generalSum = Math.max(0, Math.round(totalPfaPool || 0) - top5Sum);
 
   let pfaGuidance = '';
-  if (overflowStates.length > 0 || shieldStates.length > 0) {
-      let ofList = overflowStates.map(o => o.state);
-      let shList = shieldStates.map(s => s.state);
+  if (top5.length > 0) {
+      let top5Badges = top5.map((item, idx) => {
+          let icon = item.tier === 1 ? '🚨' : '⭐';
+          let note = item.tier === 1 ? `clear overflow (-${item.deficit})` : `shield ${item.count} CE`;
+          return `<span style="background:rgba(15,23,42,0.8); border:1px solid #334155; padding:2px 6px; border-radius:3px; font-size:9.5px; white-space:nowrap; margin-right:4px;">
+              <strong>${idx+1}. ${item.state}:</strong> <span style="color:#93c5fd; font-weight:bold;">${item.target} PS</span> <span style="color:#64748b; font-size:8.5px;">(${note})</span>
+          </span>`;
+      }).join(' ');
 
-      let ofDisplay = ofList.length > 6 
-        ? `${ofList.slice(0, 5).join(', ')} <span style="font-weight:normal; color:#94a3b8;">(+${ofList.length - 5} more)</span>` 
-        : ofList.join(', ');
+      let sweepSample = sweepStates.slice(0, 3).map(s => `${s.state}: ${s.target} PS`).join(', ');
 
-      let shDisplay = shList.length > 6 
-        ? `${shList.slice(0, 5).join(', ')} <span style="font-weight:normal; color:#94a3b8;">(+${shList.length - 5} more)</span>` 
-        : shList.join(', ');
-
-      pfaGuidance = `<p style="margin-top:6px; font-size:10.5px; color:#cbd5e1; border-top:1px dashed #374151; padding-top:6px;">
-          <strong style="color:#93c5fd;">PFA Intake Directives:</strong>
-          ${overflowStates.length > 0 ? `Prioritize front-door overflow in <span style="color:#fca5a5; font-weight:bold;">${ofDisplay}</span> (CEs at max capacity). ` : ''}
-          ${shieldStates.length > 0 ? `Route screens in <span style="color:#fcd34d; font-weight:bold;">${shDisplay}</span> to shield ${shieldStates.length} scarce clinical territory${shieldStates.length > 1 ? 'ies' : ''}.` : ''}
-      </p>`;
+      pfaGuidance = `<div style="margin-top:8px; font-size:10.5px; color:#cbd5e1; border-top:1px dashed #374151; padding-top:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong style="color:#93c5fd; font-size:11px;">Top 5 PFA Action Directives (Pool Target: ${fmt(totalPfaPool)} PS):</strong>
+              <span style="font-size:9px; color:#94a3b8;">Top 5 Targets: <strong>${top5Sum} PS</strong></span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              ${top5Badges}
+          </div>
+          <p style="font-size:9.5px; color:#94a3b8; margin:0;">
+              ↳ <strong>General Sweep Buffer (${generalSum} PS):</strong> Absorbs routine screens across high-volume states (${sweepSample}${sweepStates.length > 3 ? ', etc.' : ''}).
+          </p>
+      </div>`;
   }
 
   container.innerHTML = `
@@ -2113,13 +2135,18 @@ function renderDualHeatmap() {
         <th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th>
         <th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Apps</th>
         <th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th>
+        <th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target</th>
         <th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #93c5fd; background: rgba(59,130,246,0.05);">📞 PHONE SCREENS (CE)</th>
         <th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #c4b5fd; background: rgba(139,92,246,0.05);">📋 EVALUATIONS</th>
         <th rowspan="2" style="text-align:center;">Assigned</th>
         </tr>
         <tr>
-          <th style="background: rgba(59,130,246,0.05); color:#60a5fa;">Dem</th><th style="background: rgba(59,130,246,0.05); color:#60a5fa;">Cov</th><th style="border-right: 1px solid #374151; background: rgba(59,130,246,0.05); color:#60a5fa;">Bal</th>
-          <th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Dem</th><th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Cov</th><th style="border-right: 1px solid #374151; background: rgba(139,92,246,0.05); color:#a78bfa;">Bal</th>
+          <th style="background: rgba(59,130,246,0.05); color:#60a5fa;" title="Gross State Demand → Net Demand left for CEs after PFA sweep">Gross → CE Net</th>
+          <th style="background: rgba(59,130,246,0.05); color:#60a5fa;">Cov</th>
+          <th style="border-right: 1px solid #374151; background: rgba(59,130,246,0.05); color:#60a5fa;">Bal</th>
+          <th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Dem</th>
+          <th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Cov</th>
+          <th style="border-right: 1px solid #374151; background: rgba(139,92,246,0.05); color:#a78bfa;">Bal</th>
         </tr>
       `;
       
@@ -2133,8 +2160,9 @@ function renderDualHeatmap() {
 
         if(r.evDemand > 0) { if(evPct >= 90) countEvBlue++; else if(evPct >= 80) countEvGreen++; else if(evPct >= 70) countEvYellow++; else countEvRed++; }
 
-        // PFA ROUTING DIRECTIVE LOGIC
         let pfaDirectiveHtml = '<span style="color:#475569;">—</span>';
+        let pfaTargetDisplay = r.pfaTargetPs > 0 ? `${Math.round(r.pfaTargetPs)} PS` : '-';
+
         if (r.apps > 0 || r.psDemandFull > 0) {
             if (psBal < 0) {
                 pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-overflow" title="CEs are at max quota. Route screens to PFA to clear front-door backlog.">🚨 PFA: PS Overflow</span>`;
@@ -2145,11 +2173,18 @@ function renderDualHeatmap() {
             }
         }
 
+        let grossPs = Math.round(r.psDemandFull);
+        let ceNetPs = Math.round(r.psDemandCE);
+        let grossToNetHtml = r.psDemandFull > 0 
+            ? `<span style="color:#64748b; font-size:9.5px;">${grossPs} →</span> <strong style="color:#f8fafc;">${ceNetPs}</strong>`
+            : '-';
+
         return `<tr>
             <td style="border-right:1px solid #374151;"><strong>${s}</strong></td>
             <td style="text-align:center; border-right:1px solid #374151; font-weight:700;">${r.apps === 0 ? '-' : fmt(r.apps)}</td>
             <td style="text-align:center; border-right:1px solid #374151;">${pfaDirectiveHtml}</td>
-            <td style="background:rgba(59,130,246,0.02); text-align:center;">${r.psDemandCE===0?'-':fmt(r.psDemandCE)}</td>
+            <td style="text-align:center; border-right:1px solid #374151; font-weight:bold; color:#a5b4fc; background:rgba(99,102,241,0.03);">${pfaTargetDisplay}</td>
+            <td style="background:rgba(59,130,246,0.02); text-align:center; white-space:nowrap;">${grossToNetHtml}</td>
             <td style="background:rgba(59,130,246,0.02); text-align:center; font-weight:700; color:#93c5fd;">${r.psDemandCE===0?'-':fmt(r.psCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.psDemandCE>0?psCol:''}">${psStr}</span></td>
             <td style="background:rgba(59,130,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.psDemandCE===0?'':(psBal<0?'status-red':'status-green')}"><div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><span>${r.psDemandCE===0?'-':(psBal>0?'+':'')+fmt(psBal)}</span>${r.psDemandCE > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, psPct)}%; background:${psBarColor};"></div></div>` : ''}</div></td>
             <td style="background:rgba(139,92,246,0.02); text-align:center;">${r.evDemand===0?'-':fmt(r.evDemand)}</td>
@@ -2182,6 +2217,8 @@ function renderDualHeatmap() {
       thead.innerHTML = `
         <tr>
         <th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th>
+        <th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th>
+        <th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target / Wk</th>
         <th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Monthly EV Bal</th>
         <th colspan="5" style="text-align:center; color: #c4b5fd; background: rgba(139,92,246,0.05);">WEEKLY EVALUATION VOLATILITY (COVERAGE %)</th>
         </tr>
@@ -2192,6 +2229,20 @@ function renderDualHeatmap() {
           let r = metrics[s];
           let moEvBal = Math.round(r.evCapCe - r.evDemand);
           let moEvStr = r.evDemand === 0 ? '-' : (moEvBal>0?'+':'')+fmt(moEvBal);
+          let psBal = Math.round(r.psCapCe - r.psDemandCE);
+
+          let pfaDirectiveHtml = '<span style="color:#475569;">—</span>';
+          if (r.apps > 0 || r.psDemandFull > 0) {
+              if (psBal < 0) {
+                  pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-overflow" title="CEs are at max quota. Route screens to PFA to clear front-door backlog.">🚨 PFA: PS Overflow</span>`;
+              } else if (r.assigned.length > 0 && r.assigned.length <= 2) {
+                  pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-shield" title="Scarce territory (≤2 CEs). Route screens to PFA to reserve rare clinicians for evaluations.">⭐ PFA: Shield Licensure</span>`;
+              } else if (r.assigned.length > 2) {
+                  pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-std" title="Healthy CE capacity. CEs fulfill their standard 4 PS/day quota.">📞 CE Standard</span>`;
+              }
+          }
+
+          let weeklyPfaTargetAvg = r.pfaTargetPs > 0 ? `${Math.round(r.pfaTargetPs / 4.33)} / wk` : '-';
           
           let wksHtml = '';
           for(let w=0; w<5; w++) {
@@ -2213,6 +2264,8 @@ function renderDualHeatmap() {
           
           return `<tr>
               <td style="border-right:1px solid #374151;"><strong>${s}</strong></td>
+              <td style="text-align:center; border-right:1px solid #374151;">${pfaDirectiveHtml}</td>
+              <td style="text-align:center; border-right:1px solid #374151; font-weight:bold; color:#a5b4fc; background:rgba(99,102,241,0.03);">${weeklyPfaTargetAvg}</td>
               <td style="text-align:center; border-right:1px solid #374151; font-weight:bold;" class="${r.evDemand===0?'':(moEvBal<0?'status-red':'status-green')}">${moEvStr}</td>
               ${wksHtml}
           </tr>`;
