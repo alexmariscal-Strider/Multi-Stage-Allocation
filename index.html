@@ -343,8 +343,9 @@
           <div class="staff-kpi-card" style="border-left: 3px solid #10b981;">
               <div class="staff-kpi-title" style="color:#86efac;">📅 2-Month Ramp & Hiring Timeline</div>
               <div style="font-size:10.5px; color:#cbd5e1; line-height:1.6;">
-                  <div>• <strong>Ramp Schedule:</strong> Mo 1 (50%) → Mo 2 (75%) → Mo 3 (100% full cap).</div>
-                  <div>• <strong>Requisition Lead Time:</strong> CEs require <strong>60–90 days</strong>; PFAs require <strong>30–45 days</strong>.</div>
+                  <div>• <strong>Ramp Schedule:</strong> Mo 1 (0%) → Mo 2 (0%) → Mo 3 (100% full capacity).</div>
+                  <div>• <strong>Clinical Productivity:</strong> Zero capacity yielded during 60-day ramp (onboarding & shadowing).</div>
+                  <div>• <strong>Requisition Lead Time:</strong> Post requisitions <strong>60–90 days prior</strong> to target need.</div>
                   <div style="margin-top:6px; padding:6px; background:#1e293b; border-radius:4px; border:1px solid #334155;" id="staff-ramp-notice">
                       Calculating optimal requisition posting dates...
                   </div>
@@ -360,7 +361,7 @@
                       <th style="background:#1f2937;">Month Horizon</th>
                       <th style="text-align:center; background:#1f2937;">Apps Vol</th>
                       <th style="text-align:center; background:#1f2937;">PFA Alloc</th>
-                      <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Eval Dem</th>
+                      <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Total Workload (EV+PS)</th>
                       <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Active CEs</th>
                       <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Req CE FTE</th>
                       <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">CE Hiring Gap</th>
@@ -368,7 +369,7 @@
                       <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Active PFAs</th>
                       <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Req PFA FTE</th>
                       <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Hiring Gap</th>
-                      <th style="text-align:center; background:#1f2937;">Hiring Action (2-Mo Ramp)</th>
+                      <th style="text-align:center; background:#1f2937;">Hiring Action (0% Ramp / 60d Lead)</th>
                   </tr>
               </thead>
               <tbody id="staffing-rolling-tbody"></tbody>
@@ -2217,20 +2218,21 @@ function renderStaffingModeler() {
 
         let isCurrent = (idx === activeMonthIdx);
 
-        // 3. 2-Month Ramp Hiring Logic (Mo 1 = 50%, Mo 2 = 75%, Mo 3 = 100% full capacity)
-        // Average effective capacity during a 2-month ramp window is (0.50 + 0.75) / 2 = 62.5%
+        // 3. 2-Month Ramp Hiring Logic (Mo 1 = 0%, Mo 2 = 0%, Mo 3 = 100% full capacity)
+        // With 0% capacity during the 2-month ramp window, new hires produce 0 slots in Mo 1 & Mo 2.
+        // Therefore, to satisfy a deficit in month M, hires must be in place 60+ days prior (target M-2).
         let hiringAdvice = '';
         if (ceDelta > 0.2 || pfaDelta > 0.2) {
             let reqs = [];
             if (ceDelta > 0.2) {
-                let grossCeHires = Math.ceil(ceDelta / 0.625);
-                reqs.push(`Hire <strong>${grossCeHires} CEs</strong> (${ceDelta.toFixed(1)} net FTEs @ ramp)`);
+                let grossCeHires = Math.ceil(ceDelta);
+                reqs.push(`Hire <strong>${grossCeHires} CEs</strong> (0% ramp: post 60d prior)`);
             }
             if (pfaDelta > 0.2) {
-                let grossPfaHires = Math.ceil(pfaDelta / 0.625);
-                reqs.push(`Hire <strong>${grossPfaHires} PFAs</strong> (${pfaDelta.toFixed(1)} net FTEs @ ramp)`);
+                let grossPfaHires = Math.ceil(pfaDelta);
+                reqs.push(`Hire <strong>${grossPfaHires} PFAs</strong> (0% ramp: post 60d prior)`);
             }
-            hiringAdvice = `<span style="color:#fca5a5;">🚨 ${reqs.join(' + ')} (Post 60d prior)</span>`;
+            hiringAdvice = `<span style="color:#fca5a5;">🚨 ${reqs.join(' + ')}</span>`;
         } else if (ceDelta < -0.8) {
             hiringAdvice = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE buffer)</span>`;
         } else {
@@ -2270,7 +2272,7 @@ function renderStaffingModeler() {
                 <td style="font-weight:bold; color:${isCurrent ? '#c4b5fd' : '#f8fafc'};">${m.split('_')[0]} ${isCurrent ? '⭐' : ''}</td>
                 <td style="text-align:center;">${fmt(mApps)}</td>
                 <td style="text-align:center;">${FUNNEL.pfaRouteRate}%</td>
-                <td style="text-align:center; color:#c4b5fd;">${fmt(mEvDemand)}</td>
+                <td style="text-align:center; color:#c4b5fd;" title="${fmt(mEvDemand)} Evals (${fmt(mEvDemand * EV_HANDLE)}h) + ${fmt(remCePsDemand)} CE PS (${fmt(remCePsDemand * PS_HANDLE)}h)">${fmt(mEvDemand)} EV + ${fmt(remCePsDemand)} PS</td>
                 <td style="text-align:center;">${ceStaffCount}</td>
                 <td style="text-align:center; font-weight:bold;">${reqCeFte.toFixed(1)}</td>
                 <td style="text-align:center;">${ceBadge}</td>
@@ -2289,15 +2291,15 @@ function renderStaffingModeler() {
     // Populate Active Month KPI Summary Cards
     if (activeMonthData) {
         document.getElementById('staff-lbl-month-ce').innerText = activeMonthData.month;
-        document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Evals + ${fmt(activeMonthData.remCePs)} PS`;
+        document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Evals + ${fmt(activeMonthData.remCePs)} PS (${fmt(activeMonthData.totCeHours)} Clinical Hours)`;
         document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeHours)} Clinical Hours / CE`;
         document.getElementById('staff-ce-req').innerText = activeMonthData.reqCeFte.toFixed(1);
         document.getElementById('staff-ce-act').innerText = activeMonthData.ceStaffCount;
         
         let ceCallout = document.getElementById('staff-ce-delta-callout');
         if (activeMonthData.ceDelta > 0.2) {
-            let grossNeeded = Math.ceil(activeMonthData.ceDelta / 0.625);
-            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs to cover 2-mo ramp)</span>`;
+            let grossNeeded = Math.ceil(activeMonthData.ceDelta);
+            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs; 0% ramp requires start 60d prior)</span>`;
         } else {
             ceCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Adequate (${activeMonthData.ceDelta <= 0 ? Math.abs(activeMonthData.ceDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`;
         }
@@ -2309,24 +2311,24 @@ function renderStaffingModeler() {
 
         let pfaCallout = document.getElementById('staff-pfa-delta-callout');
         if (activeMonthData.pfaDelta > 0.2) {
-            let grossNeeded = Math.ceil(activeMonthData.pfaDelta / 0.625);
-            pfaCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.pfaDelta.toFixed(1)} FTEs (Hire ${grossNeeded} PFAs to cover 2-mo ramp)</span>`;
+            let grossNeeded = Math.ceil(activeMonthData.pfaDelta);
+            pfaCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.pfaDelta.toFixed(1)} FTEs (Hire ${grossNeeded} PFAs; 0% ramp requires start 60d prior)</span>`;
         } else {
             pfaCallout.innerHTML = `<span style="color:#86efac;">✅ PFA Capacity Adequate (${activeMonthData.pfaDelta <= 0 ? Math.abs(activeMonthData.pfaDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`;
         }
 
-        // 2-Month Ramp Advisory Notice
+        // 2-Month Ramp Advisory Notice (0% in Mo 1 & 2)
         let rampNotice = document.getElementById('staff-ramp-notice');
         if (rampNotice) {
             let nextMonthsAlerts = [];
             let currentIdx = activeMonthIdx;
             if (currentIdx + 2 < ACTIVE_TIMELINE.length) {
                 let targetM = ACTIVE_TIMELINE[currentIdx + 2];
-                nextMonthsAlerts.push(`To be fully ramped for <strong>${targetM.split('_')[0]}</strong>, requisitions must post now.`);
+                nextMonthsAlerts.push(`To cover <strong>${targetM.split('_')[0]}</strong>, requisitions must post now.`);
             }
             rampNotice.innerHTML = `
-                <div style="color:#fcd34d; font-weight:bold; margin-bottom:2px;">⚠️ Ramp Lead-Time Directive:</div>
-                <div style="font-size:9.5px; color:#cbd5e1;">New hires operate at <strong>50% in Mo 1</strong> and <strong>75% in Mo 2</strong> (avg 62.5% yield). A +1.0 FTE deficit requires hiring ~2 clinicians to offset ramp shrinkage. ${nextMonthsAlerts.join(' ')}</div>
+                <div style="color:#fcd34d; font-weight:bold; margin-bottom:2px;">⚠️ Ramp Lead-Time Directive (0% in Mo 1 & 2):</div>
+                <div style="font-size:9.5px; color:#cbd5e1;">New hires produce <strong>0 clinical capacity during their first 60 days</strong> (full onboarding/shadowing). Any deficit in Month 3+ requires starting recruiting and onboarding <strong>at least 60–90 days in advance</strong>. ${nextMonthsAlerts.join(' ')}</div>
             `;
         }
 
