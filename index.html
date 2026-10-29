@@ -2242,6 +2242,8 @@ function renderStaffingModeler() {
         let reqPfaFte = avgKnownPfaCap > 0 ? (mPfaTargetPs / avgKnownPfaCap) : 0;
         let pfaDelta = reqPfaFte - pfaStaffCount;
 
+        let isCurrent = (idx === activeMonthIdx);
+
         // 2. CE Requirement under STRICT EVAL QUOTA MODEL (Targeting ~87% Utilization)
         // If this is the active month, bind directly to the top card's strict quota cap to prevent formula drift
         let effectiveCeEvPoolCap = (isCurrent && typeof ceStrictEvCap !== 'undefined' && ceStrictEvCap > 0)
@@ -2253,8 +2255,6 @@ function renderStaffingModeler() {
         let targetCapacityPerCeAt87 = avgKnownCeEvCap * targetUtilDenominator;
         let reqCeFte = targetCapacityPerCeAt87 > 0 ? (mEvDemand / targetCapacityPerCeAt87) : 0;
         let ceDelta = reqCeFte - ceStaffCount;
-
-        let isCurrent = (idx === activeMonthIdx);
 
         // 3. 2-Month Ramp Hiring Logic (Mo 1 = 0%, Mo 2 = 0%, Mo 3 = 100% full capacity)
         let hiringAdvice = '';
