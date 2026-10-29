@@ -2220,8 +2220,8 @@ function renderStaffingModeler() {
             let r = ROSTER[name];
             let pto = parseFloat(r.pto ? r.pto[m] : 0) || 0;
             let netDays = Math.max(0, mwd - pto);
-            let qPs = parseFloat(r.qPs ? r.qPs[m] : 0) || 0;
-            let qEv = parseFloat(r.qEv ? r.qEv[m] : 0) || 0;
+            let qPs = (r.qPs && r.qPs[m] !== undefined) ? parseFloat(r.qPs[m]) : 0;
+            let qEv = (r.qEv && r.qEv[m] !== undefined) ? parseFloat(r.qEv[m]) : 0;
 
             if (r.role === 'PFA') {
                 pfaStaffCount++;
@@ -2229,11 +2229,9 @@ function renderStaffingModeler() {
                 totalKnownPfaPsCap += (netDays * effPfaQuota);
             } else {
                 ceStaffCount++;
-                let effCePs = qPs > 0 ? qPs : (r.role === 'LEAD' ? 3 : 4);
-                let effCeEv = qEv > 0 ? qEv : 3;
-                totalKnownCeEvCap += (netDays * effCeEv);
-                totalKnownCePsCap += (netDays * effCePs);
-                totalKnownCeHours += (netDays * (effCePs * PS_HANDLE + effCeEv * EV_HANDLE));
+                totalKnownCeEvCap += (netDays * qEv);
+                totalKnownCePsCap += (netDays * qPs);
+                totalKnownCeHours += (netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE));
             }
         });
 
@@ -2245,12 +2243,12 @@ function renderStaffingModeler() {
         let isCurrent = (idx === activeMonthIdx);
 
         // 2. CE Requirement under STRICT EVAL QUOTA MODEL (Targeting ~87% Utilization)
-        // If this is the active month, bind directly to the top card's strict quota cap to prevent formula drift
-        let effectiveCeEvPoolCap = (isCurrent && typeof ceStrictEvCap !== 'undefined' && ceStrictEvCap > 0)
+        // Bind strictly to the exact physical roster sum (840 in Feb)
+        let effectiveCeEvPoolCap = (isCurrent && typeof ceStrictEvCap === 'number' && ceStrictEvCap > 0)
             ? ceStrictEvCap 
             : totalKnownCeEvCap;
 
-        let avgKnownCeEvCap = ceStaffCount > 0 ? (effectiveCeEvPoolCap / ceStaffCount) : (mwd * 3.0);
+        let avgKnownCeEvCap = ceStaffCount > 0 ? (effectiveCeEvPoolCap / ceStaffCount) : 44.2;
         let targetUtilDenominator = 0.87; // Goal to operate at 87% utilization
         let targetCapacityPerCeAt87 = avgKnownCeEvCap * targetUtilDenominator;
         let reqCeFte = targetCapacityPerCeAt87 > 0 ? (mEvDemand / targetCapacityPerCeAt87) : 0;
