@@ -2171,6 +2171,16 @@ function renderStaffingModeler() {
             mEvDemand += (a * (cOver > 0 ? cOver / 100 : globalAppToEvRate));
         });
 
+        // Align Eval Demand with True Live Funnel Cascade Pipeline Yield
+        let mGrossApps = mApps;
+        let mGrossPs = mGrossApps * (FUNNEL.appToPsRate / 100);
+        let mPsComp = mGrossPs * (FUNNEL.psCompRate / 100);
+        let mScrIn = mPsComp * (FUNNEL.screenInRate / 100);
+        let mTrueEvSchedDemand = mScrIn * (FUNNEL.evSchedRate / 100);
+        if (mTrueEvSchedDemand > 0) {
+            mEvDemand = mTrueEvSchedDemand;
+        }
+
         let mPfaTargetPs = mPsDemandFull * (FUNNEL.pfaRouteRate / 100);
 
         // Calculate actual in-month known capacity by active resources
@@ -2219,8 +2229,6 @@ function renderStaffingModeler() {
         let isCurrent = (idx === activeMonthIdx);
 
         // 3. 2-Month Ramp Hiring Logic (Mo 1 = 0%, Mo 2 = 0%, Mo 3 = 100% full capacity)
-        // With 0% capacity during the 2-month ramp window, new hires produce 0 slots in Mo 1 & Mo 2.
-        // Therefore, to satisfy a deficit in month M, hires must be in place 60+ days prior (target M-2).
         let hiringAdvice = '';
         if (ceDelta > 0.2 || pfaDelta > 0.2) {
             let reqs = [];
