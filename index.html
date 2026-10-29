@@ -139,6 +139,19 @@
   .pfa-badge-shield { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
   .pfa-badge-std { background: rgba(51,65,85,0.4); color: #94a3b8; border: 1px solid #475569; }
 
+  /* STAFFING REQUISITION MODELER STYLES */
+  .staff-panel { background: #161b22; border-radius: 8px; border: 1px solid #2d3748; margin-bottom: 16px; overflow: hidden; }
+  .staff-header { background: #111827; padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3748; }
+  .staff-header:hover { background: #1e293b; }
+  .staff-title { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.05em; }
+  .staff-pill { padding: 3px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .staff-pill-ok { background: rgba(16,185,129,0.15); color: #86efac; border: 1px solid rgba(16,185,129,0.3); }
+  .staff-pill-alert { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .staff-content { padding: 14px; display: none; }
+  .staff-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .staff-kpi-card { background: #0f172a; border-radius: 6px; border: 1px solid #334155; padding: 12px; }
+  .staff-kpi-title { font-size: 9.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em; }
+
   /* INPUTS & BUTTONS */
   input, select { background: #0f172a; border: 1px solid #374151; color: #f8fafc; padding: 4px; border-radius: 4px; text-align: center; font-size: 10px; transition: 0.2s; }
   input[type="date"] { color: #93c5fd; background: #0f172a; border: 1px solid #475569; color-scheme: dark; }
@@ -168,7 +181,6 @@
   .totals-row { background: #0f172a; font-weight: bold; }
   .totals-row td { border-top: 2px solid #374151; padding: 8px; }
   .ledger-input { width: 45px; }
-  .chart-container { height: 180px; width: 100%; margin-bottom: 4px; }
   
   /* SIDEBAR STYLES */
   .ce-row { margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #2d3548; }
@@ -283,25 +295,94 @@
     </div>
 </div>
 
-<div class="dashboard-grid">
-  <!-- FORECAST PROJECTIONS (HIDDEN BY DEFAULT) -->
-  <div id="charts-wrapper" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; grid-column: span 4;">
-      <div class="panel span-2">
-        <h2>Phone Screen (PS) Capacity vs Demand</h2>
-        <div class="chart-container"><canvas id="wfmPsChart"></canvas></div>
+<!-- STRATEGIC STAFFING & HEADCOUNT REQUIREMENTS (COLLAPSIBLE) -->
+<div class="staff-panel">
+  <div class="staff-header" onclick="toggleStaffingCollapse()">
+      <div class="staff-title">
+          <span id="staffing-toggle-icon">▶</span>
+          <span>👥 Strategic Staffing & Requisition Modeler</span>
+          <span style="font-size: 9px; color:#64748b; font-weight:normal;">(In-Month Known Capacity & 2-Mo Ramp Lead Time)</span>
       </div>
-      <div class="panel span-2">
-        <h2>Evaluation (EV) Capacity vs Demand</h2>
-        <div class="chart-container"><canvas id="wfmEvChart"></canvas></div>
-      </div>
+      <div id="staffing-header-pills" style="display:flex; gap:8px; align-items:center;"></div>
   </div>
 
+  <div class="staff-content" id="staffing-content-wrapper">
+      <div class="staff-kpi-grid">
+          <!-- CE REQUIREMENTS -->
+          <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
+              <div class="staff-kpi-title" style="color:#c4b5fd;">📋 Licensed CE Requirements (<span id="staff-lbl-month-ce"></span>)</div>
+              <div style="font-size:11px; color:#cbd5e1; line-height:1.7;">
+                  <div>• Eval Pipeline Demand: <strong id="staff-ce-demand" style="color:#f8fafc;">-</strong></div>
+                  <div>• Avg Known Capacity / CE: <strong id="staff-ce-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+                  <div>• Required Headcount: <strong id="staff-ce-req" style="color:#93c5fd;">-</strong> FTEs</div>
+                  <div>• Active Staff On-Seat: <strong id="staff-ce-act" style="color:#f8fafc;">-</strong> CEs</div>
+              </div>
+              <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #334155; font-size:12px; font-weight:bold;" id="staff-ce-delta-callout">-</div>
+          </div>
+
+          <!-- PFA REQUIREMENTS -->
+          <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
+              <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center;">
+                  <span>🤖 PFA Intake Requirements</span>
+                  <div style="display:inline-flex; align-items:center; gap:4px; font-size:9px; color:#94a3b8;">
+                      <span>Quota:</span>
+                      <input type="number" id="pfa-daily-quota-inp" value="10" min="1" max="25" style="width:40px; padding:1px 3px; font-size:10px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
+                      <span style="font-size:8px;">PS/day</span>
+                  </div>
+              </div>
+              <div style="font-size:11px; color:#cbd5e1; line-height:1.7;">
+                  <div>• PFA Target Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(based on PFA Alloc %)</span></div>
+                  <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+                  <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
+                  <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
+              </div>
+              <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #334155; font-size:12px; font-weight:bold;" id="staff-pfa-delta-callout">-</div>
+          </div>
+
+          <!-- REQUISITION & RAMP ADVISORY -->
+          <div class="staff-kpi-card" style="border-left: 3px solid #10b981;">
+              <div class="staff-kpi-title" style="color:#86efac;">📅 2-Month Ramp & Hiring Timeline</div>
+              <div style="font-size:10.5px; color:#cbd5e1; line-height:1.6;">
+                  <div>• <strong>Ramp Schedule:</strong> Mo 1 (50%) → Mo 2 (75%) → Mo 3 (100% full cap).</div>
+                  <div>• <strong>Requisition Lead Time:</strong> CEs require <strong>60–90 days</strong>; PFAs require <strong>30–45 days</strong>.</div>
+                  <div style="margin-top:6px; padding:6px; background:#1e293b; border-radius:4px; border:1px solid #334155;" id="staff-ramp-notice">
+                      Calculating optimal requisition posting dates...
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- ROLLING HORIZON MULTI-MONTH STAFFING TABLE -->
+      <div style="border:1px solid #334155; border-radius:6px; overflow:hidden;">
+          <table class="hover-row-trace" style="width:100%; font-size:10.5px;">
+              <thead>
+                  <tr>
+                      <th style="background:#1f2937;">Month Horizon</th>
+                      <th style="text-align:center; background:#1f2937;">Apps Vol</th>
+                      <th style="text-align:center; background:#1f2937;">PFA Alloc</th>
+                      <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Eval Dem</th>
+                      <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Active CEs</th>
+                      <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Req CE FTE</th>
+                      <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">CE Hiring Gap</th>
+                      <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Target</th>
+                      <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Active PFAs</th>
+                      <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Req PFA FTE</th>
+                      <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Hiring Gap</th>
+                      <th style="text-align:center; background:#1f2937;">Hiring Action (2-Mo Ramp)</th>
+                  </tr>
+              </thead>
+              <tbody id="staffing-rolling-tbody"></tbody>
+          </table>
+      </div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
   <!-- DUAL HEATMAP -->
   <div class="panel full-width">
     <h2 id="heat-title" style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display:flex; align-items:center; gap:12px;">
             <span>State Cascading Distribution (PS & Evals)</span>
-            <button class="btn-action" style="background:#475569; padding:4px 8px; font-size:9px;" onclick="toggleCharts()">📈 TOGGLE CHARTS</button>
         </div>
         <div style="display: flex; gap: 4px;">
             <button class="matrix-btn matrix-btn-on" id="btn-view-mo" onclick="setHeatmapView('mo')" style="width: 70px;">Monthly</button>
@@ -608,9 +689,26 @@ function toggleFunnelCollapse() {
     else { wrap.style.display = 'none'; icon.innerText = '▶'; }
 }
 
-function toggleCharts() {
-    let cw = document.getElementById('charts-wrapper');
-    cw.style.display = cw.style.display === 'none' ? 'grid' : 'none';
+function toggleStaffingCollapse() {
+    const wrap = document.getElementById('staffing-content-wrapper');
+    const icon = document.getElementById('staffing-toggle-icon');
+    if (wrap.style.display === 'block') {
+        wrap.style.display = 'none';
+        icon.innerText = '▶';
+    } else {
+        wrap.style.display = 'block';
+        icon.innerText = '▼';
+        renderStaffingModeler();
+    }
+}
+
+function savePfaStaffingQuota() {
+    let inp = document.getElementById('pfa-daily-quota-inp');
+    let val = parseFloat(inp ? inp.value : 10) || 10;
+    if (val < 1) val = 1;
+    FUNNEL.pfaDailyStaffQuota = val;
+    saveState();
+    renderStaffingModeler();
 }
 
 function toggleModal(id) {
@@ -765,7 +863,7 @@ function getQuickWeekStats(mName, wIdx) {
 
 // --- INITIAL STATE ---
 let ACTIVE_TIMELINE = []; let LEDGER = {}; let ROSTER = {}; let FUNNEL = {}; let MASTER_STATES = [];
-let activeMonthIdx = 0; let chartPs = null; let chartEv = null;
+let activeMonthIdx = 0;
 let ARCHIVED_TIMELINE = []; let ARCHIVED_LEDGER = {}; let ARCHIVED_ROSTER = {};
 let lastMatrixBackup = null; 
 let heatmapViewMode = 'mo'; 
@@ -778,7 +876,8 @@ function bootstrapDataEngine() {
     ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December","January 2027","February 2027","March 2027"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {};
     ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
-    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80, holidays: '' };
+    FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80, holidays: '', pfaDailyStaffQuota: 10 };
+    if (!FUNNEL.pfaDailyStaffQuota) FUNNEL.pfaDailyStaffQuota = 10;
     MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v2_stat')) || [...DEFAULT_STATE_LIST];
     ARCHIVED_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_archive_time')) || [];
     ARCHIVED_LEDGER = JSON.parse(localStorage.getItem('funnel_v2_archive_ledg')) || {};
@@ -2038,8 +2137,192 @@ function recalculateDashboardMetrics() {
   renderMatrix(ceAllocations, stateMetrics);
   renderCollapsibleLedger(activeMonth, wd); 
   renderSidebarProfileManager(ceAllocations); 
-  renderDualCharts();
   renderWeeklyCapacityByProvider();
+  renderStaffingModeler();
+}
+
+// --- STRATEGIC STAFFING & HEADCOUNT MODELER WITH 2-MONTH RAMP ---
+function renderStaffingModeler() {
+    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    if (!activeMonth) return;
+
+    let pfaQuota = parseFloat(FUNNEL.pfaDailyStaffQuota) || 10;
+    let pfaInp = document.getElementById('pfa-daily-quota-inp');
+    if (pfaInp && pfaInp.value != pfaQuota) pfaInp.value = pfaQuota;
+
+    let mult = 1 + (FUNNEL.volBump / 100);
+    let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+
+    let rollingRowsHtml = '';
+    let activeMonthData = null;
+
+    ACTIVE_TIMELINE.forEach((m, idx) => {
+        let mwd = LEDGER[m] ? LEDGER[m].wd : 21;
+        let mApps = 0;
+        let mPsDemandFull = 0;
+        let mEvDemand = 0;
+
+        MASTER_STATES.forEach(s => {
+            let a = ((LEDGER[m] && LEDGER[m].apps && LEDGER[m].apps[s]) || 0) * mult;
+            mApps += a;
+            mPsDemandFull += (a * (FUNNEL.appToPsRate / 100));
+            let cOver = (LEDGER[m] && LEDGER[m].conv && LEDGER[m].conv[s]) || 0;
+            mEvDemand += (a * (cOver > 0 ? cOver / 100 : globalAppToEvRate));
+        });
+
+        let mPfaTargetPs = mPsDemandFull * (FUNNEL.pfaRouteRate / 100);
+
+        // Calculate actual in-month known capacity by active resources
+        let ceStaffCount = 0;
+        let pfaStaffCount = 0;
+        let totalKnownCeEvCap = 0;
+        let totalKnownPfaPsCap = 0;
+
+        Object.keys(ROSTER).forEach(name => {
+            let r = ROSTER[name];
+            let pto = parseFloat(r.pto ? r.pto[m] : 0) || 0;
+            let netDays = Math.max(0, mwd - pto);
+            let qPs = parseFloat(r.qPs ? r.qPs[m] : (r.role === 'PFA' ? pfaQuota : 4)) || 0;
+            let qEv = parseFloat(r.qEv ? r.qEv[m] : 3) || 0;
+
+            if (r.role === 'PFA') {
+                pfaStaffCount++;
+                totalKnownPfaPsCap += (netDays * (qPs > 0 ? qPs : pfaQuota));
+            } else {
+                ceStaffCount++;
+                totalKnownCeEvCap += (netDays * qEv);
+            }
+        });
+
+        // Compute average in-month capacity per active FTE (accounting for exact PTO & net days)
+        let avgKnownCeCap = ceStaffCount > 0 ? (totalKnownCeEvCap / ceStaffCount) : (mwd * 3.0);
+        let avgKnownPfaCap = pfaStaffCount > 0 ? (totalKnownPfaPsCap / pfaStaffCount) : (mwd * pfaQuota);
+
+        let reqCeFte = avgKnownCeCap > 0 ? (mEvDemand / avgKnownCeCap) : 0;
+        let reqPfaFte = avgKnownPfaCap > 0 ? (mPfaTargetPs / avgKnownPfaCap) : 0;
+
+        let ceDelta = reqCeFte - ceStaffCount;
+        let pfaDelta = reqPfaFte - pfaStaffCount;
+
+        let isCurrent = (idx === activeMonthIdx);
+
+        // 2-Month Ramp Hiring Logic:
+        // Ramp assumptions: Month 1 = 50% capacity, Month 2 = 75%, Month 3 = 100%
+        let hiringAdvice = '';
+        if (ceDelta > 0.4 || pfaDelta > 0.4) {
+            let reqs = [];
+            if (ceDelta > 0.4) reqs.push(`Open <strong>${Math.ceil(ceDelta)} CE</strong>`);
+            if (pfaDelta > 0.4) reqs.push(`Open <strong>${Math.ceil(pfaDelta)} PFA</strong>`);
+            hiringAdvice = `<span style="color:#fca5a5;">🚨 ${reqs.join(', ')} reqs (Post 60d prior for 2-mo ramp)</span>`;
+        } else if (ceDelta < -1.0) {
+            hiringAdvice = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE over)</span>`;
+        } else {
+            hiringAdvice = `<span style="color:#86efac;">✅ Balanced Coverage</span>`;
+        }
+
+        if (isCurrent) {
+            activeMonthData = {
+                month: m.split('_')[0],
+                evDem: mEvDemand,
+                avgKnownCeCap: avgKnownCeCap,
+                reqCeFte: reqCeFte,
+                ceStaffCount: ceStaffCount,
+                ceDelta: ceDelta,
+                pfaDem: mPfaTargetPs,
+                avgKnownPfaCap: avgKnownPfaCap,
+                reqPfaFte: reqPfaFte,
+                pfaStaffCount: pfaStaffCount,
+                pfaDelta: pfaDelta,
+                hiringAdvice: hiringAdvice
+            };
+        }
+
+        let rowBg = isCurrent ? 'background: rgba(99,102,241,0.08); font-weight:bold;' : '';
+        let ceBadge = ceDelta > 0.4 
+            ? `<span class="staff-pill staff-pill-alert">+${ceDelta.toFixed(1)} 🚨</span>` 
+            : `<span class="staff-pill staff-pill-ok">${ceDelta.toFixed(1)}</span>`;
+
+        let pfaBadge = pfaDelta > 0.4 
+            ? `<span class="staff-pill staff-pill-alert">+${pfaDelta.toFixed(1)} 🚨</span>` 
+            : `<span class="staff-pill staff-pill-ok">${pfaDelta.toFixed(1)}</span>`;
+
+        rollingRowsHtml += `
+            <tr style="${rowBg}">
+                <td style="font-weight:bold; color:${isCurrent ? '#c4b5fd' : '#f8fafc'};">${m.split('_')[0]} ${isCurrent ? '⭐' : ''}</td>
+                <td style="text-align:center;">${fmt(mApps)}</td>
+                <td style="text-align:center;">${FUNNEL.pfaRouteRate}%</td>
+                <td style="text-align:center; color:#c4b5fd;">${fmt(mEvDemand)}</td>
+                <td style="text-align:center;">${ceStaffCount}</td>
+                <td style="text-align:center; font-weight:bold;">${reqCeFte.toFixed(1)}</td>
+                <td style="text-align:center;">${ceBadge}</td>
+                <td style="text-align:center; color:#93c5fd;">${fmt(mPfaTargetPs)}</td>
+                <td style="text-align:center;">${pfaStaffCount}</td>
+                <td style="text-align:center; font-weight:bold;">${reqPfaFte.toFixed(1)}</td>
+                <td style="text-align:center;">${pfaBadge}</td>
+                <td>${hiringAdvice}</td>
+            </tr>
+        `;
+    });
+
+    let tbody = document.getElementById('staffing-rolling-tbody');
+    if (tbody) tbody.innerHTML = rollingRowsHtml;
+
+    // Populate Active Month KPI Summary Cards
+    if (activeMonthData) {
+        document.getElementById('staff-lbl-month-ce').innerText = activeMonthData.month;
+        document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Evals`;
+        document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeCap)} Evals / CE`;
+        document.getElementById('staff-ce-req').innerText = activeMonthData.reqCeFte.toFixed(1);
+        document.getElementById('staff-ce-act').innerText = activeMonthData.ceStaffCount;
+        
+        let ceCallout = document.getElementById('staff-ce-delta-callout');
+        if (activeMonthData.ceDelta > 0.4) {
+            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Hiring Deficit: +${activeMonthData.ceDelta.toFixed(1)} CE FTEs Needed</span>`;
+        } else {
+            ceCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Adequate (${activeMonthData.ceDelta <= 0 ? Math.abs(activeMonthData.ceDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`;
+        }
+
+        document.getElementById('staff-pfa-demand').innerText = `${fmt(activeMonthData.pfaDem)} PS (${FUNNEL.pfaRouteRate}%)`;
+        document.getElementById('staff-pfa-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownPfaCap)} PS / PFA`;
+        document.getElementById('staff-pfa-req').innerText = activeMonthData.reqPfaFte.toFixed(1);
+        document.getElementById('staff-pfa-act').innerText = activeMonthData.pfaStaffCount;
+
+        let pfaCallout = document.getElementById('staff-pfa-delta-callout');
+        if (activeMonthData.pfaDelta > 0.4) {
+            pfaCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Hiring Deficit: +${activeMonthData.pfaDelta.toFixed(1)} PFA FTEs Needed</span>`;
+        } else {
+            pfaCallout.innerHTML = `<span style="color:#86efac;">✅ PFA Capacity Adequate (${activeMonthData.pfaDelta <= 0 ? Math.abs(activeMonthData.pfaDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`;
+        }
+
+        // 2-Month Ramp Advisory Notice
+        let rampNotice = document.getElementById('staff-ramp-notice');
+        if (rampNotice) {
+            let nextMonthsAlerts = [];
+            let currentIdx = activeMonthIdx;
+            if (currentIdx + 2 < ACTIVE_TIMELINE.length) {
+                let targetM = ACTIVE_TIMELINE[currentIdx + 2];
+                nextMonthsAlerts.push(`For target volume in <strong>${targetM.split('_')[0]}</strong>, requisition approval must begin now.`);
+            }
+            rampNotice.innerHTML = `
+                <div style="color:#fcd34d; font-weight:bold; margin-bottom:2px;">⚠️ Ramp Lead-Time Directive:</div>
+                <div style="font-size:9.5px; color:#cbd5e1;">A new clinician hired this week achieves 50% capacity in Mo 1 and 75% in Mo 2. ${nextMonthsAlerts.join(' ')}</div>
+            `;
+        }
+
+        // Header Summary Pills
+        let pillsContainer = document.getElementById('staffing-header-pills');
+        if (pillsContainer) {
+            let cePillClass = activeMonthData.ceDelta > 0.4 ? 'staff-pill-alert' : 'staff-pill-ok';
+            let pfaPillClass = activeMonthData.pfaDelta > 0.4 ? 'staff-pill-alert' : 'staff-pill-ok';
+            let ceSymbol = activeMonthData.ceDelta > 0.4 ? '🚨 CE Gap: +' : 'CE Delta: ';
+            let pfaSymbol = activeMonthData.pfaDelta > 0.4 ? '🚨 PFA Gap: +' : 'PFA Delta: ';
+
+            pillsContainer.innerHTML = `
+                <span class="staff-pill ${cePillClass}">${ceSymbol}${activeMonthData.ceDelta.toFixed(1)} FTE</span>
+                <span class="staff-pill ${pfaPillClass}">${pfaSymbol}${activeMonthData.pfaDelta.toFixed(1)} FTE</span>
+            `;
+        }
+    }
 }
 
 function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr, totalPfaPool) {
