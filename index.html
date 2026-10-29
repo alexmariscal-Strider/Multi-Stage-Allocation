@@ -2130,10 +2130,10 @@ function recalculateDashboardMetrics() {
   let evUtilBadge = 'Healthy (Target ~87%)';
   if (d_evUtilPct > 90) {
       evUtilColor = '#ef4444';
-      evUtilBadge = 'Overcapacity Risk (>90%)';
+      evUtilBadge = '🚨 CAPACITY DEFICIT RISK (>90%)';
   } else if (d_evUtilPct >= 88.5) {
       evUtilColor = '#eab308';
-      evUtilBadge = 'Near Threshold (89-90%)';
+      evUtilBadge = 'Near Ceiling (88-90%)';
   }
 
   document.getElementById('top-stats-container').innerHTML = `
@@ -2210,6 +2210,8 @@ function renderStaffingModeler() {
 
         // Calculate actual in-month known capacity by active resources
         let ceStaffCount = 0;
+        let ceProducingCount = 0;
+        let ceZeroLeadCount = 0;
         let pfaStaffCount = 0;
         let totalKnownCeEvCap = 0;
         let totalKnownCePsCap = 0;
@@ -2229,7 +2231,13 @@ function renderStaffingModeler() {
                 totalKnownPfaPsCap += (netDays * effPfaQuota);
             } else {
                 ceStaffCount++;
-                totalKnownCeEvCap += (netDays * qEv);
+                let indCeCap = (netDays * qEv);
+                if (qEv > 0) {
+                    ceProducingCount++;
+                } else {
+                    ceZeroLeadCount++;
+                }
+                totalKnownCeEvCap += indCeCap;
                 totalKnownCePsCap += (netDays * qPs);
                 totalKnownCeHours += (netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE));
             }
@@ -2248,11 +2256,13 @@ function renderStaffingModeler() {
             ? ceStrictEvCap 
             : totalKnownCeEvCap;
 
-        let avgKnownCeEvCap = ceStaffCount > 0 ? (effectiveCeEvPoolCap / ceStaffCount) : 44.2;
+        // Base the per-FTE delivery on active producing clinicians so 0/0 leads don't distort the hiring baseline
+        let activeDivisor = ceProducingCount > 0 ? ceProducingCount : (ceStaffCount || 1);
+        let avgKnownCeEvCap = effectiveCeEvPoolCap / activeDivisor;
         let targetUtilDenominator = 0.87; // Goal to operate at 87% utilization
         let targetCapacityPerCeAt87 = avgKnownCeEvCap * targetUtilDenominator;
         let reqCeFte = targetCapacityPerCeAt87 > 0 ? (mEvDemand / targetCapacityPerCeAt87) : 0;
-        let ceDelta = reqCeFte - ceStaffCount;
+        let ceDelta = reqCeFte - ceProducingCount;
 
         // 3. 2-Month Ramp Hiring Logic (Mo 1 = 0%, Mo 2 = 0%, Mo 3 = 100% full capacity)
         let hiringAdvice = '';
@@ -2280,6 +2290,8 @@ function renderStaffingModeler() {
                 avgKnownCeEvCap: avgKnownCeEvCap,
                 reqCeFte: reqCeFte,
                 ceStaffCount: ceStaffCount,
+                ceProducingCount: ceProducingCount,
+                ceZeroLeadCount: ceZeroLeadCount,
                 ceDelta: ceDelta,
                 pfaDem: mPfaTargetPs,
                 avgKnownPfaCap: avgKnownPfaCap,
@@ -2305,7 +2317,7 @@ function renderStaffingModeler() {
                 <td style="text-align:center;">${fmt(mApps)}</td>
                 <td style="text-align:center;">${FUNNEL.pfaRouteRate}%</td>
                 <td style="text-align:center; color:#c4b5fd;">${fmt(mEvDemand)} Evals (Strict 3/d)</td>
-                <td style="text-align:center;">${ceStaffCount}</td>
+                <td style="text-align:center;">${ceProducingCount} <span style="font-size:8px; color:#64748b;">(+${ceZeroLeadCount})</span></td>
                 <td style="text-align:center; font-weight:bold;">${reqCeFte.toFixed(1)}</td>
                 <td style="text-align:center;">${ceBadge}</td>
                 <td style="text-align:center; color:#93c5fd;">${fmt(mPfaTargetPs)}</td>
@@ -2324,14 +2336,14 @@ function renderStaffingModeler() {
     if (activeMonthData) {
         document.getElementById('staff-lbl-month-ce').innerText = activeMonthData.month;
         document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Schedulable Evals (Strict Quotas)`;
-        document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeEvCap)} Schedulable Evals / CE (net PTO)`;
+        document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeEvCap)} Schedulable Evals / Producing CE`;
         document.getElementById('staff-ce-req').innerText = activeMonthData.reqCeFte.toFixed(1);
-        document.getElementById('staff-ce-act').innerText = activeMonthData.ceStaffCount;
+        document.getElementById('staff-ce-act').innerText = `${activeMonthData.ceProducingCount} Producing CEs (${activeMonthData.ceStaffCount} Total Roster)`;
         
         let ceCallout = document.getElementById('staff-ce-delta-callout');
         if (activeMonthData.ceDelta > 0.2) {
             let grossNeeded = Math.ceil(activeMonthData.ceDelta);
-            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Staffing Need: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs to maintain 87% target; post 60d prior)</span>`;
+            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Staffing Need: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs to reach 87% target; post 60d prior)</span>`;
         } else {
             ceCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Balanced for 87% Target (${activeMonthData.ceDelta <= 0 ? Math.abs(activeMonthData.ceDelta).toFixed(1) + ' buffer' : 'On Target'})</span>`;
         }
