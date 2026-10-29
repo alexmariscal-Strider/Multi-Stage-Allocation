@@ -2167,19 +2167,15 @@ function renderStaffingModeler() {
             let a = ((LEDGER[m] && LEDGER[m].apps && LEDGER[m].apps[s]) || 0) * mult;
             mApps += a;
             mPsDemandFull += (a * (FUNNEL.appToPsRate / 100));
-            let cOver = (LEDGER[m] && LEDGER[m].conv && LEDGER[m].conv[s]) || 0;
-            mEvDemand += (a * (cOver > 0 ? cOver / 100 : globalAppToEvRate));
         });
 
-        // Align Eval Demand with True Live Funnel Cascade Pipeline Yield
+        // Compute true live cascade funnel yield for this specific timeline month
         let mGrossApps = mApps;
         let mGrossPs = mGrossApps * (FUNNEL.appToPsRate / 100);
         let mPsComp = mGrossPs * (FUNNEL.psCompRate / 100);
         let mScrIn = mPsComp * (FUNNEL.screenInRate / 100);
         let mTrueEvSchedDemand = mScrIn * (FUNNEL.evSchedRate / 100);
-        if (mTrueEvSchedDemand > 0) {
-            mEvDemand = mTrueEvSchedDemand;
-        }
+        mEvDemand = mTrueEvSchedDemand;
 
         let mPfaTargetPs = mPsDemandFull * (FUNNEL.pfaRouteRate / 100);
 
