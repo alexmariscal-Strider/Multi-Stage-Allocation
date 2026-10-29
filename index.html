@@ -2176,46 +2176,63 @@ function renderStaffingModeler() {
         let ceStaffCount = 0;
         let pfaStaffCount = 0;
         let totalKnownCeEvCap = 0;
+        let totalKnownCePsCap = 0;
+        let totalKnownCeHours = 0;
         let totalKnownPfaPsCap = 0;
 
         Object.keys(ROSTER).forEach(name => {
             let r = ROSTER[name];
             let pto = parseFloat(r.pto ? r.pto[m] : 0) || 0;
             let netDays = Math.max(0, mwd - pto);
-            let qPs = parseFloat(r.qPs ? r.qPs[m] : (r.role === 'PFA' ? pfaQuota : 4)) || 0;
-            let qEv = parseFloat(r.qEv ? r.qEv[m] : 3) || 0;
+            let qPs = parseFloat(r.qPs ? r.qPs[m] : 0) || 0;
+            let qEv = parseFloat(r.qEv ? r.qEv[m] : 0) || 0;
 
             if (r.role === 'PFA') {
                 pfaStaffCount++;
-                totalKnownPfaPsCap += (netDays * (qPs > 0 ? qPs : pfaQuota));
+                let effPfaQuota = qPs > 0 ? qPs : pfaQuota;
+                totalKnownPfaPsCap += (netDays * effPfaQuota);
             } else {
                 ceStaffCount++;
-                totalKnownCeEvCap += (netDays * qEv);
+                let effCePs = qPs > 0 ? qPs : (r.role === 'LEAD' ? 3 : 4);
+                let effCeEv = qEv > 0 ? qEv : 3;
+                totalKnownCeEvCap += (netDays * effCeEv);
+                totalKnownCePsCap += (netDays * effCePs);
+                totalKnownCeHours += (netDays * (effCePs * PS_HANDLE + effCeEv * EV_HANDLE));
             }
         });
 
-        // Compute average in-month capacity per active FTE (accounting for exact PTO & net days)
-        let avgKnownCeCap = ceStaffCount > 0 ? (totalKnownCeEvCap / ceStaffCount) : (mwd * 3.0);
+        // 1. PFA Requirement based on in-month known capacity per PFA
         let avgKnownPfaCap = pfaStaffCount > 0 ? (totalKnownPfaPsCap / pfaStaffCount) : (mwd * pfaQuota);
-
-        let reqCeFte = avgKnownCeCap > 0 ? (mEvDemand / avgKnownCeCap) : 0;
         let reqPfaFte = avgKnownPfaCap > 0 ? (mPfaTargetPs / avgKnownPfaCap) : 0;
-
-        let ceDelta = reqCeFte - ceStaffCount;
         let pfaDelta = reqPfaFte - pfaStaffCount;
+
+        // 2. CE Requirement: CEs must cover BOTH remaining Phone Screens and ALL Evaluations
+        let actualPfaCapYield = Math.min(mPfaTargetPs, totalKnownPfaPsCap);
+        let remCePsDemand = Math.max(0, mPsDemandFull - actualPfaCapYield);
+        let totalRequiredCeClinicalHours = (remCePsDemand * PS_HANDLE) + (mEvDemand * EV_HANDLE);
+        let avgKnownCeHours = ceStaffCount > 0 ? (totalKnownCeHours / ceStaffCount) : (mwd * (4 * PS_HANDLE + 3 * EV_HANDLE));
+
+        let reqCeFte = avgKnownCeHours > 0 ? (totalRequiredCeClinicalHours / avgKnownCeHours) : 0;
+        let ceDelta = reqCeFte - ceStaffCount;
 
         let isCurrent = (idx === activeMonthIdx);
 
-        // 2-Month Ramp Hiring Logic:
-        // Ramp assumptions: Month 1 = 50% capacity, Month 2 = 75%, Month 3 = 100%
+        // 3. 2-Month Ramp Hiring Logic (Mo 1 = 50%, Mo 2 = 75%, Mo 3 = 100% full capacity)
+        // Average effective capacity during a 2-month ramp window is (0.50 + 0.75) / 2 = 62.5%
         let hiringAdvice = '';
-        if (ceDelta > 0.4 || pfaDelta > 0.4) {
+        if (ceDelta > 0.2 || pfaDelta > 0.2) {
             let reqs = [];
-            if (ceDelta > 0.4) reqs.push(`Open <strong>${Math.ceil(ceDelta)} CE</strong>`);
-            if (pfaDelta > 0.4) reqs.push(`Open <strong>${Math.ceil(pfaDelta)} PFA</strong>`);
-            hiringAdvice = `<span style="color:#fca5a5;">🚨 ${reqs.join(', ')} reqs (Post 60d prior for 2-mo ramp)</span>`;
-        } else if (ceDelta < -1.0) {
-            hiringAdvice = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE over)</span>`;
+            if (ceDelta > 0.2) {
+                let grossCeHires = Math.ceil(ceDelta / 0.625);
+                reqs.push(`Hire <strong>${grossCeHires} CEs</strong> (${ceDelta.toFixed(1)} net FTEs @ ramp)`);
+            }
+            if (pfaDelta > 0.2) {
+                let grossPfaHires = Math.ceil(pfaDelta / 0.625);
+                reqs.push(`Hire <strong>${grossPfaHires} PFAs</strong> (${pfaDelta.toFixed(1)} net FTEs @ ramp)`);
+            }
+            hiringAdvice = `<span style="color:#fca5a5;">🚨 ${reqs.join(' + ')} (Post 60d prior)</span>`;
+        } else if (ceDelta < -0.8) {
+            hiringAdvice = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE buffer)</span>`;
         } else {
             hiringAdvice = `<span style="color:#86efac;">✅ Balanced Coverage</span>`;
         }
@@ -2224,7 +2241,9 @@ function renderStaffingModeler() {
             activeMonthData = {
                 month: m.split('_')[0],
                 evDem: mEvDemand,
-                avgKnownCeCap: avgKnownCeCap,
+                remCePs: remCePsDemand,
+                totCeHours: totalRequiredCeClinicalHours,
+                avgKnownCeHours: avgKnownCeHours,
                 reqCeFte: reqCeFte,
                 ceStaffCount: ceStaffCount,
                 ceDelta: ceDelta,
@@ -2238,11 +2257,11 @@ function renderStaffingModeler() {
         }
 
         let rowBg = isCurrent ? 'background: rgba(99,102,241,0.08); font-weight:bold;' : '';
-        let ceBadge = ceDelta > 0.4 
+        let ceBadge = ceDelta > 0.2 
             ? `<span class="staff-pill staff-pill-alert">+${ceDelta.toFixed(1)} 🚨</span>` 
             : `<span class="staff-pill staff-pill-ok">${ceDelta.toFixed(1)}</span>`;
 
-        let pfaBadge = pfaDelta > 0.4 
+        let pfaBadge = pfaDelta > 0.2 
             ? `<span class="staff-pill staff-pill-alert">+${pfaDelta.toFixed(1)} 🚨</span>` 
             : `<span class="staff-pill staff-pill-ok">${pfaDelta.toFixed(1)}</span>`;
 
@@ -2270,14 +2289,15 @@ function renderStaffingModeler() {
     // Populate Active Month KPI Summary Cards
     if (activeMonthData) {
         document.getElementById('staff-lbl-month-ce').innerText = activeMonthData.month;
-        document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Evals`;
-        document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeCap)} Evals / CE`;
+        document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Evals + ${fmt(activeMonthData.remCePs)} PS`;
+        document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeHours)} Clinical Hours / CE`;
         document.getElementById('staff-ce-req').innerText = activeMonthData.reqCeFte.toFixed(1);
         document.getElementById('staff-ce-act').innerText = activeMonthData.ceStaffCount;
         
         let ceCallout = document.getElementById('staff-ce-delta-callout');
-        if (activeMonthData.ceDelta > 0.4) {
-            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Hiring Deficit: +${activeMonthData.ceDelta.toFixed(1)} CE FTEs Needed</span>`;
+        if (activeMonthData.ceDelta > 0.2) {
+            let grossNeeded = Math.ceil(activeMonthData.ceDelta / 0.625);
+            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs to cover 2-mo ramp)</span>`;
         } else {
             ceCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Adequate (${activeMonthData.ceDelta <= 0 ? Math.abs(activeMonthData.ceDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`;
         }
@@ -2288,8 +2308,9 @@ function renderStaffingModeler() {
         document.getElementById('staff-pfa-act').innerText = activeMonthData.pfaStaffCount;
 
         let pfaCallout = document.getElementById('staff-pfa-delta-callout');
-        if (activeMonthData.pfaDelta > 0.4) {
-            pfaCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Hiring Deficit: +${activeMonthData.pfaDelta.toFixed(1)} PFA FTEs Needed</span>`;
+        if (activeMonthData.pfaDelta > 0.2) {
+            let grossNeeded = Math.ceil(activeMonthData.pfaDelta / 0.625);
+            pfaCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.pfaDelta.toFixed(1)} FTEs (Hire ${grossNeeded} PFAs to cover 2-mo ramp)</span>`;
         } else {
             pfaCallout.innerHTML = `<span style="color:#86efac;">✅ PFA Capacity Adequate (${activeMonthData.pfaDelta <= 0 ? Math.abs(activeMonthData.pfaDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`;
         }
@@ -2301,21 +2322,21 @@ function renderStaffingModeler() {
             let currentIdx = activeMonthIdx;
             if (currentIdx + 2 < ACTIVE_TIMELINE.length) {
                 let targetM = ACTIVE_TIMELINE[currentIdx + 2];
-                nextMonthsAlerts.push(`For target volume in <strong>${targetM.split('_')[0]}</strong>, requisition approval must begin now.`);
+                nextMonthsAlerts.push(`To be fully ramped for <strong>${targetM.split('_')[0]}</strong>, requisitions must post now.`);
             }
             rampNotice.innerHTML = `
                 <div style="color:#fcd34d; font-weight:bold; margin-bottom:2px;">⚠️ Ramp Lead-Time Directive:</div>
-                <div style="font-size:9.5px; color:#cbd5e1;">A new clinician hired this week achieves 50% capacity in Mo 1 and 75% in Mo 2. ${nextMonthsAlerts.join(' ')}</div>
+                <div style="font-size:9.5px; color:#cbd5e1;">New hires operate at <strong>50% in Mo 1</strong> and <strong>75% in Mo 2</strong> (avg 62.5% yield). A +1.0 FTE deficit requires hiring ~2 clinicians to offset ramp shrinkage. ${nextMonthsAlerts.join(' ')}</div>
             `;
         }
 
         // Header Summary Pills
         let pillsContainer = document.getElementById('staffing-header-pills');
         if (pillsContainer) {
-            let cePillClass = activeMonthData.ceDelta > 0.4 ? 'staff-pill-alert' : 'staff-pill-ok';
-            let pfaPillClass = activeMonthData.pfaDelta > 0.4 ? 'staff-pill-alert' : 'staff-pill-ok';
-            let ceSymbol = activeMonthData.ceDelta > 0.4 ? '🚨 CE Gap: +' : 'CE Delta: ';
-            let pfaSymbol = activeMonthData.pfaDelta > 0.4 ? '🚨 PFA Gap: +' : 'PFA Delta: ';
+            let cePillClass = activeMonthData.ceDelta > 0.2 ? 'staff-pill-alert' : 'staff-pill-ok';
+            let pfaPillClass = activeMonthData.pfaDelta > 0.2 ? 'staff-pill-alert' : 'staff-pill-ok';
+            let ceSymbol = activeMonthData.ceDelta > 0.2 ? '🚨 CE Gap: +' : 'CE Delta: ';
+            let pfaSymbol = activeMonthData.pfaDelta > 0.2 ? '🚨 PFA Gap: +' : 'PFA Delta: ';
 
             pillsContainer.innerHTML = `
                 <span class="staff-pill ${cePillClass}">${ceSymbol}${activeMonthData.ceDelta.toFixed(1)} FTE</span>
