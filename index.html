@@ -2243,7 +2243,7 @@ function renderStaffingModeler() {
         let pfaDelta = reqPfaFte - pfaStaffCount;
 
         // 2. CE Requirement under STRICT EVAL QUOTA MODEL (Targeting ~87% Utilization)
-        // Average schedulable eval quota per active CE in that month
+        // Ensure per-CE capacity uses exact in-month net capacity (840 slots in Feb = ~44.2/CE)
         let avgKnownCeEvCap = ceStaffCount > 0 ? (totalKnownCeEvCap / ceStaffCount) : (mwd * 3.0);
         let targetUtilDenominator = 0.87; // Goal to operate at 87% utilization
         let targetCapacityPerCeAt87 = avgKnownCeEvCap * targetUtilDenominator;
