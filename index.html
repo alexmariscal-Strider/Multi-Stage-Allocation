@@ -591,7 +591,10 @@
   <div class="modal-content">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
         <h2 style="margin:0; border:none; color:#fff; font-size:14px;">Global Volume & Parameters Manager</h2>
-        <button class="btn-action" style="font-size: 11px; padding: 8px 16px;" onclick="saveGlobalModalParams()">COMMIT & RECALCULATE</button>
+        <div style="display:flex; gap:8px;">
+            <button class="btn-action" style="background:#475569; font-size: 11px; padding: 8px 12px;" onclick="closeSettingsModal()">✖ CLOSE</button>
+            <button class="btn-action" style="font-size: 11px; padding: 8px 16px;" onclick="saveGlobalModalParams()">COMMIT & RECALCULATE</button>
+        </div>
     </div>
 
     <!-- PERMANENT TERRITORY & STATE MANAGEMENT WIDGET -->
@@ -716,6 +719,11 @@ function toggleModal(id) {
   const modal = document.getElementById(id);
   if (modal.style.display === 'flex') { modal.style.display = 'none'; } 
   else { if(id === 'settings-modal') populateGlobalModalViews(); modal.style.display = 'flex'; }
+}
+
+function closeSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 function promptAlert(message) {
@@ -1231,15 +1239,25 @@ function attachPasteListeners() {
 }
 
 function saveGlobalModalParams() {
-  FUNNEL.holidays = document.getElementById('mod-global-holidays').value || '';
-  ACTIVE_TIMELINE.forEach(m => {
-    LEDGER[m].wd = parseFloat(document.getElementById(`mod-wd-field-${m}`).value) || 0;
-    MASTER_STATES.forEach(s => {
-      LEDGER[m].apps[s] = parseInt(document.getElementById(`mod-app-${s}-${m}`).value) || 0;
-      LEDGER[m].conv[s] = parseFloat(document.getElementById(`mod-cnv-${s}-${m}`).value) || 0;
+  try {
+    FUNNEL.holidays = document.getElementById('mod-global-holidays').value || '';
+    ACTIVE_TIMELINE.forEach(m => {
+      let wdEl = document.getElementById(`mod-wd-field-${m}`);
+      if (wdEl) LEDGER[m].wd = parseFloat(wdEl.value) || 0;
+      MASTER_STATES.forEach(s => {
+        let appEl = document.getElementById(`mod-app-${s}-${m}`);
+        let cnvEl = document.getElementById(`mod-cnv-${s}-${m}`);
+        if (appEl) LEDGER[m].apps[s] = parseInt(appEl.value) || 0;
+        if (cnvEl) LEDGER[m].conv[s] = parseFloat(cnvEl.value) || 0;
+      });
     });
-  });
-  saveState(); toggleModal('settings-modal'); recalculateDashboardMetrics();
+    saveState();
+  } catch (err) {
+    console.error("Error committing global parameters:", err);
+  } finally {
+    closeSettingsModal();
+    recalculateDashboardMetrics();
+  }
 }
 
 // --- SORTING ENGINE ---
@@ -2107,6 +2125,17 @@ function recalculateDashboardMetrics() {
       ? Math.min(d_evDem, d_evStrictCap) * (FUNNEL.evCompRate / 100) * enrollRate
       : Math.min(d_enroll, p_enroll);
 
+  // Target Utilization Color Coding (Target: ~87%, max: 90%)
+  let evUtilColor = '#10b981';
+  let evUtilBadge = 'Healthy (Target ~87%)';
+  if (d_evUtilPct > 90) {
+      evUtilColor = '#ef4444';
+      evUtilBadge = 'Overcapacity Risk (>90%)';
+  } else if (d_evUtilPct >= 88.5) {
+      evUtilColor = '#eab308';
+      evUtilBadge = 'Near Threshold (89-90%)';
+  }
+
   document.getElementById('top-stats-container').innerHTML = `
     <div class="stat-card-basic app-theme">
       <div class="stat-label-basic">Accepted App Vol</div>
@@ -2127,8 +2156,8 @@ function recalculateDashboardMetrics() {
     </div>
 
     <div class="stat-card-modern">
-      <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Calculated as true Funnel Pipeline Demand (${fmt(d_evDem)}) divided by Schedulable Capacity (${fmt(d_evStrictCap)}).</span></div></span></div>
-      <div class="util-pct">${Math.round(d_evUtilPct)}%</div>
+      <div class="util-header"><span>CE Eval Util <div class="tooltip-container" style="display:inline-flex;"><span class="info-icon">i</span><span class="tooltip-text">Evaluated against Strict Schedulable Quota (${fmt(d_evStrictCap)}). Target is ~87% with an operational ceiling of 90%.</span></div></span><span style="font-size:8px; color:${evUtilColor}; font-weight:bold;">${evUtilBadge}</span></div>
+      <div class="util-pct" style="color:${evUtilColor};">${Math.round(d_evUtilPct)}%</div>
       ${renderVisualBar('Schedulable Quota', d_evDem, d_evStrictCap, 'cap')}
     </div>
   `;
@@ -2213,13 +2242,12 @@ function renderStaffingModeler() {
         let reqPfaFte = avgKnownPfaCap > 0 ? (mPfaTargetPs / avgKnownPfaCap) : 0;
         let pfaDelta = reqPfaFte - pfaStaffCount;
 
-        // 2. CE Requirement: CEs must cover BOTH remaining Phone Screens and ALL Evaluations
-        let actualPfaCapYield = Math.min(mPfaTargetPs, totalKnownPfaPsCap);
-        let remCePsDemand = Math.max(0, mPsDemandFull - actualPfaCapYield);
-        let totalRequiredCeClinicalHours = (remCePsDemand * PS_HANDLE) + (mEvDemand * EV_HANDLE);
-        let avgKnownCeHours = ceStaffCount > 0 ? (totalKnownCeHours / ceStaffCount) : (mwd * (4 * PS_HANDLE + 3 * EV_HANDLE));
-
-        let reqCeFte = avgKnownCeHours > 0 ? (totalRequiredCeClinicalHours / avgKnownCeHours) : 0;
+        // 2. CE Requirement under STRICT EVAL QUOTA MODEL (Targeting ~87% Utilization)
+        // Average schedulable eval quota per active CE in that month
+        let avgKnownCeEvCap = ceStaffCount > 0 ? (totalKnownCeEvCap / ceStaffCount) : (mwd * 3.0);
+        let targetUtilDenominator = 0.87; // Goal to operate at 87% utilization
+        let targetCapacityPerCeAt87 = avgKnownCeEvCap * targetUtilDenominator;
+        let reqCeFte = targetCapacityPerCeAt87 > 0 ? (mEvDemand / targetCapacityPerCeAt87) : 0;
         let ceDelta = reqCeFte - ceStaffCount;
 
         let isCurrent = (idx === activeMonthIdx);
@@ -2230,7 +2258,7 @@ function renderStaffingModeler() {
             let reqs = [];
             if (ceDelta > 0.2) {
                 let grossCeHires = Math.ceil(ceDelta);
-                reqs.push(`Hire <strong>${grossCeHires} CEs</strong> (0% ramp: post 60d prior)`);
+                reqs.push(`Hire <strong>${grossCeHires} CEs</strong> (to reach 87% target; post 60d prior)`);
             }
             if (pfaDelta > 0.2) {
                 let grossPfaHires = Math.ceil(pfaDelta);
@@ -2238,18 +2266,16 @@ function renderStaffingModeler() {
             }
             hiringAdvice = `<span style="color:#fca5a5;">🚨 ${reqs.join(' + ')}</span>`;
         } else if (ceDelta < -0.8) {
-            hiringAdvice = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE buffer)</span>`;
+            hiringAdvice = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE buffer at 87% util)</span>`;
         } else {
-            hiringAdvice = `<span style="color:#86efac;">✅ Balanced Coverage</span>`;
+            hiringAdvice = `<span style="color:#86efac;">✅ Balanced (Within 87% target)</span>`;
         }
 
         if (isCurrent) {
             activeMonthData = {
                 month: m.split('_')[0],
                 evDem: mEvDemand,
-                remCePs: remCePsDemand,
-                totCeHours: totalRequiredCeClinicalHours,
-                avgKnownCeHours: avgKnownCeHours,
+                avgKnownCeEvCap: avgKnownCeEvCap,
                 reqCeFte: reqCeFte,
                 ceStaffCount: ceStaffCount,
                 ceDelta: ceDelta,
@@ -2276,7 +2302,7 @@ function renderStaffingModeler() {
                 <td style="font-weight:bold; color:${isCurrent ? '#c4b5fd' : '#f8fafc'};">${m.split('_')[0]} ${isCurrent ? '⭐' : ''}</td>
                 <td style="text-align:center;">${fmt(mApps)}</td>
                 <td style="text-align:center;">${FUNNEL.pfaRouteRate}%</td>
-                <td style="text-align:center; color:#c4b5fd;" title="${fmt(mEvDemand)} Evals (${fmt(mEvDemand * EV_HANDLE)}h) + ${fmt(remCePsDemand)} CE PS (${fmt(remCePsDemand * PS_HANDLE)}h)">${fmt(mEvDemand)} EV + ${fmt(remCePsDemand)} PS</td>
+                <td style="text-align:center; color:#c4b5fd;">${fmt(mEvDemand)} Evals (Strict 3/d)</td>
                 <td style="text-align:center;">${ceStaffCount}</td>
                 <td style="text-align:center; font-weight:bold;">${reqCeFte.toFixed(1)}</td>
                 <td style="text-align:center;">${ceBadge}</td>
@@ -2295,17 +2321,17 @@ function renderStaffingModeler() {
     // Populate Active Month KPI Summary Cards
     if (activeMonthData) {
         document.getElementById('staff-lbl-month-ce').innerText = activeMonthData.month;
-        document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Evals + ${fmt(activeMonthData.remCePs)} PS (${fmt(activeMonthData.totCeHours)} Clinical Hours)`;
-        document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeHours)} Clinical Hours / CE`;
+        document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Schedulable Evals (Strict Quotas)`;
+        document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeEvCap)} Schedulable Evals / CE (net PTO)`;
         document.getElementById('staff-ce-req').innerText = activeMonthData.reqCeFte.toFixed(1);
         document.getElementById('staff-ce-act').innerText = activeMonthData.ceStaffCount;
         
         let ceCallout = document.getElementById('staff-ce-delta-callout');
         if (activeMonthData.ceDelta > 0.2) {
             let grossNeeded = Math.ceil(activeMonthData.ceDelta);
-            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs; 0% ramp requires start 60d prior)</span>`;
+            ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Staffing Need: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs to maintain 87% target; post 60d prior)</span>`;
         } else {
-            ceCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Adequate (${activeMonthData.ceDelta <= 0 ? Math.abs(activeMonthData.ceDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`;
+            ceCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Balanced for 87% Target (${activeMonthData.ceDelta <= 0 ? Math.abs(activeMonthData.ceDelta).toFixed(1) + ' buffer' : 'On Target'})</span>`;
         }
 
         document.getElementById('staff-pfa-demand').innerText = `${fmt(activeMonthData.pfaDem)} PS (${FUNNEL.pfaRouteRate}%)`;
