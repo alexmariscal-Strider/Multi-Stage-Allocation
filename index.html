@@ -421,9 +421,13 @@
 
   <!-- PROFILE MANAGER -->
   <div class="panel span-1">
-    <h2 id="mix-title" style="align-items: center; display: flex;">
+    <h2 id="mix-title" style="align-items: center; display: flex; flex-wrap: wrap; gap: 4px;">
       <span>CE Profile Manager</span>
-      <button class="btn-action" style="padding: 2px 6px; font-size: 8px; background: #6366f1;" onclick="promptConfirm('Provision all states to all CEs?', addAllStatesToAllProviders)">+ ALL TO ALL</button>
+      <div style="display: inline-flex; gap: 4px; align-items: center; margin-left: auto;">
+        <button class="btn-action" id="btn-sync-licensure" style="padding: 2px 6px; font-size: 8px; background: #059669;" onclick="syncLicensureFromSheets(false)">🔄 SYNC LICENSURE</button>
+        <button class="btn-action" id="btn-undo-licensure-sync" style="padding: 2px 6px; font-size: 8px; background: #d97706; display: none;" onclick="undoLicensureSync()">⏪ UNDO SYNC</button>
+        <button class="btn-action" style="padding: 2px 6px; font-size: 8px; background: #6366f1;" onclick="promptConfirm('Provision all states to all CEs?', addAllStatesToAllProviders)">+ ALL TO ALL</button>
+      </div>
     </h2>
     <div id="ce-controls" style="max-height: 380px; overflow-y: auto; padding-right: 5px;"></div>
   </div>
@@ -891,6 +895,12 @@ function bootstrapDataEngine() {
     ARCHIVED_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_archive_time')) || [];
     ARCHIVED_LEDGER = JSON.parse(localStorage.getItem('funnel_v2_archive_ledg')) || {};
     ARCHIVED_ROSTER = JSON.parse(localStorage.getItem('funnel_v2_archive_rost')) || {};
+
+    const licBackup = localStorage.getItem('funnel_v2_rost_sync_backup');
+    const undoLicBtn = document.getElementById('btn-undo-licensure-sync');
+    if (undoLicBtn) {
+        undoLicBtn.style.display = licBackup ? 'inline-block' : 'none';
+    }
 
     hydrateDataDefaults();
     loadFunnelUI(); buildTimelineControls(); recalculateDashboardMetrics();
@@ -2251,15 +2261,13 @@ function renderStaffingModeler() {
         let isCurrent = (idx === activeMonthIdx);
 
         // 2. CE Requirement under STRICT EVAL QUOTA MODEL (Targeting ~87% Utilization)
-        // Bind strictly to the exact physical roster sum (840 in Feb)
         let effectiveCeEvPoolCap = (isCurrent && typeof ceStrictEvCap === 'number' && ceStrictEvCap > 0)
             ? ceStrictEvCap 
             : totalKnownCeEvCap;
 
-        // Base the per-FTE delivery on active producing clinicians so 0/0 leads don't distort the hiring baseline
         let activeDivisor = ceProducingCount > 0 ? ceProducingCount : (ceStaffCount || 1);
         let avgKnownCeEvCap = effectiveCeEvPoolCap / activeDivisor;
-        let targetUtilDenominator = 0.87; // Goal to operate at 87% utilization
+        let targetUtilDenominator = 0.87;
         let targetCapacityPerCeAt87 = avgKnownCeEvCap * targetUtilDenominator;
         let reqCeFte = targetCapacityPerCeAt87 > 0 ? (mEvDemand / targetCapacityPerCeAt87) : 0;
         let ceDelta = reqCeFte - ceProducingCount;
@@ -2722,6 +2730,7 @@ function renderCollapsibleLedger(activeM, wd) {
 
 function renderDualCharts() {
   const ctxPs = document.getElementById('wfmPsChart'); const ctxEv = document.getElementById('wfmEvChart');
+  if(!ctxPs || !ctxEv) return;
   let dLabels = ACTIVE_TIMELINE.map(m => m.split('_')[0]); let psDem=[], psSup=[], evDem=[], evSup=[];
   let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
 
@@ -2742,11 +2751,11 @@ function renderDualCharts() {
       psSup.push(Math.round(tSupPS)); evSup.push(Math.round(tSupEV));
   });
 
-  if(chartPs) chartPs.destroy();
-  chartPs = new Chart(ctxPs.getContext('2d'), { type: 'line', data: { labels: dLabels, datasets: [ { label: 'PS Demand', data: psDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 }, { label: 'PS Supply', data: psSup, borderColor: '#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.3 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} } });
+  if(window.chartPs) window.chartPs.destroy();
+  window.chartPs = new Chart(ctxPs.getContext('2d'), { type: 'line', data: { labels: dLabels, datasets: [ { label: 'PS Demand', data: psDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 }, { label: 'PS Supply', data: psSup, borderColor: '#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.3 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} } });
   
-  if(chartEv) chartEv.destroy();
-  chartEv = new Chart(ctxEv.getContext('2d'), { type: 'line', data: { labels: dLabels, datasets: [ { label: 'Eval Demand', data: evDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 }, { label: 'Strict Eval Supply', data: evSup, borderColor: '#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)', fill:true, tension:0.3 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} } });
+  if(window.chartEv) window.chartEv.destroy();
+  window.chartEv = new Chart(ctxEv.getContext('2d'), { type: 'line', data: { labels: dLabels, datasets: [ { label: 'Eval Demand', data: evDem, borderColor: '#ef4444', backgroundColor:'transparent', tension:0.3 }, { label: 'Strict Eval Supply', data: evSup, borderColor: '#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)', fill:true, tension:0.3 } ]}, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{labels:{color:'#94a3b8', font:{size:9}}}}, scales:{x:{display:false}, y:{grid:{color:'#1f2937'}, ticks:{color:'#94a3b8'}}} } });
 }
 
 // --- SYNC ENGINE ---
@@ -2866,6 +2875,202 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
 function undoPtoSync() {
     let bk = localStorage.getItem('funnel_roster_backup');
     if (bk) { ROSTER = JSON.parse(bk); saveState(); recalculateDashboardMetrics(); document.getElementById('undo-sync-btn').style.display = 'none'; promptAlert("PTO Sync Undone."); }
+}
+
+// --- STRICT LICENSURE SYNC ENGINE ---
+async function syncLicensureFromSheets(isSilent = false) {
+  const syncBtn = document.getElementById('btn-sync-licensure');
+  const undoBtn = document.getElementById('btn-undo-licensure-sync');
+  const originalText = syncBtn ? syncBtn.innerText : '';
+
+  try {
+    if (syncBtn) {
+      syncBtn.disabled = true;
+      syncBtn.innerText = '⏳ SYNCING...';
+    }
+
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/1R9gyVy1FXbSQz5P0YugdHW58YckNx-o7847w4SCXbdQ/export?format=csv&gid=748848576&_cb=${Date.now()}`;
+    const response = await fetch(sheetUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Google Sheets fetch failed (HTTP ${response.status})`);
+
+    const rawCSV = await response.text();
+    
+    const parseCSVRow = (row) => {
+        const result = []; let insideQuote = false; let currentVal = '';
+        for (let i = 0; i < row.length; i++) {
+            if (row[i] === '"') insideQuote = !insideQuote;
+            else if (row[i] === ',' && !insideQuote) { result.push(currentVal); currentVal = ''; }
+            else { currentVal += row[i]; }
+        }
+        result.push(currentVal); return result;
+    };
+
+    const rows = rawCSV.split(/\r\n|\n/).filter(r => r.trim()).map(r => parseCSVRow(r));
+    if (!rows || rows.length === 0) throw new Error("A2. CE Active States tab is empty or malformed.");
+
+    const normalize = (s) => (s || '').replace(/\u00a0/g, ' ').trim();
+
+    // 1. Dynamically locate header row containing CE/Clinician column
+    let headerRowIdx = -1;
+    let ceColIdx = -1;
+
+    for (let r = 0; r < Math.min(rows.length, 15); r++) {
+      for (let c = 0; c < rows[r].length; c++) {
+        const val = normalize(rows[r][c]).toUpperCase();
+        if (val === 'CE' || val.includes('CLINICAL EVALUATOR') || val === 'NAME' || val === 'PROVIDER') {
+          ceColIdx = c;
+          headerRowIdx = r;
+          break;
+        }
+      }
+      if (headerRowIdx !== -1) break;
+    }
+
+    if (headerRowIdx === -1 || ceColIdx === -1) {
+      throw new Error("Unable to identify the CE/Clinician column header.");
+    }
+
+    // 2. Identify State Columns (2-letter postal uppercase codes)
+    const headerRow = rows[headerRowIdx];
+    const stateColMap = {};
+    const stateRegex = /^[A-Z]{2}$/;
+
+    for (let c = 0; c < headerRow.length; c++) {
+      if (c === ceColIdx) continue;
+      const st = normalize(headerRow[c]).toUpperCase();
+      if (stateRegex.test(st)) {
+        stateColMap[c] = st;
+        if (!MASTER_STATES.includes(st)) {
+          MASTER_STATES.push(st);
+        }
+      }
+    }
+
+    if (Object.keys(stateColMap).length === 0) {
+      throw new Error("No valid two-letter state abbreviation headers found in sheet.");
+    }
+
+    // 3. Isolated backup for undo capability
+    localStorage.setItem('funnel_v2_rost_sync_backup', JSON.stringify(ROSTER));
+    if (undoBtn) undoBtn.style.display = 'inline-block';
+
+    // 4. Build case-insensitive roster lookup
+    const rosterLookup = {};
+    Object.keys(ROSTER).forEach(name => {
+      rosterLookup[name.toLowerCase().replace(/\u00a0/g, ' ').trim()] = name;
+    });
+
+    const activeIndicators = new Set(['YES', 'Y', 'ON', 'TRUE', '1']);
+    let updatedCliniciansCount = 0;
+    let totalAddedLicenses = 0;
+    let totalRemovedLicenses = 0;
+
+    for (let r = headerRowIdx + 1; r < rows.length; r++) {
+      const row = rows[r];
+      if (!row || row.length <= ceColIdx) continue;
+
+      const rawName = normalize(row[ceColIdx]);
+      if (!rawName) continue;
+
+      const cleanKey = rawName.toLowerCase();
+      const matchedName = rosterLookup[cleanKey];
+
+      if (matchedName) {
+        const clinician = ROSTER[matchedName];
+        if (clinician.role === 'PFA') continue; // PFAs are global stateless pool
+
+        const previousMasterLicenses = new Set(clinician.profile || []);
+        const freshSheetLicenses = new Set();
+
+        Object.entries(stateColMap).forEach(([colIdx, stateCode]) => {
+          const cellVal = normalize(row[parseInt(colIdx, 10)]).toUpperCase();
+          if (activeIndicators.has(cellVal)) {
+            freshSheetLicenses.add(stateCode);
+          }
+        });
+
+        const toAdd = [...freshSheetLicenses].filter(st => !previousMasterLicenses.has(st));
+        const toRemove = [...previousMasterLicenses].filter(st => !freshSheetLicenses.has(st));
+
+        if (toAdd.length > 0 || toRemove.length > 0) {
+          updatedCliniciansCount++;
+          totalAddedLicenses += toAdd.length;
+          totalRemovedLicenses += toRemove.length;
+
+          // Strictly synchronize master profile
+          clinician.profile = Array.from(freshSheetLicenses).sort();
+
+          // Intelligent active toggle updates across all active tracking months
+          ACTIVE_TIMELINE.forEach(m => {
+            if (!clinician.mix) clinician.mix = {};
+            let currentMix = clinician.mix[m] || [];
+
+            // 1. Remove states that are no longer licensed
+            currentMix = currentMix.filter(st => freshSheetLicenses.has(st));
+
+            // 2. Automatically toggle ON newly granted states
+            toAdd.forEach(newSt => {
+              if (!currentMix.includes(newSt)) {
+                currentMix.push(newSt);
+              }
+            });
+
+            clinician.mix[m] = currentMix.sort();
+          });
+        }
+      }
+    }
+
+    saveState();
+    recalculateDashboardMetrics();
+
+    if (!isSilent) {
+      promptAlert(
+        `Licensure Synchronization Complete!\n\n` +
+        `• Clinicians Updated: ${updatedCliniciansCount}\n` +
+        `• New State Licenses Activated: ${totalAddedLicenses}\n` +
+        `• States Revoked/Removed: ${totalRemovedLicenses}\n\n` +
+        `All active schedules and capacity arbitrage matrices have updated immediately.`
+      );
+    }
+  } catch (err) {
+    console.error("Licensure Sync Error:", err);
+    if (!isSilent) {
+      promptAlert("Failed to sync licensure: " + err.message);
+    }
+  } finally {
+    if (syncBtn) {
+      syncBtn.disabled = false;
+      syncBtn.innerText = originalText;
+    }
+  }
+}
+
+function undoLicensureSync() {
+  const backup = localStorage.getItem('funnel_v2_rost_sync_backup');
+  if (!backup) {
+    promptAlert("No previous licensure sync snapshot found to revert.");
+    return;
+  }
+
+  promptConfirm(
+    "Revert all clinician master licensures and active monthly mixes to the state before the last sync?",
+    () => {
+      try {
+        ROSTER = JSON.parse(backup);
+        localStorage.removeItem('funnel_v2_rost_sync_backup');
+        
+        const undoBtn = document.getElementById('btn-undo-licensure-sync');
+        if (undoBtn) undoBtn.style.display = 'none';
+
+        saveState();
+        recalculateDashboardMetrics();
+        promptAlert("Licensure state and active monthly mixes successfully restored!");
+      } catch (e) {
+        promptAlert("Error restoring licensure backup: " + e.message);
+      }
+    }
+  );
 }
 
 // INITIALIZE APP
