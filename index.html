@@ -141,23 +141,23 @@
 </head>
 <body>
 <div class="header-flex">
-  <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-    <div style="display: flex; align-items: center;">
-      <h1 style="font-size: 18px; margin: 0; font-weight: 800; color: #f8fafc; letter-spacing: -0.5px;">Multi-Stage Funnel Arbitrage Suite <span style="font-weight:400; color:#64748b; font-size: 14px;">· v1.3</span><span style="font-size:10px; color:#10b981; background:rgba(16,185,129,0.1); padding:3px 6px; border-radius:4px; margin-left:8px; border:1px solid rgba(16,185,129,0.2); font-weight:bold; vertical-align: middle;">🟢 CLOUD SYNC ACTIVE</span></h1>
-    </div>
-    <div class="month-bar">
-      <button class="btn-horizon" onclick="openMonthManager()">📅 Manage Months</button>
-      <div id="month-tabs" style="display: inline-flex; gap: 2px;"></div>
-    </div>
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <h1 style="font-size: 16px; margin: 0; font-weight: 800; color: #f8fafc; letter-spacing: -0.5px;">Multi-Stage Funnel Arbitrage Suite <span style="font-weight:400; color:#64748b; font-size: 12px;">· v1.3</span></h1>
+    <span style="font-size:9px; color:#10b981; background:rgba(16,185,129,0.1); padding:3px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.2); font-weight:bold;">🟢 CLOUD SYNC</span>
   </div>
-  <div style="display: flex; gap: 8px; align-items: center;">
-      <div style="display: flex; gap: 4px; margin-right: 12px; background: #0f172a; padding: 4px; border-radius: 6px; border: 1px solid #1e293b; align-items: center;">
-          <span style="font-size: 9px; color: #94a3b8; font-weight: bold; text-transform: uppercase; padding: 0 4px;">Engine:</span>
-          <button class="matrix-btn matrix-btn-on" id="btn-mode-intake" onclick="setDemandMode('intake')" style="width: 100px;">In-Month Intake</button>
-          <button class="matrix-btn matrix-btn-off" id="btn-mode-cohort" onclick="setDemandMode('cohort')" style="width: 100px;">Lagged Cohort</button>
+  
+  <div style="display: flex; align-items: center; gap: 12px; background: #0f172a; padding: 4px 8px; border-radius: 8px; border: 1px solid #1e293b; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+      <div style="display:flex; align-items:center; gap:2px; border-right: 1px solid #334155; padding-right: 8px; margin-right: 4px;">
+          <button class="matrix-btn matrix-btn-on" id="btn-mode-intake" onclick="setDemandMode('intake')" style="width: 90px; padding: 6px 0;">In-Month</button>
+          <button class="matrix-btn matrix-btn-off" id="btn-mode-cohort" onclick="setDemandMode('cohort')" style="width: 90px; padding: 6px 0;">Lagged Cohort</button>
       </div>
-      <button class="btn-action" style="background: transparent; color: #94a3b8; border: 1px solid #374151; padding: 8px 12px; font-size: 10px; border-radius: 6px; transition: 0.2s;" onmouseover="this.style.color='#f8fafc'; this.style.borderColor='#64748b';" onmouseout="this.style.color='#94a3b8'; this.style.borderColor='#374151';" onclick="toggleModal('summary-modal')">ℹ️ SUMMARY</button>
-      <button class="btn-action" style="background: #1f2937; color: #f8fafc; border: 1px solid #475569; padding: 8px 16px; font-size: 10px; border-radius: 6px;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL VOLUME & PARAMETERS</button>
+      <button class="btn-horizon" onclick="openMonthManager()" style="padding: 4px 8px; font-size: 13px;" title="Manage Months">📅</button>
+      <div id="month-tabs" style="display: inline-flex; gap: 2px;"></div>
+  </div>
+
+  <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="btn-action" style="background: transparent; color: #94a3b8; border: 1px solid #374151; padding: 6px 10px; font-size: 10px;" onclick="toggleModal('summary-modal')">ℹ️ SUMMARY</button>
+      <button class="btn-action" style="background: #1f2937; color: #f8fafc; border: 1px solid #475569; padding: 6px 10px; font-size: 10px;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL PARAMS</button>
   </div>
 </div>
 <div class="top-50-50">
@@ -195,14 +195,14 @@
                     <tr><td style="padding-left: 20px; font-size: 10px;">↳ PS Completed</td><td class="col-dem" id="tbl-dem-ps-comp">-</td><td class="col-pot" id="tbl-pot-ps-comp">-</td><td id="tbl-var-ps-comp">-</td></tr>
                     <tr><td style="padding-left: 20px; font-size: 10px;">↳ Screen-In</td><td class="col-dem" id="tbl-dem-scr-in">-</td><td class="col-pot" id="tbl-pot-scr-in">-</td><td id="tbl-var-scr-in">-</td></tr>
                     <tr class="row-major"><td><strong>Yield Eval Demand</strong></td><td class="col-dem" id="tbl-dem-ev-dem">-</td><td class="col-pot" id="tbl-pot-ev-dem">-</td><td id="tbl-var-ev-dem">-</td></tr>
-                    <tr class="cohort-subrow" style="display:none; background:rgba(30,41,59,0.3);"><td style="padding-left: 20px; font-size: 10px; color:#94a3b8;">↳ Carryover (<span id="lbl-ev-split-m1">50</span>% of Prev Mo)</td><td class="col-dem" id="tbl-dem-ev-m1">-</td><td colspan="2"></td></tr>
-                    <tr class="cohort-subrow" style="display:none; background:rgba(30,41,59,0.3);"><td style="padding-left: 20px; font-size: 10px; color:#94a3b8;">↳ Immediate (<span id="lbl-ev-split-m0">50</span>% of Curr Mo)</td><td class="col-dem" id="tbl-dem-ev-m0">-</td><td colspan="2"></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(30,41,59,0.3);"><td style="padding-left: 20px; font-size: 10px; color:#94a3b8;">↳ Carryover (<span id="lbl-ev-split-m1">50</span>% of Prev Mo)</td><td class="col-dem" id="tbl-dem-ev-m1">-</td><td class="col-pot" id="tbl-pot-ev-m1">-</td><td></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(30,41,59,0.3);"><td style="padding-left: 20px; font-size: 10px; color:#94a3b8;">↳ Immediate (<span id="lbl-ev-split-m0">50</span>% of Curr Mo)</td><td class="col-dem" id="tbl-dem-ev-m0">-</td><td class="col-pot" id="tbl-pot-ev-m0">-</td><td></td></tr>
                     <tr><td style="color: #c4b5fd;"><strong>Evals Scheduled</strong></td><td class="col-dem" id="tbl-dem-ev-sched">-</td><td class="col-pot" id="tbl-pot-ev-sched">-</td><td id="tbl-var-ev-sched">-</td></tr>
                     <tr><td style="padding-left: 20px; font-size: 10px;">↳ Eval Completed</td><td class="col-dem" id="tbl-dem-ev-comp">-</td><td class="col-pot" id="tbl-pot-ev-comp">-</td><td id="tbl-var-ev-comp">-</td></tr>
                     <tr class="row-final"><td><strong>FINAL ENROLLMENTS</strong></td><td id="tbl-dem-enroll">-</td><td id="tbl-pot-enroll">-</td><td id="tbl-var-enroll">-</td></tr>
-                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Tail Pipeline (<span id="lbl-en-split-m2">15</span>% of 2-Mo Prior)</td><td id="tbl-dem-en-m2">-</td><td colspan="2"></td></tr>
-                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Core Pipeline (<span id="lbl-en-split-m1">65</span>% of Prev Mo)</td><td id="tbl-dem-en-m1">-</td><td colspan="2"></td></tr>
-                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Immediate Yield (<span id="lbl-en-split-m0">20</span>% of Curr Mo)</td><td id="tbl-dem-en-m0">-</td><td colspan="2"></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Tail Pipeline (<span id="lbl-en-split-m2">15</span>% of 2-Mo Prior)</td><td id="tbl-dem-en-m2">-</td><td class="col-pot" id="tbl-pot-en-m2">-</td><td></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Core Pipeline (<span id="lbl-en-split-m1">65</span>% of Prev Mo)</td><td id="tbl-dem-en-m1">-</td><td class="col-pot" id="tbl-pot-en-m1">-</td><td></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Immediate Yield (<span id="lbl-en-split-m0">20</span>% of Curr Mo)</td><td id="tbl-dem-en-m0">-</td><td class="col-pot" id="tbl-pot-en-m0">-</td><td></td></tr>
                     <tr><td style="color:#10b981; font-weight:bold; font-size:10px;">↳ Weekly Pace (4.33 wks/mo)</td><td style="color:#64748b; font-size:10px;" id="tbl-dem-pace">-</td><td style="color:#10b981; font-size:11px;" id="tbl-pot-pace">-</td><td>-</td></tr>
                 </tbody>
             </table>
@@ -515,7 +515,10 @@ function bootstrapDataEngine() {
 function hydrateDataDefaults() {
     ACTIVE_TIMELINE.forEach((m) => {
       if (!LEDGER[m]) { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; } if (!LEDGER[m].apps) LEDGER[m].apps = {}; if (!LEDGER[m].conv) LEDGER[m].conv = {};
-      MASTER_STATES.forEach(s => { if (LEDGER[m].apps[s] === undefined) LEDGER[m].apps[s] = 0; if (LEDGER[m].conv[s] === undefined) LEDGER[m].conv[s] = 0; });
+      MASTER_STATES.forEach(s => { 
+          if (LEDGER[m].apps[s] === undefined) LEDGER[m].apps[s] = 0; 
+          LEDGER[m].conv[s] = 0; // ZERO OUT FOR NOW PER USER REQUEST
+      });
       if (!LEDGER[m].manualWeeks) { LEDGER[m].manualWeeks = [{start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}]; }
     });
     let rosterCount = 0;
@@ -638,8 +641,36 @@ function savePtoWeeklyModal() { if(!activePtoEditCe || !activePtoEditMonth) retu
 
 // COHORT TOGGLE AND UTILS
 function setDemandMode(mode) { activeDemandMode = mode; document.getElementById('btn-mode-intake').className = mode === 'intake' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off'; document.getElementById('btn-mode-cohort').className = mode === 'cohort' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off'; recalculateDashboardMetrics(); }
-function getHistoricalLedger(tIdx, offset) { let targetIdx = tIdx + offset; let mName = null; if (targetIdx >= 0 && targetIdx < ACTIVE_TIMELINE.length) { mName = ACTIVE_TIMELINE[targetIdx]; return LEDGER[mName]; } else if (targetIdx < 0 && ARCHIVED_TIMELINE && ARCHIVED_TIMELINE.length > 0) { let archIdx = ARCHIVED_TIMELINE.length + targetIdx; if (archIdx >= 0 && archIdx < ARCHIVED_TIMELINE.length) { mName = ARCHIVED_TIMELINE[archIdx]; return ARCHIVED_LEDGER[mName]; } } return null; }
-function getSystemYield(ledgerObj) { if (!ledgerObj) return 0; let total = 0; let mult = 1 + (FUNNEL.volBump / 100); let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100); MASTER_STATES.forEach(s => { let a = (ledgerObj.apps[s] || 0) * mult; let c = ledgerObj.conv[s] || 0; total += a * (c > 0 ? c/100 : globalAppToEvRate); }); return total; }
+
+function getHistoricalLedgerName(tIdx, offset) {
+    let targetIdx = tIdx + offset; 
+    if (targetIdx >= 0 && targetIdx < ACTIVE_TIMELINE.length) return ACTIVE_TIMELINE[targetIdx];
+    if (targetIdx < 0 && ARCHIVED_TIMELINE && ARCHIVED_TIMELINE.length > 0) { 
+        let archIdx = ARCHIVED_TIMELINE.length + targetIdx; 
+        if (archIdx >= 0 && archIdx < ARCHIVED_TIMELINE.length) return ARCHIVED_TIMELINE[archIdx]; 
+    } 
+    return null;
+}
+
+function getMonthEvMetrics(mName) {
+    if (!mName) return { apps: 0, dem: 0, cap: 0, yield: 0, maxYield: 0, psCap: 0 };
+    let ledg = LEDGER[mName] || ARCHIVED_LEDGER[mName]; if (!ledg) return { apps: 0, dem: 0, cap: 0, yield: 0, maxYield: 0, psCap: 0 };
+    let wd = ledg.wd; let mult = 1 + (FUNNEL.volBump / 100); let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+    let m_psDem = 0; let m_evDem = 0; let m_apps = 0;
+    MASTER_STATES.forEach(s => { let a = (ledg.apps[s]||0)*mult; m_apps += a; m_psDem += (a * (FUNNEL.appToPsRate/100)); m_evDem += (a * globalAppToEvRate); });
+    
+    let m_pfaPsCap = 0; let m_ceTotalH = 0; let m_ceStrictPsCap = 0;
+    Object.keys(ROSTER).forEach(n => {
+        let r = ROSTER[n]; if (!LEDGER[mName] && ARCHIVED_ROSTER[n]) r = ARCHIVED_ROSTER[n];
+        let pto = parseFloat(r.pto ? r.pto[mName] : 0) || 0; let qPs = parseFloat(r.qPs ? r.qPs[mName] : 0) || 0; let qEv = parseFloat(r.qEv ? r.qEv[mName] : 0) || 0;
+        let net = Math.max(0, wd - pto); if (r.role === 'PFA') { m_pfaPsCap += (net * qPs); } else { m_ceTotalH += (net * (qPs*PS_HANDLE + qEv*EV_HANDLE)); m_ceStrictPsCap += (net * qPs); }
+    });
+    
+    let pfaYield = Math.min(m_psDem * (FUNNEL.pfaRouteRate/100), m_pfaPsCap); let remCePs = m_psDem - pfaYield; let reqCePsH = remCePs * PS_HANDLE; let fluidEvCap = Math.max(0, m_ceTotalH - reqCePsH) / EV_HANDLE;
+    let yieldBase = m_evDem * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
+    let maxYieldBase = Math.min(m_evDem, fluidEvCap) * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
+    return { apps: m_apps, dem: m_evDem, cap: fluidEvCap, yield: yieldBase, maxYield: maxYieldBase, psCap: (m_pfaPsCap + m_ceStrictPsCap) };
+}
 
 function setHeatmapView(mode) { heatmapViewMode = mode; document.getElementById('btn-view-mo').className = mode === 'mo' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off'; document.getElementById('btn-view-wk').className = mode === 'wk' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off'; if(mode === 'mo') { activeWeekFilter = null; recalculateDashboardMetrics(); } else { renderDualHeatmap(); } }
 function setWeekFilter(weekIdx) { if(activeWeekFilter === weekIdx) { activeWeekFilter = null; } else { activeWeekFilter = weekIdx; } recalculateDashboardMetrics(); }
@@ -666,17 +697,9 @@ function recalculateDashboardMetrics() {
   let enW1 = (FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 65) / 100;
   let enW2 = (FUNNEL.enSplitM2 !== undefined ? FUNNEL.enSplitM2 : 15) / 100;
 
-  let prevLedger = activeDemandMode === 'cohort' ? getHistoricalLedger(activeMonthIdx, -1) : null;
-  let prev2Ledger = activeDemandMode === 'cohort' ? getHistoricalLedger(activeMonthIdx, -2) : null;
-
-  let yieldM0 = getSystemYield(LEDGER[activeMonth]);
-  let yieldM1 = prevLedger ? getSystemYield(prevLedger) : yieldM0;
-  let yieldM2 = prev2Ledger ? getSystemYield(prev2Ledger) : yieldM1;
-  let p_enroll_cohort = (enW0 * yieldM0) + (enW1 * yieldM1) + (enW2 * yieldM2);
-
-  let p_en_m0 = enW0 * yieldM0 * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
-  let p_en_m1 = enW1 * yieldM1 * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
-  let p_en_m2 = enW2 * yieldM2 * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
+  let m0_metrics = getMonthEvMetrics(activeMonth);
+  let m1_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -1)) : m0_metrics;
+  let m2_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -2)) : m1_metrics;
 
   let calWeeks = getCalendarWeeks(activeMonth); let wdArray = [0,0,0,0,0]; let weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
   if (calWeeks && calWeeks.length > 0) { let totalCalDays = calWeeks.reduce((sum, w) => sum + w.wd, 0); for(let i=0; i<5; i++) { if (i < calWeeks.length) { wdArray[i] = calWeeks[i].wd * (wd / totalCalDays); weekLabels[i] = calWeeks[i].label; } } } else { let remainingWd = wd; for(let i=0; i<5; i++) { wdArray[i] = Math.min(5, remainingWd); remainingWd -= wdArray[i]; weekLabels[i] = `Week ${i+1}`; } }
@@ -688,22 +711,18 @@ function recalculateDashboardMetrics() {
   });
 
   let sysTotalApps = 0; let sysGrossPsDemand = 0; let sysGrossEvDemand = 0; let stateMetrics = {};
-  let sysGrossEvDemandM0 = 0; let sysGrossEvDemandM1 = 0;
 
   MASTER_STATES.forEach(s => {
     let baseApps = (LEDGER[activeMonth].apps[s] || 0); sysTotalApps += baseApps; let bumpedApps = baseApps * mult;
     let statePsDemandFull = bumpedApps * (FUNNEL.appToPsRate/100);
-    let stateConvOverride = LEDGER[activeMonth].conv[s] || 0; let effectiveAppToEvRate = stateConvOverride > 0 ? (stateConvOverride / 100) : globalAppToEvRate;
-    let stateEvDemandM0 = bumpedApps * effectiveAppToEvRate;
-    sysGrossEvDemandM0 += stateEvDemandM0;
+    let stateEvDemandM0 = bumpedApps * globalAppToEvRate;
     
     let stateEvDemandFinal = stateEvDemandM0;
     if (activeDemandMode === 'cohort') {
+        let prevM_name = getHistoricalLedgerName(activeMonthIdx, -1);
+        let prevLedger = LEDGER[prevM_name] || ARCHIVED_LEDGER[prevM_name];
         let prevApps = prevLedger ? (prevLedger.apps[s] || 0) * mult : bumpedApps;
-        let prevConv = prevLedger ? (prevLedger.conv[s] || 0) : stateConvOverride;
-        let prevEffRate = prevConv > 0 ? (prevConv / 100) : globalAppToEvRate;
-        let stateEvDemandM1 = prevApps * prevEffRate;
-        sysGrossEvDemandM1 += stateEvDemandM1;
+        let stateEvDemandM1 = prevApps * globalAppToEvRate;
         stateEvDemandFinal = (evW0 * stateEvDemandM0) + (evW1 * stateEvDemandM1);
     }
     
@@ -716,19 +735,38 @@ function recalculateDashboardMetrics() {
   let requiredCePsHours = remainingCePsDemand * PS_HANDLE; let ceLeftoverHours = Math.max(0, ceTotalHours - requiredCePsHours); let ceFluidEvCap = ceLeftoverHours / EV_HANDLE;
   let actualTotalPsYield = actualPfaPsYield + Math.min(remainingCePsDemand, ceTotalHours / PS_HANDLE); let maxSystemPsCapacity = pfaPsCap + ceStrictPsCap; 
 
-  let d_base = sysTotalApps; let d_bumped = d_base * mult; let d_psSched = sysGrossPsDemand; let d_psComp = d_psSched * (FUNNEL.psCompRate/100); let d_scrIn = d_psComp * (FUNNEL.screenInRate/100); let d_evSched = sysGrossEvDemand; let d_evComp = d_evSched * (FUNNEL.evCompRate/100); let d_enroll = d_evComp * (FUNNEL.enrollRate/100);
-  let p_apps = d_bumped; let p_psSched = maxSystemPsCapacity; let p_psComp = p_psSched * (FUNNEL.psCompRate/100); let p_scrIn = p_psComp * (FUNNEL.screenInRate/100); let p_yldEvDem = p_scrIn * (FUNNEL.evSchedRate/100); let p_evSched = Math.min(p_yldEvDem, ceFluidEvCap); let p_evComp = p_evSched * (FUNNEL.evCompRate/100); let p_enroll = p_evComp * (FUNNEL.enrollRate/100);
+  // True Top-Down Funnel Math (Solves the 893 vs 575 bug)
+  let d_ev_m0 = evW0 * m0_metrics.dem; let d_ev_m1 = evW1 * m1_metrics.dem;
+  let d_evSched = activeDemandMode === 'cohort' ? (d_ev_m0 + d_ev_m1) : m0_metrics.dem;
+  let p_evSched = activeDemandMode === 'cohort' ? Math.min(d_evSched, m0_metrics.cap) : Math.min(m0_metrics.dem, m0_metrics.cap);
+  
+  let ev_cap_ratio = d_evSched > 0 ? (p_evSched / d_evSched) : 1;
+  let p_ev_m0 = d_ev_m0 * ev_cap_ratio; let p_ev_m1 = d_ev_m1 * ev_cap_ratio;
 
-  let finalEvDemandM0 = evW0 * sysGrossEvDemandM0;
-  let finalEvDemandM1 = evW1 * sysGrossEvDemandM1;
+  let d_enroll=0, p_enroll=0, d_en_m0=0, d_en_m1=0, d_en_m2=0, p_en_m0=0, p_en_m1=0, p_en_m2=0;
 
-  let d_en_m0 = 0; let d_en_m1 = 0; let d_en_m2 = 0;
   if (activeDemandMode === 'cohort') {
-      p_enroll = p_enroll_cohort * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
-      let d_en_ratio = d_evSched / (p_yldEvDem||1);
-      d_enroll = d_en_ratio * p_enroll; 
-      d_en_m0 = d_en_ratio * p_en_m0; d_en_m1 = d_en_ratio * p_en_m1; d_en_m2 = d_en_ratio * p_en_m2;
+      d_en_m0 = m0_metrics.yield * enW0; d_en_m1 = m1_metrics.yield * enW1; d_en_m2 = m2_metrics.yield * enW2;
+      d_enroll = d_en_m0 + d_en_m1 + d_en_m2;
+      p_en_m0 = m0_metrics.maxYield * enW0; p_en_m1 = m1_metrics.maxYield * enW1; p_en_m2 = m2_metrics.maxYield * enW2;
+      p_enroll = p_en_m0 + p_en_m1 + p_en_m2;
+  } else {
+      d_enroll = m0_metrics.yield;
+      p_enroll = m0_metrics.maxYield;
   }
+
+  let d_bumped = m0_metrics.apps; 
+  let d_psSched = d_bumped * (FUNNEL.appToPsRate/100); 
+  let d_psComp = d_psSched * (FUNNEL.psCompRate/100); 
+  let d_scrIn = d_psComp * (FUNNEL.screenInRate/100); 
+  let d_evComp = d_evSched * (FUNNEL.evCompRate/100); 
+  
+  let p_apps = d_bumped; 
+  let p_psSched = m0_metrics.psCap; 
+  let p_psComp = p_psSched * (FUNNEL.psCompRate/100); 
+  let p_scrIn = p_psComp * (FUNNEL.screenInRate/100); 
+  let p_yldEvDem = p_scrIn * (FUNNEL.evSchedRate/100); 
+  let p_evComp = p_evSched * (FUNNEL.evCompRate/100);
 
   let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0)).map(name => { let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0; let netDays = Math.max(0, wd - pto); let qPs = parseFloat(r.qPs[activeMonth]) || 0; let qEv = parseFloat(r.qEv[activeMonth]) || 0; let totalH = netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE); let activeSt = r.mix[activeMonth] || []; let loadDenomApps = 0; activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); }); return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, totalHours: totalH }; });
   ceAllocations.forEach(ce => { if(ce.denom > 0) { ce.activeStates.forEach(s => { if (stateMetrics[s]) { let weight = stateMetrics[s].apps / ce.denom; stateMetrics[s].allocatedCeHours += (ce.totalHours * weight); stateMetrics[s].assigned.push(ce.name); } }); } });
@@ -752,9 +790,12 @@ function recalculateDashboardMetrics() {
   document.querySelectorAll('.cohort-subrow').forEach(el => { el.style.display = activeDemandMode === 'cohort' ? 'table-row' : 'none'; });
   if (activeDemandMode === 'cohort') {
       document.getElementById('lbl-ev-split-m1').innerText = FUNNEL.evSplitM1; document.getElementById('lbl-ev-split-m0').innerText = FUNNEL.evSplitM0;
-      document.getElementById('tbl-dem-ev-m1').innerText = fmt(finalEvDemandM1); document.getElementById('tbl-dem-ev-m0').innerText = fmt(finalEvDemandM0);
+      document.getElementById('tbl-dem-ev-m1').innerText = fmt(d_ev_m1); document.getElementById('tbl-pot-ev-m1').innerText = fmt(p_ev_m1);
+      document.getElementById('tbl-dem-ev-m0').innerText = fmt(d_ev_m0); document.getElementById('tbl-pot-ev-m0').innerText = fmt(p_ev_m0);
       document.getElementById('lbl-en-split-m2').innerText = FUNNEL.enSplitM2; document.getElementById('lbl-en-split-m1').innerText = FUNNEL.enSplitM1; document.getElementById('lbl-en-split-m0').innerText = FUNNEL.enSplitM0;
-      document.getElementById('tbl-dem-en-m2').innerText = fmt(d_en_m2); document.getElementById('tbl-dem-en-m1').innerText = fmt(d_en_m1); document.getElementById('tbl-dem-en-m0').innerText = fmt(d_en_m0);
+      document.getElementById('tbl-dem-en-m2').innerText = fmt(d_en_m2); document.getElementById('tbl-pot-en-m2').innerText = fmt(p_en_m2);
+      document.getElementById('tbl-dem-en-m1').innerText = fmt(d_en_m1); document.getElementById('tbl-pot-en-m1').innerText = fmt(p_en_m1);
+      document.getElementById('tbl-dem-en-m0').innerText = fmt(d_en_m0); document.getElementById('tbl-pot-en-m0').innerText = fmt(p_en_m0);
   }
 
   document.getElementById('tbl-dem-apps').innerText = fmt(d_bumped); document.getElementById('tbl-pot-apps').innerText = fmt(p_apps); document.getElementById('tbl-var-apps').innerHTML = formatVar(0);
