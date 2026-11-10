@@ -195,9 +195,14 @@
                     <tr><td style="padding-left: 20px; font-size: 10px;">↳ PS Completed</td><td class="col-dem" id="tbl-dem-ps-comp">-</td><td class="col-pot" id="tbl-pot-ps-comp">-</td><td id="tbl-var-ps-comp">-</td></tr>
                     <tr><td style="padding-left: 20px; font-size: 10px;">↳ Screen-In</td><td class="col-dem" id="tbl-dem-scr-in">-</td><td class="col-pot" id="tbl-pot-scr-in">-</td><td id="tbl-var-scr-in">-</td></tr>
                     <tr class="row-major"><td><strong>Yield Eval Demand</strong></td><td class="col-dem" id="tbl-dem-ev-dem">-</td><td class="col-pot" id="tbl-pot-ev-dem">-</td><td id="tbl-var-ev-dem">-</td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(30,41,59,0.3);"><td style="padding-left: 20px; font-size: 10px; color:#94a3b8;">↳ Carryover (<span id="lbl-ev-split-m1">50</span>% of Prev Mo)</td><td class="col-dem" id="tbl-dem-ev-m1">-</td><td colspan="2"></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(30,41,59,0.3);"><td style="padding-left: 20px; font-size: 10px; color:#94a3b8;">↳ Immediate (<span id="lbl-ev-split-m0">50</span>% of Curr Mo)</td><td class="col-dem" id="tbl-dem-ev-m0">-</td><td colspan="2"></td></tr>
                     <tr><td style="color: #c4b5fd;"><strong>Evals Scheduled</strong></td><td class="col-dem" id="tbl-dem-ev-sched">-</td><td class="col-pot" id="tbl-pot-ev-sched">-</td><td id="tbl-var-ev-sched">-</td></tr>
                     <tr><td style="padding-left: 20px; font-size: 10px;">↳ Eval Completed</td><td class="col-dem" id="tbl-dem-ev-comp">-</td><td class="col-pot" id="tbl-pot-ev-comp">-</td><td id="tbl-var-ev-comp">-</td></tr>
                     <tr class="row-final"><td><strong>FINAL ENROLLMENTS</strong></td><td id="tbl-dem-enroll">-</td><td id="tbl-pot-enroll">-</td><td id="tbl-var-enroll">-</td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Tail Pipeline (<span id="lbl-en-split-m2">15</span>% of 2-Mo Prior)</td><td id="tbl-dem-en-m2">-</td><td colspan="2"></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Core Pipeline (<span id="lbl-en-split-m1">65</span>% of Prev Mo)</td><td id="tbl-dem-en-m1">-</td><td colspan="2"></td></tr>
+                    <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;">↳ Immediate Yield (<span id="lbl-en-split-m0">20</span>% of Curr Mo)</td><td id="tbl-dem-en-m0">-</td><td colspan="2"></td></tr>
                     <tr><td style="color:#10b981; font-weight:bold; font-size:10px;">↳ Weekly Pace (4.33 wks/mo)</td><td style="color:#64748b; font-size:10px;" id="tbl-dem-pace">-</td><td style="color:#10b981; font-size:11px;" id="tbl-pot-pace">-</td><td>-</td></tr>
                 </tbody>
             </table>
@@ -319,6 +324,13 @@
     <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
         <p style="margin-bottom: 14px;"><strong style="color: #93c5fd;">What it does:</strong> End-to-end tactical alignment (Demand Pipeline vs. Maximum Capacity Potential).</p>
         <p style="margin-bottom: 16px;"><strong style="color: #c4b5fd;">Core Focus:</strong> Definitive Command Center tracking where pipeline demand collides with strict clinical capacity.</p>
+        <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">In-Month vs. Lagged Cohort Logic</h3>
+        <p style="font-size: 11.5px; color:#94a3b8; margin-bottom: 8px;">Analyzing everything strictly "In-Month" creates artificial capacity panics because operational labor happens days or weeks after an application arrives. The <strong>Lagged Cohort Engine</strong> cleanly separates work into accurate buckets:</p>
+        <ul style="padding-left: 20px; list-style-type: none; margin-bottom: 16px;">
+            <li style="margin-bottom: 8px;">📞 <strong>Phone Screens (100% In-Month):</strong> Because the median delay is only ~3 days, effectively 100% of PS labor hits the current month.</li>
+            <li style="margin-bottom: 8px;">📋 <strong>Evaluations (Split Over 2 Months):</strong> Due to a ~14-day median lag, Evaluation demand straddles two months. In Lagged Mode, capacity is calculated as a configurable split (e.g. 50% from this month's intake, 50% carried over from last month's pipeline).</li>
+            <li style="margin-bottom: 8px;">🎓 <strong>Enrollments (Split Over 3 Months):</strong> A 30-day timeline spreads final enrollments across 3 consecutive months. Lagged mode forecasts output based heavily on historical pipeline carryovers rather than top-of-funnel anomalies.</li>
+        </ul>
         <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">Strategic PFA Routing Directives (State Heatmap)</h3>
         <p style="font-size: 11.5px; color:#94a3b8; margin-bottom: 8px;">Because licensed CEs are anchored to strict daily quotas (3 Evals/day), the PFA pool must be routed strategically rather than randomly to prevent front-door dropoff and protect scarce clinical licenses:</p>
         <ul style="padding-left: 20px; list-style-type: none; margin-bottom: 16px;">
@@ -386,6 +398,26 @@
             </div>
         </div>
         <div id="territory-pills-container" style="display:flex; flex-wrap:wrap; gap:4px; max-height: 80px; overflow-y: auto; padding: 6px; background:#161b22; border-radius:4px; border:1px solid #1e293b;"></div>
+    </div>
+    <div style="margin-bottom: 16px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; padding: 12px;">
+        <h2 style="margin-bottom: 8px; font-size: 10px; color:#93c5fd; text-transform:uppercase;">Cohort Lag Distributions (%)</h2>
+        <div style="display:flex; gap: 16px; flex-wrap: wrap;">
+            <div style="flex:1; background:rgba(30,41,59,0.5); padding:8px; border-radius:4px; border:1px solid #1e293b;">
+                <div style="font-size:9px; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">Eval Demand Split</div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:10px; color:#cbd5e1;">M0 (Current):</span> <input type="number" id="mod-global-ev-m0" style="width:45px; color:#93c5fd;">%
+                    <span style="font-size:10px; color:#cbd5e1; margin-left:8px;">M-1 (Prev):</span> <input type="number" id="mod-global-ev-m1" style="width:45px; color:#93c5fd;">%
+                </div>
+            </div>
+            <div style="flex:1; background:rgba(30,41,59,0.5); padding:8px; border-radius:4px; border:1px solid #1e293b;">
+                <div style="font-size:9px; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">Enrollment Realization Split</div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:10px; color:#cbd5e1;">M0:</span> <input type="number" id="mod-global-en-m0" style="width:45px; color:#10b981;">%
+                    <span style="font-size:10px; color:#cbd5e1; margin-left:4px;">M-1:</span> <input type="number" id="mod-global-en-m1" style="width:45px; color:#10b981;">%
+                    <span style="font-size:10px; color:#cbd5e1; margin-left:4px;">M-2:</span> <input type="number" id="mod-global-en-m2" style="width:45px; color:#10b981;">%
+                </div>
+            </div>
+        </div>
     </div>
     <div style="margin-bottom: 16px; background: rgba(59,130,246,0.05); border: 1px solid #3b82f6; border-radius: 6px; padding: 12px;">
         <h2 style="margin-bottom: 4px; font-size: 10px; color:#93c5fd;">Global Company Holidays</h2>
@@ -473,6 +505,7 @@ function bootstrapDataEngine() {
     ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December","January 2027","February 2027","March 2027"];
     LEDGER = JSON.parse(localStorage.getItem('funnel_v2_ledg')) || {}; ROSTER = JSON.parse(localStorage.getItem('funnel_v2_rost')) || {};
     FUNNEL = JSON.parse(localStorage.getItem('funnel_v2_conf')) || { appToPsRate: 95, pfaRouteRate: 30, volBump: 0, psCompRate: 74, screenInRate: 86, evSchedRate: 78, evCompRate: 78, enrollRate: 80, holidays: '', pfaDailyStaffQuota: 10 };
+    if (FUNNEL.evSplitM0 === undefined) { FUNNEL.evSplitM0 = 50; FUNNEL.evSplitM1 = 50; FUNNEL.enSplitM0 = 20; FUNNEL.enSplitM1 = 65; FUNNEL.enSplitM2 = 15; }
     if (!FUNNEL.pfaDailyStaffQuota) FUNNEL.pfaDailyStaffQuota = 10; MASTER_STATES = JSON.parse(localStorage.getItem('funnel_v2_stat')) || [...DEFAULT_STATE_LIST];
     ARCHIVED_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_archive_time')) || []; ARCHIVED_LEDGER = JSON.parse(localStorage.getItem('funnel_v2_archive_ledg')) || {}; ARCHIVED_ROSTER = JSON.parse(localStorage.getItem('funnel_v2_archive_rost')) || {};
     const licBackup = localStorage.getItem('funnel_v2_rost_sync_backup'); const undoLicBtn = document.getElementById('btn-undo-licensure-sync'); if (undoLicBtn) { undoLicBtn.style.display = licBackup ? 'inline-block' : 'none'; }
@@ -552,6 +585,11 @@ function removeTerritoryState(s) {
 }
 function populateGlobalModalViews() {
   document.getElementById('mod-global-holidays').value = FUNNEL.holidays || '';
+  document.getElementById('mod-global-ev-m0').value = FUNNEL.evSplitM0 !== undefined ? FUNNEL.evSplitM0 : 50;
+  document.getElementById('mod-global-ev-m1').value = FUNNEL.evSplitM1 !== undefined ? FUNNEL.evSplitM1 : 50;
+  document.getElementById('mod-global-en-m0').value = FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 20;
+  document.getElementById('mod-global-en-m1').value = FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 65;
+  document.getElementById('mod-global-en-m2').value = FUNNEL.enSplitM2 !== undefined ? FUNNEL.enSplitM2 : 15;
   const pillsContainer = document.getElementById('territory-pills-container'); const countEl = document.getElementById('territory-count'); if (countEl) countEl.innerText = MASTER_STATES.length; if (pillsContainer) { pillsContainer.innerHTML = MASTER_STATES.map(s => `<span style="display:inline-flex; align-items:center; gap:4px; background:#1e293b; color:#93c5fd; border:1px solid #334155; padding:2px 6px; border-radius:3px; font-size:9px; font-weight:bold;">${s}<span style="color:#ef4444; cursor:pointer; font-size:10px; margin-left:2px;" title="Remove ${s}" onclick="removeTerritoryState('${s}')">×</span></span>`).join(''); }
   const wdTable = document.getElementById('modal-wd-table'); let html = `<thead><tr><th style="border-right:1px solid #374151;">Metric</th>${ACTIVE_TIMELINE.map(m => `<th>${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody><tr><td style="border-right:1px solid #374151;"><strong>Working Days</strong></td>`; ACTIVE_TIMELINE.forEach(m => { html += `<td><input type="number" id="mod-wd-field-${m}" value="${LEDGER[m].wd}"></td>`; }); wdTable.innerHTML = html + `</tr></tbody>`;
   const appsTable = document.getElementById('modal-apps-entry-table'); let aHtml = `<thead><tr><th style="position:sticky; left:0; top:0; background:#1f2937; z-index:3; border-right:1px solid #374151;">Territory</th>${ACTIVE_TIMELINE.map(m => `<th style="position:sticky; top:0; background:#1f2937; z-index:2;">${m.split('_')[0]}</th>`).join('')}</tr></thead><tbody>`; MASTER_STATES.forEach((s, rIdx) => { aHtml += `<tr><td style="position:sticky; left:0; background:#161b22; z-index:1; border-right:1px solid #374151;"><strong>${s}</strong></td>`; ACTIVE_TIMELINE.forEach((m, cIdx) => { aHtml += `<td><input type="number" class="paste-target" data-table="apps" data-row="${rIdx}" data-col="${cIdx}" id="mod-app-${s}-${m}" value="${LEDGER[m].apps[s]}" style="color:#93c5fd;"></td>`; }); aHtml += `</tr>`; }); appsTable.innerHTML = aHtml + '</tbody>';
@@ -561,7 +599,7 @@ function attachPasteListeners() {
   const inputs = document.querySelectorAll('.paste-target'); inputs.forEach(input => { input.addEventListener('paste', function(e) { e.preventDefault(); const text = (e.originalEvent || e).clipboardData.getData('text/plain'); const rows = text.split(/\r\n|\n|\r/); const startR = parseInt(this.dataset.row); const startC = parseInt(this.dataset.col); const tName = this.dataset.table; rows.forEach((rowStr, rOffset) => { if(!rowStr.trim()) return; const cols = rowStr.split('\t'); cols.forEach((val, cOffset) => { const targetInput = document.querySelector(`input[data-table="${tName}"][data-row="${startR + rOffset}"][data-col="${startC + cOffset}"]`); if(targetInput) { const cleanVal = val.replace(/,|%/g, '').trim(); if(cleanVal !== "" && !isNaN(cleanVal)) targetInput.value = parseFloat(cleanVal); } }); }); }); });
 }
 function saveGlobalModalParams() {
-  try { FUNNEL.holidays = document.getElementById('mod-global-holidays').value || ''; ACTIVE_TIMELINE.forEach(m => { let wdEl = document.getElementById(`mod-wd-field-${m}`); if (wdEl) LEDGER[m].wd = parseFloat(wdEl.value) || 0; MASTER_STATES.forEach(s => { let appEl = document.getElementById(`mod-app-${s}-${m}`); let cnvEl = document.getElementById(`mod-cnv-${s}-${m}`); if (appEl) LEDGER[m].apps[s] = parseInt(appEl.value) || 0; if (cnvEl) LEDGER[m].conv[s] = parseFloat(cnvEl.value) || 0; }); }); saveState(); } catch (err) { console.error("Error committing global parameters:", err); } finally { closeSettingsModal(); recalculateDashboardMetrics(); }
+  try { FUNNEL.holidays = document.getElementById('mod-global-holidays').value || ''; FUNNEL.evSplitM0 = parseFloat(document.getElementById('mod-global-ev-m0').value) || 0; FUNNEL.evSplitM1 = parseFloat(document.getElementById('mod-global-ev-m1').value) || 0; FUNNEL.enSplitM0 = parseFloat(document.getElementById('mod-global-en-m0').value) || 0; FUNNEL.enSplitM1 = parseFloat(document.getElementById('mod-global-en-m1').value) || 0; FUNNEL.enSplitM2 = parseFloat(document.getElementById('mod-global-en-m2').value) || 0; ACTIVE_TIMELINE.forEach(m => { let wdEl = document.getElementById(`mod-wd-field-${m}`); if (wdEl) LEDGER[m].wd = parseFloat(wdEl.value) || 0; MASTER_STATES.forEach(s => { let appEl = document.getElementById(`mod-app-${s}-${m}`); let cnvEl = document.getElementById(`mod-cnv-${s}-${m}`); if (appEl) LEDGER[m].apps[s] = parseInt(appEl.value) || 0; if (cnvEl) LEDGER[m].conv[s] = parseFloat(cnvEl.value) || 0; }); }); saveState(); } catch (err) { console.error("Error committing global parameters:", err); } finally { closeSettingsModal(); recalculateDashboardMetrics(); }
 }
 function moveClinicianOrder(name, direction) {
     if (!ROSTER[name]) return; let ceNames = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0)); let pfaNames = Object.keys(ROSTER).filter(n => ROSTER[n].role === 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0)); ceNames.forEach((n, i) => { ROSTER[n].order = i * 10; }); pfaNames.forEach((n, i) => { ROSTER[n].order = (i * 10) + 10000; }); let targetList = ROSTER[name].role === 'PFA' ? pfaNames : ceNames; let currIdx = targetList.indexOf(name); let targetIdx = currIdx + direction; if (targetIdx >= 0 && targetIdx < targetList.length) { let targetName = targetList[targetIdx]; let tempOrder = ROSTER[name].order; ROSTER[name].order = ROSTER[targetName].order; ROSTER[targetName].order = tempOrder; } saveState(); recalculateDashboardMetrics();
@@ -622,13 +660,23 @@ function recalculateDashboardMetrics() {
   let wd = LEDGER[activeMonth].wd; let mult = 1 + (FUNNEL.volBump / 100);
   let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
 
+  let evW0 = (FUNNEL.evSplitM0 !== undefined ? FUNNEL.evSplitM0 : 50) / 100;
+  let evW1 = (FUNNEL.evSplitM1 !== undefined ? FUNNEL.evSplitM1 : 50) / 100;
+  let enW0 = (FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 20) / 100;
+  let enW1 = (FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 65) / 100;
+  let enW2 = (FUNNEL.enSplitM2 !== undefined ? FUNNEL.enSplitM2 : 15) / 100;
+
   let prevLedger = activeDemandMode === 'cohort' ? getHistoricalLedger(activeMonthIdx, -1) : null;
   let prev2Ledger = activeDemandMode === 'cohort' ? getHistoricalLedger(activeMonthIdx, -2) : null;
 
   let yieldM0 = getSystemYield(LEDGER[activeMonth]);
   let yieldM1 = prevLedger ? getSystemYield(prevLedger) : yieldM0;
   let yieldM2 = prev2Ledger ? getSystemYield(prev2Ledger) : yieldM1;
-  let p_enroll_cohort = (0.20 * yieldM0) + (0.65 * yieldM1) + (0.15 * yieldM2);
+  let p_enroll_cohort = (enW0 * yieldM0) + (enW1 * yieldM1) + (enW2 * yieldM2);
+
+  let p_en_m0 = enW0 * yieldM0 * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
+  let p_en_m1 = enW1 * yieldM1 * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
+  let p_en_m2 = enW2 * yieldM2 * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
 
   let calWeeks = getCalendarWeeks(activeMonth); let wdArray = [0,0,0,0,0]; let weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
   if (calWeeks && calWeeks.length > 0) { let totalCalDays = calWeeks.reduce((sum, w) => sum + w.wd, 0); for(let i=0; i<5; i++) { if (i < calWeeks.length) { wdArray[i] = calWeeks[i].wd * (wd / totalCalDays); weekLabels[i] = calWeeks[i].label; } } } else { let remainingWd = wd; for(let i=0; i<5; i++) { wdArray[i] = Math.min(5, remainingWd); remainingWd -= wdArray[i]; weekLabels[i] = `Week ${i+1}`; } }
@@ -640,11 +688,14 @@ function recalculateDashboardMetrics() {
   });
 
   let sysTotalApps = 0; let sysGrossPsDemand = 0; let sysGrossEvDemand = 0; let stateMetrics = {};
+  let sysGrossEvDemandM0 = 0; let sysGrossEvDemandM1 = 0;
+
   MASTER_STATES.forEach(s => {
     let baseApps = (LEDGER[activeMonth].apps[s] || 0); sysTotalApps += baseApps; let bumpedApps = baseApps * mult;
     let statePsDemandFull = bumpedApps * (FUNNEL.appToPsRate/100);
     let stateConvOverride = LEDGER[activeMonth].conv[s] || 0; let effectiveAppToEvRate = stateConvOverride > 0 ? (stateConvOverride / 100) : globalAppToEvRate;
     let stateEvDemandM0 = bumpedApps * effectiveAppToEvRate;
+    sysGrossEvDemandM0 += stateEvDemandM0;
     
     let stateEvDemandFinal = stateEvDemandM0;
     if (activeDemandMode === 'cohort') {
@@ -652,7 +703,8 @@ function recalculateDashboardMetrics() {
         let prevConv = prevLedger ? (prevLedger.conv[s] || 0) : stateConvOverride;
         let prevEffRate = prevConv > 0 ? (prevConv / 100) : globalAppToEvRate;
         let stateEvDemandM1 = prevApps * prevEffRate;
-        stateEvDemandFinal = (0.50 * stateEvDemandM0) + (0.50 * stateEvDemandM1);
+        sysGrossEvDemandM1 += stateEvDemandM1;
+        stateEvDemandFinal = (evW0 * stateEvDemandM0) + (evW1 * stateEvDemandM1);
     }
     
     sysGrossPsDemand += statePsDemandFull; sysGrossEvDemand += stateEvDemandFinal;
@@ -667,9 +719,15 @@ function recalculateDashboardMetrics() {
   let d_base = sysTotalApps; let d_bumped = d_base * mult; let d_psSched = sysGrossPsDemand; let d_psComp = d_psSched * (FUNNEL.psCompRate/100); let d_scrIn = d_psComp * (FUNNEL.screenInRate/100); let d_evSched = sysGrossEvDemand; let d_evComp = d_evSched * (FUNNEL.evCompRate/100); let d_enroll = d_evComp * (FUNNEL.enrollRate/100);
   let p_apps = d_bumped; let p_psSched = maxSystemPsCapacity; let p_psComp = p_psSched * (FUNNEL.psCompRate/100); let p_scrIn = p_psComp * (FUNNEL.screenInRate/100); let p_yldEvDem = p_scrIn * (FUNNEL.evSchedRate/100); let p_evSched = Math.min(p_yldEvDem, ceFluidEvCap); let p_evComp = p_evSched * (FUNNEL.evCompRate/100); let p_enroll = p_evComp * (FUNNEL.enrollRate/100);
 
+  let finalEvDemandM0 = evW0 * sysGrossEvDemandM0;
+  let finalEvDemandM1 = evW1 * sysGrossEvDemandM1;
+
+  let d_en_m0 = 0; let d_en_m1 = 0; let d_en_m2 = 0;
   if (activeDemandMode === 'cohort') {
       p_enroll = p_enroll_cohort * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
-      d_enroll = (d_evSched / (p_yldEvDem||1)) * p_enroll; 
+      let d_en_ratio = d_evSched / (p_yldEvDem||1);
+      d_enroll = d_en_ratio * p_enroll; 
+      d_en_m0 = d_en_ratio * p_en_m0; d_en_m1 = d_en_ratio * p_en_m1; d_en_m2 = d_en_ratio * p_en_m2;
   }
 
   let ceAllocations = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA').sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0)).map(name => { let r = ROSTER[name]; let pto = parseFloat(r.pto[activeMonth]) || 0; let netDays = Math.max(0, wd - pto); let qPs = parseFloat(r.qPs[activeMonth]) || 0; let qEv = parseFloat(r.qEv[activeMonth]) || 0; let totalH = netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE); let activeSt = r.mix[activeMonth] || []; let loadDenomApps = 0; activeSt.forEach(s => { loadDenomApps += (stateMetrics[s] ? stateMetrics[s].apps : 0); }); return { name, activeStates: activeSt, denom: loadDenomApps, masterProfile: r.profile, totalHours: totalH }; });
@@ -691,6 +749,14 @@ function recalculateDashboardMetrics() {
 
   window.stateMetricsCache = { metrics: stateMetrics, wdArray: wdArray, weekLabels: weekLabels };
   
+  document.querySelectorAll('.cohort-subrow').forEach(el => { el.style.display = activeDemandMode === 'cohort' ? 'table-row' : 'none'; });
+  if (activeDemandMode === 'cohort') {
+      document.getElementById('lbl-ev-split-m1').innerText = FUNNEL.evSplitM1; document.getElementById('lbl-ev-split-m0').innerText = FUNNEL.evSplitM0;
+      document.getElementById('tbl-dem-ev-m1').innerText = fmt(finalEvDemandM1); document.getElementById('tbl-dem-ev-m0').innerText = fmt(finalEvDemandM0);
+      document.getElementById('lbl-en-split-m2').innerText = FUNNEL.enSplitM2; document.getElementById('lbl-en-split-m1').innerText = FUNNEL.enSplitM1; document.getElementById('lbl-en-split-m0').innerText = FUNNEL.enSplitM0;
+      document.getElementById('tbl-dem-en-m2').innerText = fmt(d_en_m2); document.getElementById('tbl-dem-en-m1').innerText = fmt(d_en_m1); document.getElementById('tbl-dem-en-m0').innerText = fmt(d_en_m0);
+  }
+
   document.getElementById('tbl-dem-apps').innerText = fmt(d_bumped); document.getElementById('tbl-pot-apps').innerText = fmt(p_apps); document.getElementById('tbl-var-apps').innerHTML = formatVar(0);
   document.getElementById('tbl-dem-ps-sched').innerText = fmt(d_psSched); document.getElementById('tbl-pot-ps-sched').innerText = fmt(p_psSched); document.getElementById('tbl-var-ps-sched').innerHTML = formatVar(p_psSched - d_psSched);
   document.getElementById('tbl-dem-ps-comp').innerText = fmt(d_psComp); document.getElementById('tbl-pot-ps-comp').innerText = fmt(p_psComp); document.getElementById('tbl-var-ps-comp').innerHTML = formatVar(p_psComp - d_psComp);
@@ -727,7 +793,7 @@ function recalculateDashboardMetrics() {
     <div class="stat-card-modern"><div class="util-header"><span>CE Eval Util</span><span style="font-size:8px; color:${evUtilColor}; font-weight:bold;">${evUtilBadge}</span></div><div class="util-pct" style="color:${evUtilColor};">${Math.round(d_evUtilPct)}%</div>${renderVisualBar('Schedulable Quota', d_evDem, d_evStrictCap, 'cap')}</div>
   `;
 
-  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr, actualPfaPsYield);
+  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr, actualPfaPsYield, (p_en_m1 + p_en_m2), finalEvDemandM1);
   renderDualHeatmap(); renderMatrix(ceAllocations, stateMetrics); renderCollapsibleLedger(activeMonth, wd); renderSidebarProfileManager(ceAllocations); renderWeeklyCapacityByProvider(); renderStaffingModeler();
 }
 
@@ -735,6 +801,10 @@ function renderStaffingModeler() {
     let activeMonth = ACTIVE_TIMELINE[activeMonthIdx]; if (!activeMonth) return;
     let pfaQuota = parseFloat(FUNNEL.pfaDailyStaffQuota) || 10; let pfaInp = document.getElementById('pfa-daily-quota-inp'); if (pfaInp && pfaInp.value != pfaQuota) pfaInp.value = pfaQuota;
     let mult = 1 + (FUNNEL.volBump / 100); let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+    
+    let evW0 = (FUNNEL.evSplitM0 !== undefined ? FUNNEL.evSplitM0 : 50) / 100;
+    let evW1 = (FUNNEL.evSplitM1 !== undefined ? FUNNEL.evSplitM1 : 50) / 100;
+
     let rollingRowsHtml = ''; let activeMonthData = null;
 
     ACTIVE_TIMELINE.forEach((m, idx) => {
@@ -751,7 +821,7 @@ function renderStaffingModeler() {
             let pApps = 0;
             MASTER_STATES.forEach(s => { pApps += (pLedger.apps[s] || 0) * mult; });
             let pTrueEv = pApps * (FUNNEL.appToPsRate / 100) * (FUNNEL.psCompRate / 100) * (FUNNEL.screenInRate / 100) * (FUNNEL.evSchedRate / 100);
-            mEvDemand = (0.50 * mTrueEvSchedDemand) + (0.50 * pTrueEv);
+            mEvDemand = (evW0 * mTrueEvSchedDemand) + (evW1 * pTrueEv);
         }
 
         let mPfaTargetPs = mPsDemandFull * (FUNNEL.pfaRouteRate / 100);
@@ -783,7 +853,7 @@ function renderStaffingModeler() {
     }
 }
 
-function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr, totalPfaPool) {
+function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr, totalPfaPool, enrollCarryover, evalCarryover) {
   const container = document.getElementById('executive-insight-banner'); if (!container) return; let evShort = Math.max(0, evDem - evSup);
   let title = customTitle || `MONTHLY INSIGHT ANALYSIS: ${activeMonth.split('_')[0].toUpperCase()}`; if(dateRangeStr && !customTitle) title = `WEEK ${activeWeekFilter + 1} TACTICAL DRILL-DOWN (${dateRangeStr})`;
   if (activeWeekFilter !== null) container.classList.add('wk-mode'); else container.classList.remove('wk-mode');
@@ -793,7 +863,10 @@ function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitl
   let top5 = [...overflowStates, ...shieldStates].slice(0, 5); let top5Sum = top5.reduce((sum, item) => sum + item.target, 0); let generalSum = Math.max(0, Math.round(totalPfaPool || 0) - top5Sum);
   let pfaGuidance = '';
   if (top5.length > 0) { let top5Badges = top5.map((item, idx) => { let note = item.tier === 1 ? `clear overflow (-${item.deficit})` : `shield ${item.count} CE`; return `<span style="background:rgba(15,23,42,0.8); border:1px solid #334155; padding:2px 6px; border-radius:3px; font-size:9.5px; white-space:nowrap; margin-right:4px;"><strong>${idx+1}. ${item.state}:</strong> <span style="color:#93c5fd; font-weight:bold;">${item.target} PS</span> <span style="color:#64748b; font-size:8.5px;">(${note})</span></span>`; }).join(' '); let sweepSample = sweepStates.slice(0, 3).map(s => `${s.state}: ${s.target} PS`).join(', '); pfaGuidance = `<div style="margin-top:8px; font-size:10.5px; color:#cbd5e1; border-top:1px dashed #374151; padding-top:6px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;"><strong style="color:#93c5fd; font-size:11px;">Top 5 PFA Action Directives (Pool Target: ${fmt(totalPfaPool)} PS):</strong><span style="font-size:9px; color:#94a3b8;">Top 5 Targets: <strong>${top5Sum} PS</strong></span></div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">${top5Badges}</div><p style="font-size:9.5px; color:#94a3b8; margin:0;">↳ <strong>General Sweep Buffer (${generalSum} PS):</strong> Absorbs routine screens across high-volume states (${sweepSample}${sweepStates.length > 3 ? ', etc.' : ''}).</p></div>`; }
-  container.innerHTML = `<h3>${title}</h3><p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. Based on strict clinician quotas (3/day), the CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>${evShort > 0 ? `<p style="color:#fca5a5; margin-top:6px;">⚠️ Mid-Funnel Deficit: We are short ${fmt(evShort)} Evaluation slots compared to baseline demand.</p>` : `<p style="color:#86efac; margin-top:6px;">✅ Eval Queue is adequately staffed.</p>`}<p style="margin-top: 6px;"><strong>Actual Enrollment Yield:</strong> Constraining the pipeline by physical PS limits and EV limits, the system projects <strong>${fmt(finalYield)} Actual Enrollments</strong> for this ${activeWeekFilter !== null ? 'timeframe' : 'cohort'}.</p>${pfaGuidance}`;
+  
+  let lagNoticeHtml = activeDemandMode === 'cohort' ? `<div style="margin-top:8px; padding:8px; background:rgba(99,102,241,0.1); border-left:3px solid #6366f1; border-radius:4px; font-size:11px; color:#cbd5e1;"><strong>Lagged Cohort Buffer:</strong> This month's ${fmt(finalYield)} projected enrollments are heavily insulated by <strong>${fmt(enrollCarryover)} pipeline carryover enrollments</strong> from previous months. Operational Evaluation workload similarly consists of ${fmt(evalCarryover)} Evals originating from prior-month intake.</div>` : '';
+
+  container.innerHTML = `<h3>${title}</h3><p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. Based on strict clinician quotas (3/day), the CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>${evShort > 0 ? `<p style="color:#fca5a5; margin-top:6px;">⚠️ Mid-Funnel Deficit: We are short ${fmt(evShort)} Evaluation slots compared to baseline demand.</p>` : `<p style="color:#86efac; margin-top:6px;">✅ Eval Queue is adequately staffed.</p>`}<p style="margin-top: 6px;"><strong>Actual Enrollment Yield:</strong> Constraining the pipeline by physical PS limits and EV limits, the system projects <strong>${fmt(finalYield)} Actual Enrollments</strong> for this ${activeWeekFilter !== null ? 'timeframe' : 'cohort'}.</p>${lagNoticeHtml}${pfaGuidance}`;
 }
 
 function renderDualHeatmap() {
