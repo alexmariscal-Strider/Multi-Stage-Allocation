@@ -244,16 +244,16 @@
   </div>
 </div>
 
-<!-- FULL-WIDTH TELEMETRY KPI STRIP (OPTION A) -->
-<div class="telemetry-strip" id="top-stats-container"></div>
-
 <!-- 50/50 SPLIT ARCHITECTURE -->
 <div class="top-50-50">
     <div class="top-left">
+        <!-- 1. EXECUTIVE INSIGHT BANNER -->
         <div class="insight-banner" id="executive-insight-banner"></div>
-        <div class="stat-grid" id="top-stats-container"></div>
         
-        <!-- INLINE ACTIVE MONTH STAFFING REQUIREMENTS (CE + PFA) -->
+        <!-- 2. COMPACT 4-KPI TELEMETRY STRIP (NESTED IN LEFT COLUMN) -->
+        <div class="telemetry-strip" id="top-stats-container" style="margin-bottom:0;"></div>
+        
+        <!-- 3. INLINE ACTIVE MONTH STAFFING REQUIREMENTS (CE + PFA) -->
         <div class="top-staff-grid">
             <!-- CE REQUIREMENTS -->
             <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
@@ -331,31 +331,7 @@
         </div>
     </div>
 </div>
-<div class="staff-panel">
-  <div class="staff-header" onclick="toggleStaffingCollapse()">
-      <div class="staff-title"><span id="staffing-toggle-icon">▶</span><span>👥 Strategic Staffing & Requisition Modeler</span><span style="font-size: 9px; color:#64748b; font-weight:normal;">(In-Month Known Capacity & 2-Mo Ramp Lead Time)</span></div>
-      <div id="staffing-header-pills" style="display:flex; gap:8px; align-items:center;"></div>
-  </div>
-  <div class="staff-content" id="staffing-content-wrapper">
-      <div class="staff-kpi-grid">
-          <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
-              <div class="staff-kpi-title" style="color:#c4b5fd;">📋 Licensed CE Requirements (<span id="staff-lbl-month-ce"></span>)</div>
-              <div style="font-size:11px; color:#cbd5e1; line-height:1.7;">
-                  <div>• Eval Pipeline Demand: <strong id="staff-ce-demand" style="color:#f8fafc;">-</strong></div>
-                  <div>• Avg Known Capacity / CE: <strong id="staff-ce-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
-                  <div>• Required Headcount: <strong id="staff-ce-req" style="color:#93c5fd;">-</strong> FTEs</div>
-                  <div>• Active Staff On-Seat: <strong id="staff-ce-act" style="color:#f8fafc;">-</strong> CEs</div>
-              </div>
-              <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #334155; font-size:12px; font-weight:bold;" id="staff-ce-delta-callout">-</div>
-          </div>
-          <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
-              <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center;">
-                  <span>🤖 PFA Intake Requirements</span>
-                  <div style="display:inline-flex; align-items:center; gap:4px; font-size:9px; color:#94a3b8;">
-                      <span>Quota:</span><input type="number" id="pfa-daily-quota-inp" value="10" min="1" max="25" style="width:40px; padding:1px 3px; font-size:10px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()"><span style="font-size:8px;">PS/day</span>
-                  </div>
-              </div>
-              <div style="font-size:11px; color:#cbd5e1; line-height:1.7;">
+
 <!-- STRATEGIC STAFFING & HEADCOUNT REQUIREMENTS (COLLAPSIBLE) -->
 <div class="staff-panel">
   <div class="staff-header" onclick="toggleStaffingCollapse()">
@@ -387,6 +363,7 @@
       </div>
   </div>
 </div>
+
 <div class="dashboard-grid">
   <div class="panel full-width">
     <h2 id="heat-title" style="display: flex; align-items: center; justify-content: space-between;">
