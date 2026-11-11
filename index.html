@@ -834,7 +834,7 @@ function recalculateDashboardMetrics() {
     <div class="stat-card-modern"><div class="util-header"><span>CE Eval Util</span><span style="font-size:8px; color:${evUtilColor}; font-weight:bold;">${evUtilBadge}</span></div><div class="util-pct" style="color:${evUtilColor};">${Math.round(d_evUtilPct)}%</div>${renderVisualBar('Schedulable Quota', d_evDem, d_evStrictCap, 'cap')}</div>
   `;
 
-  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr, actualPfaPsYield, (p_en_m1 + p_en_m2), finalEvDemandM1);
+  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr, actualPfaPsYield, (p_en_m1 + p_en_m2), d_ev_m1);
   renderDualHeatmap(); renderMatrix(ceAllocations, stateMetrics); renderCollapsibleLedger(activeMonth, wd); renderSidebarProfileManager(ceAllocations); renderWeeklyCapacityByProvider(); renderStaffingModeler();
 }
 
@@ -850,7 +850,8 @@ function renderStaffingModeler() {
 
     ACTIVE_TIMELINE.forEach((m, idx) => {
         let mwd = LEDGER[m] ? LEDGER[m].wd : 21; let mApps = 0; let mPsDemandFull = 0; let mEvDemand = 0;
-        let pLedger = activeDemandMode === 'cohort' ? getHistoricalLedger(idx, -1) : null;
+        let pLedgerName = activeDemandMode === 'cohort' ? getHistoricalLedgerName(idx, -1) : null;
+        let pLedger = pLedgerName ? (LEDGER[pLedgerName] || ARCHIVED_LEDGER[pLedgerName]) : null;
         MASTER_STATES.forEach(s => { 
             let a = ((LEDGER[m] && LEDGER[m].apps && LEDGER[m].apps[s]) || 0) * mult; mApps += a; mPsDemandFull += (a * (FUNNEL.appToPsRate / 100)); 
         });
