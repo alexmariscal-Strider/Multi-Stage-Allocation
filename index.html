@@ -22,7 +22,7 @@
   .top-right { flex: 1; min-width: 400px; display: flex; flex-direction: column; }
   .top-staff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-items: stretch; }
 
-  /* COHORT WATERFALL ORIGIN LEDGER (IDEA A) */
+  /* COHORT WATERFALL ORIGIN LEDGER */
   .cohort-waterfall-panel {
     background: #111827;
     border-radius: 6px;
@@ -100,25 +100,25 @@
   .insight-banner p:last-child { margin-bottom: 0; }
   .insight-banner strong { color: #fff; font-weight: 700; }
 
-  /* FULL-WIDTH TELEMETRY KPI STRIP (OPTION A) */
+  /* EXPANDED & CENTERED KPI TELEMETRY STRIP */
   .telemetry-strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
+    gap: 12px;
     width: 100%;
-    max-width: min(1500px, calc(100% - 16px));
+    max-width: min(1580px, calc(100% - 16px));
     margin: 0 auto 16px auto;
   }
   .telemetry-card {
     background: #161b22;
     border-radius: 8px;
     border: 1px solid #2d3748;
-    padding: 12px 16px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-    min-height: 82px;
+    min-height: 84px;
     position: relative;
     overflow: hidden;
   }
@@ -140,7 +140,7 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-    margin: 3px 0;
+    margin: 4px 0;
   }
   .telemetry-val {
     font-size: 22px;
@@ -183,29 +183,6 @@
     transition: width 0.3s;
   }
 
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-items: stretch; flex: 1; }
-  .stat-card-basic { background: #1f2937; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; border-left: 4px solid #475569; display: flex; flex-direction: column; justify-content: center; height: 100%; }
-  .stat-card-basic.app-theme { border-left-color: #6366f1; }
-  .stat-card-basic.pto-theme { border-left-color: #f43f5e; }
-  .stat-label-basic { font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; font-weight: 700; }
-  .stat-val-basic { font-size: 32px; font-weight: 800; color: #f8fafc; }
-  .pto-split { display: flex; justify-content: space-between; font-size: 9px; color: #cbd5e1; margin-top: 6px; border-top: 1px dotted #374151; padding-top: 6px; }
-  .stat-card-modern { background: #202434; border-radius: 6px; border: 1px solid #374151; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
-  .util-header { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 4px; letter-spacing: 0.05em; align-items: center; }
-  .util-pct { font-size: 20px; font-weight: 800; color: #f8fafc; margin-bottom: 8px; }
-  .bar-row { margin-bottom: 6px; }
-  .bar-row:last-child { margin-bottom: 0; }
-  .bar-labels { display: flex; justify-content: space-between; font-size: 9.5px; color: #cbd5e1; margin-bottom: 3px; font-weight: 600; }
-  .bar-bg { width: 100%; height: 3px; background: #0f1117; border-radius: 2px; overflow: hidden; position: relative; }
-  .bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; position: absolute; top: 0; left: 0; }
-  .bar-red { background: #ef4444; }
-  .bar-green { background: #10b981; }
-  .bar-blue { background: #3b82f6; }
-  .info-icon { cursor: help; display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; background: #374151; color: #94a3b8; border-radius: 50%; font-size: 9px; font-weight: bold; margin-left: 4px; text-decoration: none; font-style: normal; }
-  .tooltip-container { position: relative; display: inline-flex; align-items: center; }
-  .tooltip-text { visibility: hidden; width: 220px; background-color: #1e293b; color: #e2e8f0; text-align: left; border-radius: 6px; padding: 10px; border: 1px solid #475569; position: absolute; z-index: 9999; top: 130%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.2s; font-size: 10px; font-weight: normal; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); pointer-events: none; white-space: normal; }
-  .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
-  .tooltip-text::after { content: ""; position: absolute; bottom: 100%; top: auto; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: transparent transparent #475569 transparent; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: 10.5px; }
   th { padding: 6px; color: #94a3b8; border-bottom: 1px solid #374151; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; background: #1f2937; white-space: nowrap; }
   td { padding: 4px 6px; border-bottom: 1px solid #1f2937; }
@@ -298,7 +275,7 @@
   </div>
 </div>
 
-<!-- 4 MAIN KPI TELEMETRY STRIP (FULL WIDTH DIRECTLY ABOVE THE 50/50 SPLIT) -->
+<!-- 4 MAIN KPI TELEMETRY STRIP (EXPANDED & CENTERED WITH BALANCED MARGINS) -->
 <div class="telemetry-strip" id="top-stats-container"></div>
 
 <!-- 50/50 SPLIT ARCHITECTURE -->
@@ -307,7 +284,7 @@
         <!-- 1. EXECUTIVE INSIGHT BANNER -->
         <div class="insight-banner" id="executive-insight-banner"></div>
         
-        <!-- 2. COHORT PIPELINE ORIGIN & WATERFALL LEDGER (PERFECT VERTICAL BALANCER FOR LAGGED MODE) -->
+        <!-- 2. COHORT PIPELINE ORIGIN & WATERFALL LEDGER -->
         <div class="cohort-waterfall-panel" id="cohort-waterfall-container"></div>
 
         <!-- 3. INLINE ACTIVE MONTH STAFFING REQUIREMENTS (CE + PFA) -->
@@ -673,7 +650,7 @@ function hydrateDataDefaults() {
       if (!LEDGER[m]) { LEDGER[m] = { wd: 21, apps: {}, conv: {} }; } if (!LEDGER[m].apps) LEDGER[m].apps = {}; if (!LEDGER[m].conv) LEDGER[m].conv = {};
       MASTER_STATES.forEach(s => { 
           if (LEDGER[m].apps[s] === undefined) LEDGER[m].apps[s] = 0; 
-          LEDGER[m].conv[s] = 0; // ZERO OUT FOR NOW PER USER REQUEST
+          LEDGER[m].conv[s] = 0;
       });
       if (!LEDGER[m].manualWeeks) { LEDGER[m].manualWeeks = [{start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}, {start: '', end: ''}]; }
     });
@@ -896,7 +873,7 @@ function recalculateDashboardMetrics() {
   let requiredCePsHours = remainingCePsDemand * PS_HANDLE; let ceLeftoverHours = Math.max(0, ceTotalHours - requiredCePsHours); let ceFluidEvCap = ceLeftoverHours / EV_HANDLE;
   let actualTotalPsYield = actualPfaPsYield + Math.min(remainingCePsDemand, ceTotalHours / PS_HANDLE); let maxSystemPsCapacity = pfaPsCap + ceStrictPsCap; 
 
-  // True Top-Down Funnel Math (Solves the 893 vs 575 bug)
+  // True Top-Down Funnel Math
   let d_ev_m0 = evW0 * m0_metrics.dem; let d_ev_m1 = evW1 * m1_metrics.dem;
   let d_evSched = activeDemandMode === 'cohort' ? (d_ev_m0 + d_ev_m1) : m0_metrics.dem;
   
@@ -959,7 +936,7 @@ function recalculateDashboardMetrics() {
       let enSplitM1 = FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 65;
       let enSplitM0 = FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 20;
 
-      // Inline self-explanatory formula badges: [Month Vol x Rate% = Product]
+      // Inline transparent formula badges: [Month Vol x Rate% = Product]
       document.getElementById('lbl-ev-title-m1').innerHTML = `↳ Carryover (${evSplitM1}% of Prev Mo) <span style="color:#64748b; font-size:9px; font-weight:normal;">[${m1_name} Dem ${fmt(m1_metrics.dem)} × ${evSplitM1}% = ${fmt(d_ev_m1)} | Cap ${fmt(m1_metrics.maxEvSched)} × ${evSplitM1}% = ${fmt(p_ev_m1)}]</span>`;
       document.getElementById('lbl-ev-title-m0').innerHTML = `↳ Immediate (${evSplitM0}% of Curr Mo) <span style="color:#64748b; font-size:9px; font-weight:normal;">[${m0_name} Dem ${fmt(m0_metrics.dem)} × ${evSplitM0}% = ${fmt(d_ev_m0)} | Cap ${fmt(m0_metrics.maxEvSched)} × ${evSplitM0}% = ${fmt(p_ev_m0)}]</span>`;
       
@@ -1099,7 +1076,7 @@ function recalculateDashboardMetrics() {
     </div>
   `;
 
-  // Render Idea A: Dynamic Cohort Pipeline Origin & Waterfall Balancer
+  // Render Dynamic Cohort Pipeline Origin & Waterfall Balancer
   const waterfallContainer = document.getElementById('cohort-waterfall-container');
   if (waterfallContainer) {
     if (activeDemandMode === 'cohort') {
@@ -1415,7 +1392,7 @@ function renderDualHeatmap() {
   } else {
       let colsHtml = '';
       for(let w=0; w<5; w++) { if(wdArray[w] > 0) { let isActive = activeWeekFilter === w; let bg = isActive ? '#3b82f6' : 'transparent'; let color = isActive ? '#fff' : '#c4b5fd'; let displayLabel = weekLabels[w] || `Week ${w+1}`; colsHtml += `<th style="background: rgba(139,92,246,0.05); text-align:center; padding: 2px;"><button style="width:100%; border:1px solid ${isActive ? '#60a5fa' : '#4c1d95'}; background:${bg}; color:${color}; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:4px; transition: 0.2s;" onclick="setWeekFilter(${w})">${displayLabel}</button></th>`; } }
-      thead.innerHTML = `<tr><th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target / Wk</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Monthly EV Bal</th><th colspan="5" style="text-align:center; color: #c4b5fd; background: rgba(139,92,246,0.05);">WEEKLY EVALUATION VOLATILITY (COVERAGE %)</th></tr><tr>${colsHtml}</tr>`;
+      thead.innerHTML = `<tr><th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target / Wk</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Monthly EV Bal</th><th colspan="5" style="text-align:color: #c4b5fd; background: rgba(139,92,246,0.05);">WEEKLY EVALUATION VOLATILITY (COVERAGE %)</th></tr><tr>${colsHtml}</tr>`;
       tbody.innerHTML = MASTER_STATES.map(s => {
           let r = metrics[s]; let moEvBal = Math.round(r.evCapCe - r.evDemand); let moEvStr = r.evDemand === 0 ? '-' : (moEvBal>0?'+':'')+fmt(moEvBal); let psBal = Math.round(r.psCapCe - r.psDemandCE);
           let pfaDirectiveHtml = '<span style="color:#475569;">—</span>';
@@ -1523,7 +1500,6 @@ async function syncLicensureFromSheets(isSilent = false) {
     const primaryUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQd7J8oMveRBfBtVb2OxbyVXJg-bW7_DUQdN8fryo-56EmFqxhhICP24tUG7EL3UsxHMCsCil5WJqYz/pub?gid=748848576&single=true&output=csv&_cb=" + Date.now();
     let response = await fetch(primaryUrl, { cache: "no-store" });
     if (!response.ok) {
-      // Fallback via Google Visualization Query API endpoint
       const fallbackUrl = `https://docs.google.com/spreadsheets/d/1R9gyVy1FXbSQz5P0YugdHW58YckNx-o7847w4SCXbdQ/gviz/tq?tqx=out:csv&gid=748848576&_cb=${Date.now()}`;
       response = await fetch(fallbackUrl, { cache: "no-store" });
     }
