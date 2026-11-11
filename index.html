@@ -103,10 +103,11 @@
   /* FULL-WIDTH TELEMETRY KPI STRIP (OPTION A) */
   .telemetry-strip {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     width: 100%;
-    margin-bottom: 16px;
+    max-width: 1100px;
+    margin: 0 auto 16px auto;
   }
   .telemetry-card {
     background: #161b22;
@@ -1023,12 +1024,12 @@ function recalculateDashboardMetrics() {
     <!-- 1. APPS INTAKE -->
     <div class="telemetry-card theme-app">
       <div class="telemetry-hdr">
-        <span>Accepted App Vol</span>
+        <span>Accepted Application Volume</span>
         <span style="color:#6366f1;">Top of Funnel</span>
       </div>
       <div class="telemetry-main">
         <div class="telemetry-val" style="color:#a5b4fc;">${fmt(d_apps * mult)}</div>
-        <div class="telemetry-sub">apps gross</div>
+        <div class="telemetry-sub">applications gross</div>
       </div>
       <div style="font-size:8.5px; color:#64748b; display:flex; justify-content:space-between;">
         <span>Bump: ${FUNNEL.volBump}%</span>
@@ -1052,10 +1053,10 @@ function recalculateDashboardMetrics() {
       </div>
     </div>
 
-    <!-- 3. SYSTEM PS UTILIZATION (DYNAMIC STATUS COLORS) -->
+    <!-- 3. SYSTEM PS UTILIZATION (DYNAMIC STATUS COLORS & DETAILED CE/PFA BREAKDOWN) -->
     <div class="telemetry-card" style="border-left: 3px solid ${psUtilColor};">
       <div class="telemetry-hdr">
-        <span>System PS Util</span>
+        <span>System Phone Screen Utilization</span>
         <span style="font-size:8px; color:${psUtilColor}; font-weight:bold;">${psUtilBadge}</span>
       </div>
       <div class="telemetry-main">
@@ -1064,14 +1065,14 @@ function recalculateDashboardMetrics() {
       </div>
       <div class="telemetry-bars-wrap">
         <div class="telemetry-bar-row">
-          <span style="width:22px; color:#64748b;">CE:</span>
+          <span style="width:24px; color:#64748b; font-weight:bold;">CE:</span>
           <div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${cePsPct}%; background:${cePsPct>100?'#ef4444':'#10b981'};"></div></div>
-          <span style="font-size:8px; color:#94a3b8; width:22px; text-align:right;">${cePsPct}%</span>
+          <span style="font-size:8.5px; color:#cbd5e1; white-space:nowrap; margin-left:2px;">${fmt(d_cePsDem)} / ${fmt(d_cePsCap)} (${cePsPct}%)</span>
         </div>
         <div class="telemetry-bar-row">
-          <span style="width:22px; color:#64748b;">PFA:</span>
+          <span style="width:24px; color:#64748b; font-weight:bold;">PFA:</span>
           <div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${pfaPsPct}%; background:${pfaPsPct>100?'#ef4444':'#3b82f6'};"></div></div>
-          <span style="font-size:8px; color:#94a3b8; width:22px; text-align:right;">${pfaPsPct}%</span>
+          <span style="font-size:8.5px; color:#cbd5e1; white-space:nowrap; margin-left:2px;">${fmt(d_pfaPsDem)} / ${fmt(d_pfaPsCap)} (${pfaPsPct}%)</span>
         </div>
       </div>
     </div>
@@ -1079,12 +1080,12 @@ function recalculateDashboardMetrics() {
     <!-- 4. CE EVAL UTILIZATION -->
     <div class="telemetry-card theme-ev">
       <div class="telemetry-hdr">
-        <span>CE Eval Util</span>
+        <span>CE Evaluation Utilization</span>
         <span style="font-size:8px; color:${evUtilColor}; font-weight:bold;">${evUtilBadge}</span>
       </div>
       <div class="telemetry-main">
         <div class="telemetry-val" style="color:${evUtilColor};">${Math.round(d_evUtilPct)}%</div>
-        <div class="telemetry-sub">${fmt(d_evDem)} / ${fmt(d_evStrictCap)} Cap</div>
+        <div class="telemetry-sub">${fmt(d_evDem)} / ${fmt(d_evStrictCap)} Capacity</div>
       </div>
       <div class="telemetry-bars-wrap">
         <div class="telemetry-bar-row">
@@ -1123,11 +1124,11 @@ function recalculateDashboardMetrics() {
         <div class="waterfall-row">
           <div class="waterfall-meta">
             <span class="waterfall-badge" style="background:rgba(148,163,184,0.15); color:#cbd5e1; border:1px solid #475569;">${m2_name} (M-2)</span>
-            <span style="color:#94a3b8;">${fmt(m2_metrics.apps)} Apps</span>
+            <span style="color:#94a3b8;">${fmt(m2_metrics.apps)} Applications</span>
           </div>
           <div class="waterfall-outputs">
-            <span style="color:#64748b;">0% Evals</span>
-            <span style="color:#10b981; font-weight:bold;">${enSplitM2}% Tail Enr (${fmt(d_en_m2)} Dem / ${fmt(p_en_m2)} Cap)</span>
+            <span style="color:#64748b;">0% Evaluations</span>
+            <span style="color:#10b981; font-weight:bold;">${enSplitM2}% Tail Enrollments (${fmt(d_en_m2)} Demand / ${fmt(p_en_m2)} Capacity)</span>
           </div>
         </div>
 
@@ -1135,11 +1136,11 @@ function recalculateDashboardMetrics() {
         <div class="waterfall-row">
           <div class="waterfall-meta">
             <span class="waterfall-badge" style="background:rgba(99,102,241,0.15); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3);">${m1_name} (M-1)</span>
-            <span style="color:#94a3b8;">${fmt(m1_metrics.apps)} Apps</span>
+            <span style="color:#94a3b8;">${fmt(m1_metrics.apps)} Applications</span>
           </div>
           <div class="waterfall-outputs">
-            <span style="color:#c4b5fd; font-weight:bold;">${evSplitM1}% Evals (${fmt(d_ev_m1)} Dem / ${fmt(p_ev_m1)} Cap)</span>
-            <span style="color:#10b981; font-weight:bold;">${enSplitM1}% Core Enr (${fmt(d_en_m1)} Dem / ${fmt(p_en_m1)} Cap)</span>
+            <span style="color:#c4b5fd; font-weight:bold;">${evSplitM1}% Evaluations (${fmt(d_ev_m1)} Demand / ${fmt(p_ev_m1)} Capacity)</span>
+            <span style="color:#10b981; font-weight:bold;">${enSplitM1}% Core Enrollments (${fmt(d_en_m1)} Demand / ${fmt(p_en_m1)} Capacity)</span>
           </div>
         </div>
 
@@ -1147,12 +1148,12 @@ function recalculateDashboardMetrics() {
         <div class="waterfall-row" style="border-color:#3b82f6;">
           <div class="waterfall-meta">
             <span class="waterfall-badge" style="background:rgba(59,130,246,0.15); color:#93c5fd; border:1px solid rgba(59,130,246,0.3);">${m0_name} (M0)</span>
-            <span style="color:#94a3b8;">${fmt(m0_metrics.apps)} Apps</span>
+            <span style="color:#94a3b8;">${fmt(m0_metrics.apps)} Applications</span>
           </div>
           <div class="waterfall-outputs">
-            <span style="color:#93c5fd; font-weight:bold;">100% PS</span>
-            <span style="color:#c4b5fd; font-weight:bold;">${evSplitM0}% Evals (${fmt(d_ev_m0)})</span>
-            <span style="color:#10b981; font-weight:bold;">${enSplitM0}% Enr (${fmt(d_en_m0)})</span>
+            <span style="color:#93c5fd; font-weight:bold;">100% Phone Screens</span>
+            <span style="color:#c4b5fd; font-weight:bold;">${evSplitM0}% Evaluations (${fmt(d_ev_m0)} Demand)</span>
+            <span style="color:#10b981; font-weight:bold;">${enSplitM0}% Enrollments (${fmt(d_en_m0)} Demand)</span>
           </div>
         </div>
       `;
