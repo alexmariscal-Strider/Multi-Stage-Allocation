@@ -104,21 +104,21 @@
   .telemetry-strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
     width: 100%;
-    max-width: 1100px;
+    max-width: min(1500px, calc(100% - 16px));
     margin: 0 auto 16px auto;
   }
   .telemetry-card {
     background: #161b22;
     border-radius: 8px;
     border: 1px solid #2d3748;
-    padding: 10px 14px;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-    min-height: 74px;
+    min-height: 82px;
     position: relative;
     overflow: hidden;
   }
@@ -1166,7 +1166,26 @@ function recalculateDashboardMetrics() {
   let enrollCarryoverToReport = d_enroll <= p_enroll ? (d_en_m1 + d_en_m2) : (p_en_m1 + p_en_m2);
   let evalCarryoverToReport = d_ev_m1;
 
-  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr, actualPfaPsYield, enrollCarryoverToReport, evalCarryoverToReport);
+  // Compute CE hiring requirement status to keep Executive Banner strictly in sync
+  let activeMonthLedgerWd = LEDGER[activeMonth] ? LEDGER[activeMonth].wd : 21;
+  let activeMonthProducingCEs = 0; let activeMonthKnownEvCap = 0;
+  Object.keys(ROSTER).forEach(name => {
+      let r = ROSTER[name];
+      if (r.role !== 'PFA') {
+          let pto = parseFloat(r.pto ? r.pto[activeMonth] : 0) || 0;
+          let netDays = Math.max(0, activeMonthLedgerWd - pto);
+          let qEv = (r.qEv && r.qEv[activeMonth] !== undefined) ? parseFloat(r.qEv[activeMonth]) : 0;
+          if (qEv > 0) activeMonthProducingCEs++;
+          activeMonthKnownEvCap += (netDays * qEv);
+      }
+  });
+  let activeDivisor = activeMonthProducingCEs > 0 ? activeMonthProducingCEs : 1;
+  let avgKnownCap = (ceStrictEvCap > 0 ? ceStrictEvCap : activeMonthKnownEvCap) / activeDivisor;
+  let targetCapAt87 = avgKnownCap * 0.87;
+  let reqCeFte = targetCapAt87 > 0 ? (d_evDem / targetCapAt87) : 0;
+  let ceHiringDelta = reqCeFte - activeMonthProducingCEs;
+
+  renderExecutiveBanner(d_evDem, d_evStrictCap, finalYield, activeMonth, unifiedTitle, dateRangeStr, actualPfaPsYield, enrollCarryoverToReport, evalCarryoverToReport, ceHiringDelta, d_psUtilPct);
   renderDualHeatmap(); renderMatrix(ceAllocations, stateMetrics); renderCollapsibleLedger(activeMonth, wd); renderSidebarProfileManager(ceAllocations); renderWeeklyCapacityByProvider(); renderStaffingModeler();
 }
 
@@ -1211,23 +1230,141 @@ function renderStaffingModeler() {
         let activeDivisor = ceProducingCount > 0 ? ceProducingCount : (ceStaffCount || 1); let avgKnownCeEvCap = effectiveCeEvPoolCap / activeDivisor; let targetUtilDenominator = 0.87; let targetCapacityPerCeAt87 = avgKnownCeEvCap * targetUtilDenominator; let reqCeFte = targetCapacityPerCeAt87 > 0 ? (mEvDemand / targetCapacityPerCeAt87) : 0; let ceDelta = reqCeFte - ceProducingCount;
 
         let hiringAdvice = ''; if (ceDelta > 0.2 || pfaDelta > 0.2) { let reqs = []; if (ceDelta > 0.2) { let grossCeHires = Math.ceil(ceDelta); reqs.push(`Hire <strong>${grossCeHires} CEs</strong>`); } if (pfaDelta > 0.2) { let grossPfaHires = Math.ceil(pfaDelta); reqs.push(`Hire <strong>${grossPfaHires} PFAs</strong>`); } hiringAdvice = `<span style="color:#fca5a5;">🚨 ${reqs.join(' + ')}</span>`; } else if (ceDelta < -0.8) { hiringAdvice = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE buffer at 87% util)</span>`; } else { hiringAdvice = `<span style="color:#86efac;">✅ Balanced (Within 87% target)</span>`; }
-        if (isCurrent) { activeMonthData = { month: m.split('_')[0], evDem: mEvDemand, avgKnownCeEvCap: avgKnownCeEvCap, reqCeFte: reqCeFte, ceStaffCount: ceStaffCount, ceProducingCount: ceProducingCount, ceZeroLeadCount: ceZeroLeadCount, ceDelta: ceDelta, pfaDem: mPfaTargetPs, avgKnownPfaCap: avgKnownPfaCap, reqPfaFte: reqPfaFte, pfaStaffCount: pfaStaffCount, pfaDelta: pfaDelta, hiringAdvice: hiringAdvice }; }
 
-        let rowBg = isCurrent ? 'background: rgba(99,102,241,0.08); font-weight:bold;' : ''; let ceBadge = ceDelta > 0.2 ? `<span class="staff-pill staff-pill-alert">+${ceDelta.toFixed(1)} 🚨</span>` : `<span class="staff-pill staff-pill-ok">${ceDelta.toFixed(1)}</span>`; let pfaBadge = pfaDelta > 0.2 ? `<span class="staff-pill staff-pill-alert">+${pfaDelta.toFixed(1)} 🚨</span>` : `<span class="staff-pill staff-pill-ok">${pfaDelta.toFixed(1)}</span>`;
-        rollingRowsHtml += `<tr style="${rowBg}"><td style="font-weight:bold; color:${isCurrent ? '#c4b5fd' : '#f8fafc'};">${m.split('_')[0]} ${isCurrent ? '⭐' : ''}</td><td style="text-align:center;">${fmt(mApps)}</td><td style="text-align:center;">${FUNNEL.pfaRouteRate}%</td><td style="text-align:center; color:#c4b5fd;">${fmt(mEvDemand)} Evals (Strict 3/d)</td><td style="text-align:center;">${ceProducingCount} <span style="font-size:8px; color:#64748b;">(+${ceZeroLeadCount})</span></td><td style="text-align:center; font-weight:bold;">${reqCeFte.toFixed(1)}</td><td style="text-align:center;">${ceBadge}</td><td style="text-align:center; color:#93c5fd;">${fmt(mPfaTargetPs)}</td><td style="text-align:center;">${pfaStaffCount}</td><td style="text-align:center; font-weight:bold;">${reqPfaFte.toFixed(1)}</td><td style="text-align:center;">${pfaBadge}</td><td>${hiringAdvice}</td></tr>`;
+        let ceBadgeColor = ceDelta > 0.2 ? '#fca5a5' : (ceDelta < -0.8 ? '#93c5fd' : '#86efac');
+        let ceBadgeBg = ceDelta > 0.2 ? 'rgba(239,68,68,0.15)' : (ceDelta < -0.8 ? 'rgba(59,130,246,0.15)' : 'rgba(16,185,129,0.15)');
+        let ceBadgeBorder = ceDelta > 0.2 ? 'rgba(239,68,68,0.4)' : (ceDelta < -0.8 ? 'rgba(59,130,246,0.4)' : 'rgba(16,185,129,0.4)');
+        let ceDeltaStr = (ceDelta > 0 ? `+${ceDelta.toFixed(1)}` : ceDelta.toFixed(1));
+
+        let pfaBadgeColor = pfaDelta > 0.2 ? '#fca5a5' : (pfaDelta < -0.5 ? '#93c5fd' : '#86efac');
+        let pfaBadgeBg = pfaDelta > 0.2 ? 'rgba(239,68,68,0.15)' : (pfaDelta < -0.5 ? 'rgba(59,130,246,0.15)' : 'rgba(16,185,129,0.15)');
+        let pfaBadgeBorder = pfaDelta > 0.2 ? 'rgba(239,68,68,0.4)' : (pfaDelta < -0.5 ? 'rgba(59,130,246,0.4)' : 'rgba(16,185,129,0.4)');
+        let pfaDeltaStr = (pfaDelta > 0 ? `+${pfaDelta.toFixed(1)}` : pfaDelta.toFixed(1));
+
+        let rowStyle = isCurrent ? 'background:rgba(59,130,246,0.06); font-weight:bold;' : '';
+        let monthStar = isCurrent ? ' ⭐' : '';
+
+        rollingRowsHtml += `
+            <tr style="${rowStyle}">
+                <td style="font-weight:bold; color:${isCurrent?'#93c5fd':'#f8fafc'};">${m.split('_')[0]}${monthStar}</td>
+                <td style="text-align:center;">${fmt(mApps)}</td>
+                <td style="text-align:center; color:#94a3b8;">${FUNNEL.pfaRouteRate}%</td>
+                <td style="text-align:center; color:#c4b5fd;">${fmt(mEvDemand)} Evals <span style="font-size:8px; color:#64748b;">(Strict 3/d)</span></td>
+                <td style="text-align:center; color:#cbd5e1;">${ceProducingCount} <span style="font-size:8.5px; color:#64748b;">(${ceZeroLeadCount > 0 ? `+${ceZeroLeadCount}` : '0'})</span></td>
+                <td style="text-align:center; color:#c4b5fd;">${reqCeFte.toFixed(1)}</td>
+                <td style="text-align:center;"><span style="display:inline-block; padding:1px 6px; border-radius:3px; font-size:9px; font-weight:bold; color:${ceBadgeColor}; background:${ceBadgeBg}; border:1px solid ${ceBadgeBorder};">${ceDeltaStr}</span></td>
+                <td style="text-align:center; color:#93c5fd;">${fmt(mPfaTargetPs)}</td>
+                <td style="text-align:center; color:#cbd5e1;">${pfaStaffCount}</td>
+                <td style="text-align:center; color:#93c5fd;">${reqPfaFte.toFixed(1)}</td>
+                <td style="text-align:center;"><span style="display:inline-block; padding:1px 6px; border-radius:3px; font-size:9px; font-weight:bold; color:${pfaBadgeColor}; background:${pfaBadgeBg}; border:1px solid ${pfaBadgeBorder};">${pfaDeltaStr}</span></td>
+                <td style="text-align:left; padding-left:12px;">${hiringAdvice}</td>
+            </tr>
+        `;
+
+        if (isCurrent) {
+            activeMonthData = {
+                monthName: m.split('_')[0],
+                evDemand: mEvDemand,
+                avgCeCap: avgKnownCeEvCap,
+                reqCeFte: reqCeFte,
+                ceProducing: ceProducingCount,
+                ceStaffTotal: ceStaffCount,
+                ceDelta: ceDelta,
+                pfaDemand: mPfaTargetPs,
+                avgPfaCap: avgKnownPfaCap,
+                reqPfaFte: reqPfaFte,
+                pfaStaff: pfaStaffCount,
+                pfaDelta: pfaDelta
+            };
+        }
     });
 
-    let tbody = document.getElementById('staffing-rolling-tbody'); if (tbody) tbody.innerHTML = rollingRowsHtml;
+    const tbody = document.getElementById('staffing-rolling-tbody');
+    if (tbody) tbody.innerHTML = rollingRowsHtml;
+
     if (activeMonthData) {
-        document.getElementById('staff-lbl-month-ce').innerText = activeMonthData.month; document.getElementById('staff-ce-demand').innerText = `${fmt(activeMonthData.evDem)} Schedulable Evals (Strict Quotas)`; document.getElementById('staff-ce-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownCeEvCap)} Schedulable Evals / Producing CE`; document.getElementById('staff-ce-req').innerText = activeMonthData.reqCeFte.toFixed(1); document.getElementById('staff-ce-act').innerText = `${activeMonthData.ceProducingCount} Producing CEs (${activeMonthData.ceStaffCount} Total Roster)`;
-        let ceCallout = document.getElementById('staff-ce-delta-callout'); if (activeMonthData.ceDelta > 0.2) { let grossNeeded = Math.ceil(activeMonthData.ceDelta); ceCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Staffing Need: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossNeeded} CEs to reach 87% target; post 60d prior)</span>`; } else { ceCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Balanced for 87% Target (${activeMonthData.ceDelta <= 0 ? Math.abs(activeMonthData.ceDelta).toFixed(1) + ' buffer' : 'On Target'})</span>`; }
-        document.getElementById('staff-pfa-demand').innerText = `${fmt(activeMonthData.pfaDem)} PS (${FUNNEL.pfaRouteRate}%)`; document.getElementById('staff-pfa-avg-cap').innerText = `${Math.round(activeMonthData.avgKnownPfaCap)} PS / PFA`; document.getElementById('staff-pfa-req').innerText = activeMonthData.reqPfaFte.toFixed(1); document.getElementById('staff-pfa-act').innerText = activeMonthData.pfaStaffCount;
-        let pfaCallout = document.getElementById('staff-pfa-delta-callout'); if (activeMonthData.pfaDelta > 0.2) { let grossNeeded = Math.ceil(activeMonthData.pfaDelta); pfaCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.pfaDelta.toFixed(1)} FTEs (Hire ${grossNeeded} PFAs; 0% ramp requires start 60d prior)</span>`; } else { pfaCallout.innerHTML = `<span style="color:#86efac;">✅ PFA Capacity Adequate (${activeMonthData.pfaDelta <= 0 ? Math.abs(activeMonthData.pfaDelta).toFixed(1) + ' buffer' : 'Balanced'})</span>`; }
-        let pillsContainer = document.getElementById('staffing-header-pills'); if (pillsContainer) { let cePillClass = activeMonthData.ceDelta > 0.2 ? 'staff-pill-alert' : 'staff-pill-ok'; let pfaPillClass = activeMonthData.pfaDelta > 0.2 ? 'staff-pill-alert' : 'staff-pill-ok'; let ceSymbol = activeMonthData.ceDelta > 0.2 ? '🚨 CE Gap: +' : 'CE Delta: '; let pfaSymbol = activeMonthData.pfaDelta > 0.2 ? '🚨 PFA Gap: +' : 'PFA Delta: '; pillsContainer.innerHTML = `<span class="staff-pill ${cePillClass}">${ceSymbol}${activeMonthData.ceDelta.toFixed(1)} FTE</span><span class="staff-pill ${pfaPillClass}">${pfaSymbol}${activeMonthData.pfaDelta.toFixed(1)} FTE</span>`; }
+        let lblCe = document.getElementById('staff-lbl-month-ce');
+        if (lblCe) lblCe.innerText = activeMonthData.monthName.toUpperCase();
+        
+        let elCeDem = document.getElementById('staff-ce-demand');
+        if (elCeDem) elCeDem.innerText = `${fmt(activeMonthData.evDemand)} Schedulable Evals (Strict Quotas)`;
+        
+        let elCeAvg = document.getElementById('staff-ce-avg-cap');
+        if (elCeAvg) elCeAvg.innerText = `${Math.round(activeMonthData.avgCeCap)} Schedulable Evals / Producing CE`;
+        
+        let elCeReq = document.getElementById('staff-ce-req');
+        if (elCeReq) elCeReq.innerText = activeMonthData.reqCeFte.toFixed(1);
+        
+        let elCeAct = document.getElementById('staff-ce-act');
+        if (elCeAct) elCeAct.innerText = `${activeMonthData.ceProducing} Producing CEs (${activeMonthData.ceStaffTotal} Total Roster)`;
+        
+        let elCeCallout = document.getElementById('staff-ce-delta-callout');
+        if (elCeCallout) {
+            if (activeMonthData.ceDelta > 0.2) {
+                let grossHires = Math.ceil(activeMonthData.ceDelta);
+                elCeCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Staffing Need: +${activeMonthData.ceDelta.toFixed(1)} FTEs (Hire ${grossHires} CEs to reach 87% target; post 60d prior)</span>`;
+            } else if (activeMonthData.ceDelta < -0.8) {
+                elCeCallout.innerHTML = `<span style="color:#93c5fd;">ℹ️ Surplus Buffer: ${Math.abs(activeMonthData.ceDelta).toFixed(1)} FTEs above 87% utilization threshold</span>`;
+            } else {
+                let buffer = Math.abs(activeMonthData.ceDelta).toFixed(1);
+                elCeCallout.innerHTML = `<span style="color:#86efac;">✅ CE Capacity Balanced for 87% Target (${buffer} buffer)</span>`;
+            }
+        }
+
+        let elPfaDem = document.getElementById('staff-pfa-demand');
+        if (elPfaDem) elPfaDem.innerText = `${fmt(activeMonthData.pfaDemand)} PS (${FUNNEL.pfaRouteRate}%)`;
+        
+        let elPfaAvg = document.getElementById('staff-pfa-avg-cap');
+        if (elPfaAvg) elPfaAvg.innerText = `${Math.round(activeMonthData.avgPfaCap)} PS / PFA`;
+        
+        let elPfaReq = document.getElementById('staff-pfa-req');
+        if (elPfaReq) elPfaReq.innerText = activeMonthData.reqPfaFte.toFixed(1);
+        
+        let elPfaAct = document.getElementById('staff-pfa-act');
+        if (elPfaAct) elPfaAct.innerText = `${activeMonthData.pfaStaff} PFAs`;
+        
+        let elPfaCallout = document.getElementById('staff-pfa-delta-callout');
+        if (elPfaCallout) {
+            if (activeMonthData.pfaDelta > 0.2) {
+                let grossHires = Math.ceil(activeMonthData.pfaDelta);
+                elPfaCallout.innerHTML = `<span style="color:#fca5a5;">🚨 Net Gap: +${activeMonthData.pfaDelta.toFixed(1)} FTEs (Hire ${grossHires} PFAs; 0% ramp requires start 60d prior)</span>`;
+            } else {
+                elPfaCallout.innerHTML = `<span style="color:#86efac;">✅ PFA Capacity Adequate (Balanced)</span>`;
+            }
+        }
+
+        let rampNotice = document.getElementById('staff-ramp-notice');
+        if (rampNotice) {
+            let nextM1_idx = activeMonthIdx + 1;
+            let nextM2_idx = activeMonthIdx + 2;
+            let nextM1_name = nextM1_idx < ACTIVE_TIMELINE.length ? ACTIVE_TIMELINE[nextM1_idx].split('_')[0] : null;
+            let nextM2_name = nextM2_idx < ACTIVE_TIMELINE.length ? ACTIVE_TIMELINE[nextM2_idx].split('_')[0] : null;
+            let noticeText = `Posting requisitions now targets productivity for `;
+            if (nextM2_name) {
+                noticeText += `<strong>${nextM2_name}</strong> (due to 60-day ramp period).`;
+            } else if (nextM1_name) {
+                noticeText += `<strong>${nextM1_name}</strong>.`;
+            } else {
+                noticeText += `upcoming horizon months.`;
+            }
+            rampNotice.innerHTML = noticeText;
+        }
+
+        let pillsContainer = document.getElementById('staffing-header-pills');
+        if (pillsContainer) {
+            let cePillClass = activeMonthData.ceDelta > 0.2 ? 'staff-pill-alert' : 'staff-pill-ok';
+            let pfaPillClass = activeMonthData.pfaDelta > 0.2 ? 'staff-pill-alert' : 'staff-pill-ok';
+            let cePillText = activeMonthData.ceDelta > 0.2 ? `CE Need: +${activeMonthData.ceDelta.toFixed(1)}` : 'CE: Balanced';
+            let pfaPillText = activeMonthData.pfaDelta > 0.2 ? `PFA Need: +${activeMonthData.pfaDelta.toFixed(1)}` : 'PFA: Balanced';
+            pillsContainer.innerHTML = `
+                <span class="staff-pill ${cePillClass}">${cePillText}</span>
+                <span class="staff-pill ${pfaPillClass}">${pfaPillText}</span>
+            `;
+        }
     }
 }
 
-function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr, totalPfaPool, enrollCarryover, evalCarryover) {
+function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitle, dateRangeStr, totalPfaPool, enrollCarryover, evalCarryover, ceHiringDelta, psUtilPct) {
   const container = document.getElementById('executive-insight-banner'); if (!container) return; let evShort = Math.max(0, evDem - evSup);
   let title = customTitle || `MONTHLY INSIGHT ANALYSIS: ${activeMonth.split('_')[0].toUpperCase()}`; if(dateRangeStr && !customTitle) title = `WEEK ${activeWeekFilter + 1} TACTICAL DRILL-DOWN (${dateRangeStr})`;
   if (activeWeekFilter !== null) container.classList.add('wk-mode'); else container.classList.remove('wk-mode');
@@ -1240,7 +1377,23 @@ function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitl
   
   let lagNoticeHtml = activeDemandMode === 'cohort' ? `<div style="margin-top:8px; padding:8px; background:rgba(99,102,241,0.1); border-left:3px solid #6366f1; border-radius:4px; font-size:11px; color:#cbd5e1;"><strong>Lagged Cohort Buffer:</strong> This month's ${fmt(finalYield)} projected enrollments are heavily insulated by <strong>${fmt(enrollCarryover)} pipeline carryover enrollments</strong> from previous months. Operational Evaluation workload similarly consists of ${fmt(evalCarryover)} Evals originating from prior-month intake.</div>` : '';
 
-  container.innerHTML = `<h3>${title}</h3><p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. Based on strict clinician quotas (3/day), the CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>${evShort > 0 ? `<p style="color:#fca5a5; margin-top:6px;">⚠️ Mid-Funnel Deficit: We are short ${fmt(evShort)} Evaluation slots compared to baseline demand.</p>` : `<p style="color:#86efac; margin-top:6px;">✅ Eval Queue is adequately staffed.</p>`}<p style="margin-top: 6px;"><strong>Actual Enrollment Yield:</strong> Constraining the pipeline by physical PS limits and EV limits, the system projects <strong>${fmt(finalYield)} Actual Enrollments</strong> for this ${activeWeekFilter !== null ? 'timeframe' : 'cohort'}.</p>${lagNoticeHtml}${pfaGuidance}`;
+  // Synchronized Staffing Health Assessment
+  let queueStatusHtml = '';
+  let isHiringNeeded = (typeof ceHiringDelta === 'number' && ceHiringDelta > 0.2);
+  let isPsOverCapacity = (typeof psUtilPct === 'number' && psUtilPct > 100);
+
+  if (evShort > 0) {
+      queueStatusHtml = `<p style="color:#fca5a5; margin-top:6px;">⚠️ <strong>Mid-Funnel Deficit:</strong> Short ${fmt(evShort)} Evaluation slots compared to pipeline demand.</p>`;
+  } else if (isPsOverCapacity) {
+      queueStatusHtml = `<p style="color:#fde047; margin-top:6px;">⚡ <strong>Front-Door Chokepoint:</strong> Nominal Eval slots are available, but System PS Utilization is at <strong>${Math.round(psUtilPct)}%</strong>. Unabsorbed Phone Screens threaten to cannibalize CE evaluation time unless re-routed to PFAs.</p>`;
+  } else if (isHiringNeeded) {
+      let grossNeeded = Math.ceil(ceHiringDelta);
+      queueStatusHtml = `<p style="color:#fde047; margin-top:6px;">⚠️ <strong>Staffing Buffer Below Target:</strong> Nominal slots exist, but roster runs at <strong>&gt;87% utilization</strong>. Recommending <strong>+${ceHiringDelta.toFixed(1)} CE FTEs (Hire ${grossNeeded})</strong> to prevent burnout and absorb localized volatility.</p>`;
+  } else {
+      queueStatusHtml = `<p style="color:#86efac; margin-top:6px;">✅ <strong>Queue Balanced:</strong> Clinician roster meets both demand and the 87% utilization safety buffer.</p>`;
+  }
+
+  container.innerHTML = `<h3>${title}</h3><p><strong>Evaluation Bottleneck Status:</strong> The Demand pipeline requests <strong>${fmt(evDem)} Eval slots</strong>. Based on strict clinician quotas (3/day), the CE Roster physically provides <strong>${fmt(evSup)} Schedulable Slots</strong> net of PTO.</p>${queueStatusHtml}<p style="margin-top: 6px;"><strong>Actual Enrollment Yield:</strong> Constraining the pipeline by physical PS limits and EV limits, the system projects <strong>${fmt(finalYield)} Actual Enrollments</strong> for this ${activeWeekFilter !== null ? 'timeframe' : 'cohort'}.</p>${lagNoticeHtml}${pfaGuidance}`;
 }
 
 function renderDualHeatmap() {
