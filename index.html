@@ -21,6 +21,59 @@
   .top-left { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 10px; }
   .top-right { flex: 1; min-width: 400px; display: flex; flex-direction: column; }
   .top-staff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-items: stretch; }
+
+  /* COHORT WATERFALL ORIGIN LEDGER (IDEA A) */
+  .cohort-waterfall-panel {
+    background: #111827;
+    border-radius: 6px;
+    border: 1px solid #374151;
+    border-left: 3px solid #6366f1;
+    padding: 10px 12px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .cohort-waterfall-title {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a5b4fc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1f2937;
+    padding-bottom: 4px;
+    margin-bottom: 2px;
+  }
+  .waterfall-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #161b22;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #1e293b;
+    font-size: 10px;
+  }
+  .waterfall-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .waterfall-badge {
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .waterfall-outputs {
+    display: flex;
+    gap: 10px;
+    font-size: 9.5px;
+  }
   .params-strip-funnel { display: flex; gap: 6px; flex-wrap: wrap; background: #0f172a; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; margin: 0 auto 12px auto; align-items: center; justify-content: center; width: 100%; max-width: 650px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
   .param-group { display: inline-flex; align-items: center; gap: 5px; background: rgba(30, 41, 59, 0.6); padding: 3px 6px; border-radius: 4px; border: 1px solid #1e293b; }
   .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -244,15 +297,18 @@
   </div>
 </div>
 
+<!-- 4 MAIN KPI TELEMETRY STRIP (FULL WIDTH DIRECTLY ABOVE THE 50/50 SPLIT) -->
+<div class="telemetry-strip" id="top-stats-container"></div>
+
 <!-- 50/50 SPLIT ARCHITECTURE -->
 <div class="top-50-50">
     <div class="top-left">
         <!-- 1. EXECUTIVE INSIGHT BANNER -->
         <div class="insight-banner" id="executive-insight-banner"></div>
         
-        <!-- 2. COMPACT 4-KPI TELEMETRY STRIP (NESTED IN LEFT COLUMN) -->
-        <div class="telemetry-strip" id="top-stats-container" style="margin-bottom:0;"></div>
-        
+        <!-- 2. COHORT PIPELINE ORIGIN & WATERFALL LEDGER (PERFECT VERTICAL BALANCER FOR LAGGED MODE) -->
+        <div class="cohort-waterfall-panel" id="cohort-waterfall-container"></div>
+
         <!-- 3. INLINE ACTIVE MONTH STAFFING REQUIREMENTS (CE + PFA) -->
         <div class="top-staff-grid">
             <!-- CE REQUIREMENTS -->
@@ -947,7 +1003,18 @@ function recalculateDashboardMetrics() {
   let finalYield = activeWeekFilter !== null ? Math.min(d_evDem, d_evStrictCap) * (FUNNEL.evCompRate / 100) * (FUNNEL.enrollRate / 100) : Math.min(d_enroll, p_enroll);
   let evUtilColor = '#10b981'; let evUtilBadge = 'Healthy (Target ~87%)'; if (d_evUtilPct > 90) { evUtilColor = '#ef4444'; evUtilBadge = '🚨 CAPACITY DEFICIT RISK (>90%)'; } else if (d_evUtilPct >= 88.5) { evUtilColor = '#eab308'; evUtilBadge = 'Near Ceiling (88-90%)'; }
 
-  // Option A: Render Slim 4-Column Full-Width Telemetry Strip
+  // Dynamic PS Utilization Thresholds: Green (<=90%), Yellow (90-100%), Red (>100%)
+  let psUtilColor = '#10b981';
+  let psUtilBadge = 'Healthy (≤90%)';
+  if (d_psUtilPct > 100) {
+      psUtilColor = '#ef4444';
+      psUtilBadge = '🚨 OVERFLOW (>100%)';
+  } else if (d_psUtilPct >= 90) {
+      psUtilColor = '#eab308';
+      psUtilBadge = 'Near Ceiling (90-100%)';
+  }
+
+  // Render Full-Width Top Telemetry Strip
   let cePsPct = d_cePsCap > 0 ? Math.min(100, Math.round((d_cePsDem / d_cePsCap) * 100)) : 0;
   let pfaPsPct = d_pfaPsCap > 0 ? Math.min(100, Math.round((d_pfaPsDem / d_pfaPsCap) * 100)) : 0;
   let evCapBarColor = d_evUtilPct > 90 ? '#ef4444' : (d_evUtilPct >= 80 ? '#10b981' : '#3b82f6');
@@ -985,14 +1052,14 @@ function recalculateDashboardMetrics() {
       </div>
     </div>
 
-    <!-- 3. SYSTEM PS UTILIZATION -->
-    <div class="telemetry-card theme-ps">
+    <!-- 3. SYSTEM PS UTILIZATION (DYNAMIC STATUS COLORS) -->
+    <div class="telemetry-card" style="border-left: 3px solid ${psUtilColor};">
       <div class="telemetry-hdr">
         <span>System PS Util</span>
-        <span style="color:#93c5fd; font-weight:bold;">${Math.round(d_psUtilPct)}%</span>
+        <span style="font-size:8px; color:${psUtilColor}; font-weight:bold;">${psUtilBadge}</span>
       </div>
       <div class="telemetry-main">
-        <div class="telemetry-val" style="color:#93c5fd;">${Math.round(d_psUtilPct)}%</div>
+        <div class="telemetry-val" style="color:${psUtilColor};">${Math.round(d_psUtilPct)}%</div>
         <div class="telemetry-sub">${fmt(d_cePsDem + d_pfaPsDem)} / ${fmt(d_cePsCap + d_pfaPsCap)}</div>
       </div>
       <div class="telemetry-bars-wrap">
@@ -1030,6 +1097,70 @@ function recalculateDashboardMetrics() {
       </div>
     </div>
   `;
+
+  // Render Idea A: Dynamic Cohort Pipeline Origin & Waterfall Balancer
+  const waterfallContainer = document.getElementById('cohort-waterfall-container');
+  if (waterfallContainer) {
+    if (activeDemandMode === 'cohort') {
+      let m0_name = activeMonth.split('_')[0];
+      let m1_name = (getHistoricalLedgerName(activeMonthIdx, -1) || activeMonth).split('_')[0];
+      let m2_name = (getHistoricalLedgerName(activeMonthIdx, -2) || m1_name).split('_')[0];
+
+      let evSplitM1 = FUNNEL.evSplitM1 !== undefined ? FUNNEL.evSplitM1 : 50;
+      let evSplitM0 = FUNNEL.evSplitM0 !== undefined ? FUNNEL.evSplitM0 : 50;
+      let enSplitM2 = FUNNEL.enSplitM2 !== undefined ? FUNNEL.enSplitM2 : 15;
+      let enSplitM1 = FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 65;
+      let enSplitM0 = FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 20;
+
+      waterfallContainer.style.display = 'flex';
+      waterfallContainer.innerHTML = `
+        <div class="cohort-waterfall-title">
+          <span>🌊 Cohort Workload Origin & Carryover Flow</span>
+          <span style="font-size:8px; color:#94a3b8; font-weight:normal;">Insulates against top-of-funnel dips</span>
+        </div>
+        
+        <!-- M-2 (2 Months Prior) -->
+        <div class="waterfall-row">
+          <div class="waterfall-meta">
+            <span class="waterfall-badge" style="background:rgba(148,163,184,0.15); color:#cbd5e1; border:1px solid #475569;">${m2_name} (M-2)</span>
+            <span style="color:#94a3b8;">${fmt(m2_metrics.apps)} Apps</span>
+          </div>
+          <div class="waterfall-outputs">
+            <span style="color:#64748b;">0% Evals</span>
+            <span style="color:#10b981; font-weight:bold;">${enSplitM2}% Tail Enr (${fmt(d_en_m2)} Dem / ${fmt(p_en_m2)} Cap)</span>
+          </div>
+        </div>
+
+        <!-- M-1 (Prior Month) -->
+        <div class="waterfall-row">
+          <div class="waterfall-meta">
+            <span class="waterfall-badge" style="background:rgba(99,102,241,0.15); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3);">${m1_name} (M-1)</span>
+            <span style="color:#94a3b8;">${fmt(m1_metrics.apps)} Apps</span>
+          </div>
+          <div class="waterfall-outputs">
+            <span style="color:#c4b5fd; font-weight:bold;">${evSplitM1}% Evals (${fmt(d_ev_m1)} Dem / ${fmt(p_ev_m1)} Cap)</span>
+            <span style="color:#10b981; font-weight:bold;">${enSplitM1}% Core Enr (${fmt(d_en_m1)} Dem / ${fmt(p_en_m1)} Cap)</span>
+          </div>
+        </div>
+
+        <!-- M0 (Current Month) -->
+        <div class="waterfall-row" style="border-color:#3b82f6;">
+          <div class="waterfall-meta">
+            <span class="waterfall-badge" style="background:rgba(59,130,246,0.15); color:#93c5fd; border:1px solid rgba(59,130,246,0.3);">${m0_name} (M0)</span>
+            <span style="color:#94a3b8;">${fmt(m0_metrics.apps)} Apps</span>
+          </div>
+          <div class="waterfall-outputs">
+            <span style="color:#93c5fd; font-weight:bold;">100% PS</span>
+            <span style="color:#c4b5fd; font-weight:bold;">${evSplitM0}% Evals (${fmt(d_ev_m0)})</span>
+            <span style="color:#10b981; font-weight:bold;">${enSplitM0}% Enr (${fmt(d_en_m0)})</span>
+          </div>
+        </div>
+      `;
+    } else {
+      waterfallContainer.style.display = 'none';
+      waterfallContainer.innerHTML = '';
+    }
+  }
 
   let enrollCarryoverToReport = d_enroll <= p_enroll ? (d_en_m1 + d_en_m2) : (p_en_m1 + p_en_m2);
   let evalCarryoverToReport = d_ev_m1;
