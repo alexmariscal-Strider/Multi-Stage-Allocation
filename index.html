@@ -653,8 +653,8 @@ function getHistoricalLedgerName(tIdx, offset) {
 }
 
 function getMonthEvMetrics(mName) {
-    if (!mName) return { apps: 0, dem: 0, cap: 0, yield: 0, maxYield: 0, psCap: 0 };
-    let ledg = LEDGER[mName] || ARCHIVED_LEDGER[mName]; if (!ledg) return { apps: 0, dem: 0, cap: 0, yield: 0, maxYield: 0, psCap: 0 };
+    if (!mName) return { apps: 0, dem: 0, cap: 0, yield: 0, maxYield: 0, psCap: 0, maxEvSched: 0 };
+    let ledg = LEDGER[mName] || ARCHIVED_LEDGER[mName]; if (!ledg) return { apps: 0, dem: 0, cap: 0, yield: 0, maxYield: 0, psCap: 0, maxEvSched: 0 };
     let wd = ledg.wd; let mult = 1 + (FUNNEL.volBump / 100); let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
     let m_psDem = 0; let m_evDem = 0; let m_apps = 0;
     MASTER_STATES.forEach(s => { let a = (ledg.apps[s]||0)*mult; m_apps += a; m_psDem += (a * (FUNNEL.appToPsRate/100)); m_evDem += (a * globalAppToEvRate); });
@@ -668,8 +668,13 @@ function getMonthEvMetrics(mName) {
     
     let pfaYield = Math.min(m_psDem * (FUNNEL.pfaRouteRate/100), m_pfaPsCap); let remCePs = m_psDem - pfaYield; let reqCePsH = remCePs * PS_HANDLE; let fluidEvCap = Math.max(0, m_ceTotalH - reqCePsH) / EV_HANDLE;
     let yieldBase = m_evDem * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
-    let maxYieldBase = Math.min(m_evDem, fluidEvCap) * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
-    return { apps: m_apps, dem: m_evDem, cap: fluidEvCap, yield: yieldBase, maxYield: maxYieldBase, psCap: (m_pfaPsCap + m_ceStrictPsCap) };
+    
+    let maxPsCap = m_pfaPsCap + m_ceStrictPsCap;
+    let p_yldEvDem = maxPsCap * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+    let maxEvSched = Math.min(p_yldEvDem, fluidEvCap);
+    let maxYieldBase = maxEvSched * (FUNNEL.evCompRate/100) * (FUNNEL.enrollRate/100);
+    
+    return { apps: m_apps, dem: m_evDem, cap: fluidEvCap, yield: yieldBase, maxYield: maxYieldBase, psCap: maxPsCap, maxEvSched: maxEvSched };
 }
 
 function setHeatmapView(mode) { heatmapViewMode = mode; document.getElementById('btn-view-mo').className = mode === 'mo' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off'; document.getElementById('btn-view-wk').className = mode === 'wk' ? 'matrix-btn matrix-btn-on' : 'matrix-btn matrix-btn-off'; if(mode === 'mo') { activeWeekFilter = null; recalculateDashboardMetrics(); } else { renderDualHeatmap(); } }
@@ -738,10 +743,9 @@ function recalculateDashboardMetrics() {
   // True Top-Down Funnel Math (Solves the 893 vs 575 bug)
   let d_ev_m0 = evW0 * m0_metrics.dem; let d_ev_m1 = evW1 * m1_metrics.dem;
   let d_evSched = activeDemandMode === 'cohort' ? (d_ev_m0 + d_ev_m1) : m0_metrics.dem;
-  let p_evSched = activeDemandMode === 'cohort' ? Math.min(d_evSched, m0_metrics.cap) : Math.min(m0_metrics.dem, m0_metrics.cap);
   
-  let ev_cap_ratio = d_evSched > 0 ? (p_evSched / d_evSched) : 1;
-  let p_ev_m0 = d_ev_m0 * ev_cap_ratio; let p_ev_m1 = d_ev_m1 * ev_cap_ratio;
+  let p_ev_m0 = evW0 * m0_metrics.maxEvSched; let p_ev_m1 = evW1 * m1_metrics.maxEvSched;
+  let p_evSched = activeDemandMode === 'cohort' ? (p_ev_m0 + p_ev_m1) : m0_metrics.maxEvSched;
 
   let d_enroll=0, p_enroll=0, d_en_m0=0, d_en_m1=0, d_en_m2=0, p_en_m0=0, p_en_m1=0, p_en_m2=0;
 
