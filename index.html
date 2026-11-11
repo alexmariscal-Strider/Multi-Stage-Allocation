@@ -20,6 +20,7 @@
   .top-50-50 { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; align-items: stretch; }
   .top-left { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 10px; }
   .top-right { flex: 1; min-width: 400px; display: flex; flex-direction: column; }
+  .top-staff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-items: stretch; }
   .params-strip-funnel { display: flex; gap: 6px; flex-wrap: wrap; background: #0f172a; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; margin: 0 auto 12px auto; align-items: center; justify-content: center; width: 100%; max-width: 650px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
   .param-group { display: inline-flex; align-items: center; gap: 5px; background: rgba(30, 41, 59, 0.6); padding: 3px 6px; border-radius: 4px; border: 1px solid #1e293b; }
   .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -45,6 +46,89 @@
   .insight-banner p { font-size: 11.5px; line-height: 1.4; color: #e2e8f0; margin-bottom: 4px; }
   .insight-banner p:last-child { margin-bottom: 0; }
   .insight-banner strong { color: #fff; font-weight: 700; }
+
+  /* FULL-WIDTH TELEMETRY KPI STRIP (OPTION A) */
+  .telemetry-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  .telemetry-card {
+    background: #161b22;
+    border-radius: 8px;
+    border: 1px solid #2d3748;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    min-height: 74px;
+    position: relative;
+    overflow: hidden;
+  }
+  .telemetry-card.theme-app { border-left: 3px solid #6366f1; }
+  .telemetry-card.theme-pto { border-left: 3px solid #f43f5e; }
+  .telemetry-card.theme-ps  { border-left: 3px solid #3b82f6; }
+  .telemetry-card.theme-ev  { border-left: 3px solid #10b981; }
+  .telemetry-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+  }
+  .telemetry-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 3px 0;
+  }
+  .telemetry-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1;
+  }
+  .telemetry-sub {
+    font-size: 9.5px;
+    color: #94a3b8;
+    font-weight: 600;
+  }
+  .telemetry-bars-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 2px;
+  }
+  .telemetry-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 8.5px;
+    color: #cbd5e1;
+  }
+  .telemetry-bar-bg {
+    flex: 1;
+    height: 3px;
+    background: #0f1117;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .telemetry-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: width 0.3s;
+  }
+
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-items: stretch; flex: 1; }
   .stat-card-basic { background: #1f2937; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; border-left: 4px solid #475569; display: flex; flex-direction: column; justify-content: center; height: 100%; }
   .stat-card-basic.app-theme { border-left-color: #6366f1; }
@@ -94,7 +178,6 @@
   .staff-pill-ok { background: rgba(16,185,129,0.15); color: #86efac; border: 1px solid rgba(16,185,129,0.3); }
   .staff-pill-alert { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
   .staff-content { padding: 14px; display: none; }
-  .staff-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
   .staff-kpi-card { background: #0f172a; border-radius: 6px; border: 1px solid #334155; padding: 12px; }
   .staff-kpi-title { font-size: 9.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em; }
   input, select { background: #0f172a; border: 1px solid #374151; color: #f8fafc; padding: 4px; border-radius: 4px; text-align: center; font-size: 10px; transition: 0.2s; }
@@ -160,10 +243,49 @@
       <button class="btn-action" style="background: #1f2937; color: #f8fafc; border: 1px solid #475569; padding: 6px 10px; font-size: 10px;" onclick="toggleModal('settings-modal')">⚙️ GLOBAL PARAMS</button>
   </div>
 </div>
+
+<!-- FULL-WIDTH TELEMETRY KPI STRIP (OPTION A) -->
+<div class="telemetry-strip" id="top-stats-container"></div>
+
+<!-- 50/50 SPLIT ARCHITECTURE -->
 <div class="top-50-50">
     <div class="top-left">
         <div class="insight-banner" id="executive-insight-banner"></div>
         <div class="stat-grid" id="top-stats-container"></div>
+        
+        <!-- INLINE ACTIVE MONTH STAFFING REQUIREMENTS (CE + PFA) -->
+        <div class="top-staff-grid">
+            <!-- CE REQUIREMENTS -->
+            <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
+                <div class="staff-kpi-title" style="color:#c4b5fd;">📋 Licensed CE Requirements (<span id="staff-lbl-month-ce"></span>)</div>
+                <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
+                    <div>• Eval Pipeline Demand: <strong id="staff-ce-demand" style="color:#f8fafc;">-</strong></div>
+                    <div>• Avg Known Capacity / CE: <strong id="staff-ce-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+                    <div>• Required Headcount: <strong id="staff-ce-req" style="color:#93c5fd;">-</strong> FTEs</div>
+                    <div>• Active Staff On-Seat: <strong id="staff-ce-act" style="color:#f8fafc;">-</strong> CEs</div>
+                </div>
+                <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-ce-delta-callout">-</div>
+            </div>
+
+            <!-- PFA REQUIREMENTS -->
+            <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
+                <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🤖 PFA Intake Requirements</span>
+                    <div style="display:inline-flex; align-items:center; gap:3px; font-size:8.5px; color:#94a3b8;">
+                        <span>Quota:</span>
+                        <input type="number" id="pfa-daily-quota-inp" value="10" min="1" max="25" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
+                        <span style="font-size:7.5px;">PS/d</span>
+                    </div>
+                </div>
+                <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
+                    <div>• PFA Target Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(based on PFA Alloc %)</span></div>
+                    <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+                    <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
+                    <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
+                </div>
+                <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-pfa-delta-callout">-</div>
+            </div>
+        </div>
     </div>
     <div class="top-right panel">
         <h2 style="cursor: pointer; margin-bottom: 0;" onclick="toggleFunnelCollapse()">
@@ -234,22 +356,22 @@
                   </div>
               </div>
               <div style="font-size:11px; color:#cbd5e1; line-height:1.7;">
-                  <div>• PFA Target Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(based on PFA Alloc %)</span></div>
-                  <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
-                  <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
-                  <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
-              </div>
-              <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #334155; font-size:12px; font-weight:bold;" id="staff-pfa-delta-callout">-</div>
+<!-- STRATEGIC STAFFING & HEADCOUNT REQUIREMENTS (COLLAPSIBLE) -->
+<div class="staff-panel">
+  <div class="staff-header" onclick="toggleStaffingCollapse()">
+      <div class="staff-title"><span id="staffing-toggle-icon">▶</span><span>👥 Strategic Staffing & Requisition Modeler</span><span style="font-size: 9px; color:#64748b; font-weight:normal;">(In-Month Known Capacity & 2-Mo Ramp Lead Time)</span></div>
+      <div id="staffing-header-pills" style="display:flex; gap:8px; align-items:center;"></div>
+  </div>
+  <div class="staff-content" id="staffing-content-wrapper">
+      <!-- 2-MONTH RAMP & HIRING TIMELINE FULL-WIDTH ROW -->
+      <div class="staff-kpi-card" style="border-left: 3px solid #10b981; margin-bottom: 14px;">
+          <div class="staff-kpi-title" style="color:#86efac; font-size:10.5px;">📅 2-Month Ramp & Strategic Hiring Advisory Timeline</div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; font-size:10.5px; color:#cbd5e1; line-height:1.5;">
+              <div>• <strong>Ramp Schedule:</strong> Mo 1 (0%) → Mo 2 (0%) → Mo 3 (100% full capacity).</div>
+              <div>• <strong>Clinical Productivity:</strong> Zero capacity yielded during 60-day ramp (onboarding & shadowing).</div>
+              <div>• <strong>Requisition Lead Time:</strong> Post requisitions <strong>60–90 days prior</strong> to target month.</div>
           </div>
-          <div class="staff-kpi-card" style="border-left: 3px solid #10b981;">
-              <div class="staff-kpi-title" style="color:#86efac;">📅 2-Month Ramp & Hiring Timeline</div>
-              <div style="font-size:10.5px; color:#cbd5e1; line-height:1.6;">
-                  <div>• <strong>Ramp Schedule:</strong> Mo 1 (0%) → Mo 2 (0%) → Mo 3 (100% full capacity).</div>
-                  <div>• <strong>Clinical Productivity:</strong> Zero capacity yielded during 60-day ramp (onboarding & shadowing).</div>
-                  <div>• <strong>Requisition Lead Time:</strong> Post requisitions <strong>60–90 days prior</strong> to target need.</div>
-                  <div style="margin-top:6px; padding:6px; background:#1e293b; border-radius:4px; border:1px solid #334155;" id="staff-ramp-notice">Calculating optimal requisition posting dates...</div>
-              </div>
-          </div>
+          <div style="margin-top:8px; padding:8px 10px; background:#1e293b; border-radius:4px; border:1px solid #334155;" id="staff-ramp-notice">Calculating optimal requisition posting dates...</div>
       </div>
       <div style="border:1px solid #334155; border-radius:6px; overflow:hidden;">
           <table class="hover-row-trace" style="width:100%; font-size:10.5px;">
@@ -848,11 +970,88 @@ function recalculateDashboardMetrics() {
   let finalYield = activeWeekFilter !== null ? Math.min(d_evDem, d_evStrictCap) * (FUNNEL.evCompRate / 100) * (FUNNEL.enrollRate / 100) : Math.min(d_enroll, p_enroll);
   let evUtilColor = '#10b981'; let evUtilBadge = 'Healthy (Target ~87%)'; if (d_evUtilPct > 90) { evUtilColor = '#ef4444'; evUtilBadge = '🚨 CAPACITY DEFICIT RISK (>90%)'; } else if (d_evUtilPct >= 88.5) { evUtilColor = '#eab308'; evUtilBadge = 'Near Ceiling (88-90%)'; }
 
+  // Option A: Render Slim 4-Column Full-Width Telemetry Strip
+  let cePsPct = d_cePsCap > 0 ? Math.min(100, Math.round((d_cePsDem / d_cePsCap) * 100)) : 0;
+  let pfaPsPct = d_pfaPsCap > 0 ? Math.min(100, Math.round((d_pfaPsDem / d_pfaPsCap) * 100)) : 0;
+  let evCapBarColor = d_evUtilPct > 90 ? '#ef4444' : (d_evUtilPct >= 80 ? '#10b981' : '#3b82f6');
+
   document.getElementById('top-stats-container').innerHTML = `
-    <div class="stat-card-basic app-theme"><div class="stat-label-basic">Accepted App Vol</div><div class="stat-val-basic">${fmt(d_apps * mult)}</div></div>
-    <div class="stat-card-modern"><div class="util-header"><span>System PS Util</span></div><div class="util-pct">${Math.round(d_psUtilPct)}%</div>${renderVisualBar('CEs', d_cePsDem, d_cePsCap, 'demand')}${renderVisualBar('PFAs', d_pfaPsDem, d_pfaPsCap, 'demand')}</div>
-    <div class="stat-card-basic pto-theme"><div class="stat-label-basic">Total Roster PTO</div><div class="stat-val-basic" style="color:#fca5a5;">${d_ptoCe + d_ptoPfa}</div><div class="pto-split"><span>CE PTO: ${d_ptoCe} days</span><span>PFA PTO: ${d_ptoPfa} days</span></div></div>
-    <div class="stat-card-modern"><div class="util-header"><span>CE Eval Util</span><span style="font-size:8px; color:${evUtilColor}; font-weight:bold;">${evUtilBadge}</span></div><div class="util-pct" style="color:${evUtilColor};">${Math.round(d_evUtilPct)}%</div>${renderVisualBar('Schedulable Quota', d_evDem, d_evStrictCap, 'cap')}</div>
+    <!-- 1. APPS INTAKE -->
+    <div class="telemetry-card theme-app">
+      <div class="telemetry-hdr">
+        <span>Accepted App Vol</span>
+        <span style="color:#6366f1;">Top of Funnel</span>
+      </div>
+      <div class="telemetry-main">
+        <div class="telemetry-val" style="color:#a5b4fc;">${fmt(d_apps * mult)}</div>
+        <div class="telemetry-sub">apps gross</div>
+      </div>
+      <div style="font-size:8.5px; color:#64748b; display:flex; justify-content:space-between;">
+        <span>Bump: ${FUNNEL.volBump}%</span>
+        <span>Base: ${fmt(d_apps)}</span>
+      </div>
+    </div>
+
+    <!-- 2. ROSTER PTO -->
+    <div class="telemetry-card theme-pto">
+      <div class="telemetry-hdr">
+        <span>Total Roster PTO</span>
+        <span style="color:#f43f5e;">Days Out</span>
+      </div>
+      <div class="telemetry-main">
+        <div class="telemetry-val" style="color:#fca5a5;">${d_ptoCe + d_ptoPfa}</div>
+        <div class="telemetry-sub">days net</div>
+      </div>
+      <div style="font-size:8.5px; color:#cbd5e1; display:flex; justify-content:space-between; border-top:1px dotted #374151; padding-top:2px;">
+        <span>CE: <strong style="color:#f8fafc;">${d_ptoCe}d</strong></span>
+        <span>PFA: <strong style="color:#f8fafc;">${d_ptoPfa}d</strong></span>
+      </div>
+    </div>
+
+    <!-- 3. SYSTEM PS UTILIZATION -->
+    <div class="telemetry-card theme-ps">
+      <div class="telemetry-hdr">
+        <span>System PS Util</span>
+        <span style="color:#93c5fd; font-weight:bold;">${Math.round(d_psUtilPct)}%</span>
+      </div>
+      <div class="telemetry-main">
+        <div class="telemetry-val" style="color:#93c5fd;">${Math.round(d_psUtilPct)}%</div>
+        <div class="telemetry-sub">${fmt(d_cePsDem + d_pfaPsDem)} / ${fmt(d_cePsCap + d_pfaPsCap)}</div>
+      </div>
+      <div class="telemetry-bars-wrap">
+        <div class="telemetry-bar-row">
+          <span style="width:22px; color:#64748b;">CE:</span>
+          <div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${cePsPct}%; background:${cePsPct>100?'#ef4444':'#10b981'};"></div></div>
+          <span style="font-size:8px; color:#94a3b8; width:22px; text-align:right;">${cePsPct}%</span>
+        </div>
+        <div class="telemetry-bar-row">
+          <span style="width:22px; color:#64748b;">PFA:</span>
+          <div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${pfaPsPct}%; background:${pfaPsPct>100?'#ef4444':'#3b82f6'};"></div></div>
+          <span style="font-size:8px; color:#94a3b8; width:22px; text-align:right;">${pfaPsPct}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. CE EVAL UTILIZATION -->
+    <div class="telemetry-card theme-ev">
+      <div class="telemetry-hdr">
+        <span>CE Eval Util</span>
+        <span style="font-size:8px; color:${evUtilColor}; font-weight:bold;">${evUtilBadge}</span>
+      </div>
+      <div class="telemetry-main">
+        <div class="telemetry-val" style="color:${evUtilColor};">${Math.round(d_evUtilPct)}%</div>
+        <div class="telemetry-sub">${fmt(d_evDem)} / ${fmt(d_evStrictCap)} Cap</div>
+      </div>
+      <div class="telemetry-bars-wrap">
+        <div class="telemetry-bar-row">
+          <div class="telemetry-bar-bg" style="height:4px;"><div class="telemetry-bar-fill" style="width:${Math.min(100, Math.round(d_evUtilPct))}%; background:${evCapBarColor};"></div></div>
+        </div>
+        <div style="font-size:8px; color:#64748b; display:flex; justify-content:space-between; margin-top:1px;">
+          <span>Target: ~87%</span>
+          <span>Ceiling: 90%</span>
+        </div>
+      </div>
+    </div>
   `;
 
   let enrollCarryoverToReport = d_enroll <= p_enroll ? (d_en_m1 + d_en_m2) : (p_en_m1 + p_en_m2);
