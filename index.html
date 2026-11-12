@@ -182,6 +182,8 @@
     left: 0;
     transition: width 0.3s;
   }
+  .progress-bg { width: 100%; max-width: 60px; height: 4px; background: #0f172a; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
 
   table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: 10.5px; }
   th { padding: 6px; color: #94a3b8; border-bottom: 1px solid #374151; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; background: #1f2937; white-space: nowrap; }
@@ -303,16 +305,23 @@
 
             <!-- PFA REQUIREMENTS -->
             <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
-                <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center;">
+                <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
                     <span>🤖 PFA Intake Requirements</span>
-                    <div style="display:inline-flex; align-items:center; gap:3px; font-size:8.5px; color:#94a3b8;">
-                        <span>Quota:</span>
-                        <input type="number" id="pfa-daily-quota-inp" value="10" min="1" max="25" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
-                        <span style="font-size:7.5px;">PS/d</span>
+                    <div style="display:inline-flex; align-items:center; gap:6px; font-size:8.5px; color:#94a3b8;">
+                        <div style="display:inline-flex; align-items:center; gap:2px;" title="Strategic hiring benchmark % of total PS demand">
+                            <span>Target:</span>
+                            <input type="number" id="pfa-bench-rate-inp" value="25" min="0" max="100" style="width:34px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaBenchmarkRate()">
+                            <span style="font-size:7.5px;">%</span>
+                        </div>
+                        <div style="display:inline-flex; align-items:center; gap:2px;">
+                            <span>Quota:</span>
+                            <input type="number" id="pfa-daily-quota-inp" value="10" min="1" max="25" style="width:34px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
+                            <span style="font-size:7.5px;">PS/d</span>
+                        </div>
                     </div>
                 </div>
                 <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
-                    <div>• PFA Target Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(based on PFA Alloc %)</span></div>
+                    <div>• Strategic Benchmark Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(hiring baseline)</span></div>
                     <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
                     <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
                     <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
@@ -331,7 +340,7 @@
                 <div class="param-group"><div class="param-item"><span class="param-lbl">Vol Bump</span><div class="param-inp-wrap"><input type="number" id="mod-global-bump" onchange="triggerUpdate()"><span>%</span></div></div></div>
                 <div class="param-group">
                     <div class="param-item"><span class="param-lbl">App→PS</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-rate" onchange="triggerUpdate()"><span>%</span></div></div>
-                    <div class="param-item"><span class="param-lbl">PFA Alloc</span><div class="param-inp-wrap"><input type="number" id="mod-global-pfa-route" onchange="triggerUpdate()"><span>%</span></div></div>
+                    <div class="param-item" title="Read-only effective share of Gross Phone Screens absorbed by the PFA pool via Need-Based Arbitrage"><span class="param-lbl" style="color:#93c5fd;">Eff. PFA %</span><div class="param-inp-wrap" style="border-color:rgba(59,130,246,0.4); background:rgba(30,58,138,0.25); padding:0 6px;"><strong id="disp-eff-pfa-share" style="color:#93c5fd; font-size:11px; min-width:26px; text-align:center;">0</strong><span style="color:#93c5fd;">%</span></div></div>
                 </div>
                 <div class="param-group">
                     <div class="param-item"><span class="param-lbl">PS Comp</span><div class="param-inp-wrap"><input type="number" id="mod-global-ps-comp" onchange="triggerUpdate()"><span>%</span></div></div>
@@ -388,9 +397,9 @@
           <table class="hover-row-trace" style="width:100%; font-size:10.5px;">
               <thead>
                   <tr>
-                      <th style="background:#1f2937;">Month Horizon</th><th style="text-align:center; background:#1f2937;">Apps Vol</th><th style="text-align:center; background:#1f2937;">PFA Alloc</th>
+                      <th style="background:#1f2937;">Month Horizon</th><th style="text-align:center; background:#1f2937;">Apps Vol</th><th style="text-align:center; background:#1f2937;">PFA Bench %</th>
                       <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Total Workload (EV+PS)</th><th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Active CEs</th><th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Req CE FTE</th><th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">CE Hiring Gap</th>
-                      <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Target</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Active PFAs</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Req PFA FTE</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Hiring Gap</th><th style="text-align:center; background:#1f2937;">Hiring Action (0% Ramp / 60d Lead)</th>
+                      <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Bench Dem</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Active PFAs</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Req PFA FTE</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Hiring Gap</th><th style="text-align:center; background:#1f2937;">Hiring Action (0% Ramp / 60d Lead)</th>
                   </tr>
               </thead>
               <tbody id="staffing-rolling-tbody"></tbody>
@@ -419,7 +428,7 @@
   <div class="panel span-1">
     <h2 id="mix-title" style="align-items: center; display: flex; flex-wrap: wrap; gap: 4px;">
       <span>CE Profile Manager</span>
-      <div style="display: inline-flex; gap: 4px; align-items: center; margin-left: auto;"><button class="btn-action" id="btn-sync-licensure" style="padding: 2px 6px; font-size: 8px; background: #059669;" onclick="syncLicensureFromSheets(false)">🔄 SYNC LICENSURE</button><button class="btn-action" id="btn-undo-licensure-sync" style="padding: 2px 6px; font-size: 8px; background: #d97706; display: none;" onclick="undoLicensureSync()">⏪ UNDO SYNC</button><button class="btn-action" style="padding: 2px 6px; font-size: 8px; background: #6366f1;" onclick="promptConfirm('Provision all states to all CEs?', addAllStatesToAllProviders)">+ ALL TO ALL</button></div>
+      <div style="display: inline-flex; gap: 4px; align-items: center; margin-left: auto;"><button class="btn-action" id="btn-sync-licensure" style="padding: 2px 6px; font-size: 8px; background: #059669;" onclick="syncLicensureFromSheets(false)">🔄 SYNC LICENSURE</button><button class="btn-action" id="btn-undo-licensure-sync" style="padding: 2px 6px; font-size: 8px; background: #d97706; display: none;" onclick="undoLicensureSync()">⏪ UNDO SYNC</button><button class="btn-action" id="btn-sync-all-states" style="padding: 2px 6px; font-size: 8px; background: #6366f1;" onclick="promptConfirm('Provision all states to all CEs?', addAllStatesToAllProviders)">+ ALL TO ALL</button></div>
     </h2>
     <div id="ce-controls" style="max-height: 380px; overflow-y: auto; padding-right: 5px;"></div>
   </div>
@@ -465,12 +474,12 @@
             <li style="margin-bottom: 8px;">📋 <strong>Evaluations (Split Over 2 Months):</strong> Due to an ~11–14 day median time-to-eval, evaluation workload straddles two months (configurable 50% current month intake + 50% carried over from prior month's intake).</li>
             <li style="margin-bottom: 8px;">🎓 <strong>Enrollments (4-Month Row-Based Lag Curve):</strong> Rather than relying on volatile column-based ratios, enrollments follow an empirical cohort realization curve tied directly to each historical month's accepted application cohort (default: <strong>5.0%</strong> Month 0, <strong>22.0%</strong> Month +1, <strong>5.5%</strong> Month +2, and <strong>1.3%</strong> Month +3 = <strong>33.8%</strong> cumulative conversion), dynamically scaled by your live funnel sliders and capped by physical capacity limits.</li>
         </ul>
-        <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">Strategic PFA Routing Directives (State Heatmap)</h3>
-        <p style="font-size: 11.5px; color:#94a3b8; margin-bottom: 8px;">Because licensed CEs are anchored to strict daily quotas (3 Evals/day), the PFA pool must be routed strategically rather than randomly to prevent front-door dropoff and protect scarce clinical licenses:</p>
+        <h3 style="color: #f8fafc; font-size: 13px; margin-bottom: 8px; border-bottom: 1px dotted #374151; padding-bottom: 4px;">Need-Based PFA Arbitrage Routing (State Heatmap)</h3>
+        <p style="font-size: 11.5px; color:#94a3b8; margin-bottom: 8px;">Rather than wasting PFA capacity on states where assigned CEs already have surplus screen capacity, the engine pools 100% of active PFA capacity and deploys it exclusively where needed:</p>
         <ul style="padding-left: 20px; list-style-type: none; margin-bottom: 16px;">
-            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-overflow" style="font-size:9px;">🚨 PFA: PS OVERFLOW</span> <strong style="color:#f8fafc;">(Tier 1 Priority):</strong> Triggered when CE Phone Screen balance is negative. Intake must route screens to PFAs to prevent prospective patient drop-off.</li>
-            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-shield" style="font-size:9px;">⭐ PFA: SHIELD LICENSURE</span> <strong style="color:#f8fafc;">(Tier 2 Priority):</strong> Triggered when a territory has active demand but ≤ 2 assigned CEs (rare or PsyPact licenses). PFAs absorb intake screens so these rare clinicians reserve 100% of their calendars for specialized Evaluations.</li>
-            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-std" style="font-size:9px;">📞 CE STANDARD</span> <strong style="color:#f8fafc;">(Tier 3 Standard):</strong> The state has healthy CE bench strength and positive PS capacity. Salaried CEs fulfill their standard 4 PS/day quota here.</li>
+            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-overflow" style="font-size:9px;">🚨 PFA: PS OVERFLOW</span> <strong style="color:#f8fafc;">(Tier 1 Rescue):</strong> Triggered when Gross PS Demand exceeds CE PS Supply. PFAs absorb the shortfall first so prospective patients do not drop off at the front door.</li>
+            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-shield" style="font-size:9px;">⭐ PFA: SHIELD EVALS</span> <strong style="color:#f8fafc;">(Tier 2 Reinvestment):</strong> Remaining PFA capacity is swept into states where Evaluations are below 90% coverage. Offloading a Phone Screen frees up 30 minutes of clinical time that CEs reinvest into Evaluations.</li>
+            <li style="margin-bottom: 8px;"><span class="pfa-badge pfa-badge-std" style="font-size:9px;">✅ CE SELF-SUFFICIENT</span> <strong style="color:#f8fafc;">(0 PS PFA Target):</strong> Assigned CEs cover 100% of Phone Screens on their own with zero PFA assistance required.</li>
         </ul>
     </div>
   </div>
@@ -592,6 +601,7 @@ function formatVar(delta) { if (delta === 0) return `<span style="color:#64748b;
 function toggleFunnelCollapse() { const wrap = document.getElementById('unified-funnel-wrapper'); const icon = document.getElementById('funnel-toggle-icon'); if (wrap.style.display === 'none') { wrap.style.display = 'block'; icon.innerText = '▼'; } else { wrap.style.display = 'none'; icon.innerText = '▶'; } }
 function toggleStaffingCollapse() { const wrap = document.getElementById('staffing-content-wrapper'); const icon = document.getElementById('staffing-toggle-icon'); if (wrap.style.display === 'block') { wrap.style.display = 'none'; icon.innerText = '▶'; } else { wrap.style.display = 'block'; icon.innerText = '▼'; renderStaffingModeler(); } }
 function savePfaStaffingQuota() { let inp = document.getElementById('pfa-daily-quota-inp'); let val = parseFloat(inp ? inp.value : 10) || 10; if (val < 1) val = 1; FUNNEL.pfaDailyStaffQuota = val; saveState(); renderStaffingModeler(); }
+function savePfaBenchmarkRate() { let inp = document.getElementById('pfa-bench-rate-inp'); let val = parseFloat(inp ? inp.value : 25); if (isNaN(val) || val < 0) val = 0; if (val > 100) val = 100; FUNNEL.pfaRouteRate = val; saveState(); renderStaffingModeler(); }
 function toggleModal(id) { const modal = document.getElementById(id); if (modal.style.display === 'flex') { modal.style.display = 'none'; } else { if(id === 'settings-modal') populateGlobalModalViews(); modal.style.display = 'flex'; } }
 function closeSettingsModal() { const modal = document.getElementById('settings-modal'); if (modal) modal.style.display = 'none'; }
 function promptAlert(message) { document.getElementById('dialog-message').innerText = message; document.getElementById('dialog-cancel-btn').style.display = 'none'; document.getElementById('dialog-confirm-btn').innerText = 'OK'; document.getElementById('dialog-confirm-btn').onclick = closeDialog; document.getElementById('custom-dialog-overlay').style.display = 'flex'; }
@@ -806,7 +816,6 @@ function setWeeklyCapView(mode) {
 function triggerUpdate() {
     FUNNEL.volBump = parseFloat(document.getElementById('mod-global-bump').value) || 0;
     FUNNEL.appToPsRate = parseFloat(document.getElementById('mod-global-ps-rate').value) || 0;
-    FUNNEL.pfaRouteRate = parseFloat(document.getElementById('mod-global-pfa-route').value) || 0;
     FUNNEL.psCompRate = parseFloat(document.getElementById('mod-global-ps-comp').value) || 0;
     FUNNEL.screenInRate = parseFloat(document.getElementById('mod-global-scr-in').value) || 0;
     FUNNEL.evSchedRate = parseFloat(document.getElementById('mod-global-ev-sched').value) || 0;
@@ -906,12 +915,13 @@ function recalculateDashboardMetrics() {
   let activeMonth = ACTIVE_TIMELINE[activeMonthIdx]; if (!activeMonth) return;
   document.getElementById('mod-global-bump').value = FUNNEL.volBump || 0;
   document.getElementById('mod-global-ps-rate').value = FUNNEL.appToPsRate || 0;
-  document.getElementById('mod-global-pfa-route').value = FUNNEL.pfaRouteRate || 0;
   document.getElementById('mod-global-ps-comp').value = FUNNEL.psCompRate || 0;
   document.getElementById('mod-global-scr-in').value = FUNNEL.screenInRate || 0;
   document.getElementById('mod-global-ev-sched').value = FUNNEL.evSchedRate || 0;
   document.getElementById('mod-global-ev-comp').value = FUNNEL.evCompRate || 0;
   document.getElementById('mod-global-enroll').value = FUNNEL.enrollRate || 0;
+  let benchInp = document.getElementById('pfa-bench-rate-inp');
+  if (benchInp) benchInp.value = FUNNEL.pfaRouteRate !== undefined ? FUNNEL.pfaRouteRate : 25;
 
   let wd = LEDGER[activeMonth].wd || 21;
   let mult = 1 + (FUNNEL.volBump / 100);
@@ -994,9 +1004,8 @@ function recalculateDashboardMetrics() {
       }
   });
 
-  // Calculate global unused PFA capacity
-  let basePfaRequirement = totalPsDemFull * (FUNNEL.pfaRouteRate / 100);
-  let globalUnusedPfaCapacity = Math.max(0, totalPfaPsCap - basePfaRequirement);
+  // Calculate global PFA capacity pool
+  let availablePfaPool = totalPfaPsCap;
 
   // Bottom-up CE State Allocations
   let ceAllocations = [];
@@ -1023,36 +1032,62 @@ function recalculateDashboardMetrics() {
       ceAllocations.push({ name: n, activeStates, denom, cePsTotal, ceEvTotal });
   });
 
-  // Initial State-Level PS Deficit Calculation
-  let totalPfaAllocated = 0;
+  // NEED-BASED PFA ARBITRAGE ROUTING
+  // Step 1: Zero out PFA targets on surplus states; let CEs absorb what they naturally can first
   MASTER_STATES.forEach(s => {
-      let baseStateTarget = stateMetrics[s].psDemandFull * (FUNNEL.pfaRouteRate / 100);
-      let initialNetDemandCE = Math.max(0, stateMetrics[s].psDemandFull - baseStateTarget);
-      stateMetrics[s].pfaTargetPs = baseStateTarget;
-      stateMetrics[s].psDemandCE = initialNetDemandCE;
-      totalPfaAllocated += baseStateTarget;
+      stateMetrics[s].pfaTargetPs = 0;
+      stateMetrics[s].psDemandCE = stateMetrics[s].psDemandFull;
+      stateMetrics[s].pfaTierReason = 'NONE';
   });
 
-  // DYNAMIC PFA OVERFLOW SWEEP: Reroute unused PFA capacity to states with CE PS deficits
-  if (globalUnusedPfaCapacity > 0) {
-      let deficitStates = MASTER_STATES
-          .map(s => {
-              let deficit = stateMetrics[s].psDemandCE - stateMetrics[s].psCapCe;
-              return { state: s, deficit: deficit > 0 ? deficit : 0 };
-          })
-          .filter(d => d.deficit > 0)
-          .sort((a, b) => b.deficit - a.deficit);
+  let totalPfaAllocated = 0;
 
-      for (let dState of deficitStates) {
-          if (globalUnusedPfaCapacity <= 0) break;
-          let sweepAmount = Math.min(dState.deficit, globalUnusedPfaCapacity);
-          stateMetrics[dState.state].pfaTargetPs += sweepAmount;
-          stateMetrics[dState.state].psDemandCE -= sweepAmount;
-          globalUnusedPfaCapacity -= sweepAmount;
-          totalPfaAllocated += sweepAmount;
+  // Step 2 (Tier 1 - PS Overflow Rescue): Prioritize states where Gross PS Demand exceeds CE PS Supply
+  let psDeficitStates = MASTER_STATES
+      .map(s => ({ state: s, deficit: Math.max(0, stateMetrics[s].psDemandFull - stateMetrics[s].psCapCe) }))
+      .filter(d => d.deficit > 0)
+      .sort((a, b) => b.deficit - a.deficit);
+
+  for (let item of psDeficitStates) {
+      if (availablePfaPool <= 0) break;
+      let alloc = Math.min(item.deficit, availablePfaPool);
+      stateMetrics[item.state].pfaTargetPs += alloc;
+      stateMetrics[item.state].psDemandCE = Math.max(0, stateMetrics[item.state].psDemandFull - stateMetrics[item.state].pfaTargetPs);
+      stateMetrics[item.state].pfaTierReason = 'OVERFLOW';
+      availablePfaPool -= alloc;
+      totalPfaAllocated += alloc;
+  }
+
+  // Step 3 (Tier 2 - Eval Bottleneck Shielding): Sweep remaining PFA pool to states with Evaluation deficits (<90% cov)
+  // Taking Phone Screens off Eval-starved CEs frees up 30-min blocks they can reinvest into Evaluations
+  if (availablePfaPool > 0) {
+      let evDeficitStates = MASTER_STATES
+          .filter(s => stateMetrics[s].psDemandCE > 0 && stateMetrics[s].evDemand > 0 && (stateMetrics[s].evCapCe / stateMetrics[s].evDemand) < 0.90)
+          .map(s => ({
+              state: s,
+              isScarce: stateMetrics[s].assigned.length > 0 && stateMetrics[s].assigned.length <= 2 ? 1 : 0,
+              evShortfall: Math.max(0, (stateMetrics[s].evDemand * 0.90) - stateMetrics[s].evCapCe),
+              remPs: stateMetrics[s].psDemandCE
+          }))
+          .sort((a, b) => b.isScarce - a.isScarce || b.evShortfall - a.evShortfall);
+
+      for (let item of evDeficitStates) {
+          if (availablePfaPool <= 0) break;
+          let shieldAlloc = Math.min(item.remPs, availablePfaPool);
+          stateMetrics[item.state].pfaTargetPs += shieldAlloc;
+          stateMetrics[item.state].psDemandCE = Math.max(0, stateMetrics[item.state].psDemandFull - stateMetrics[item.state].pfaTargetPs);
+          if (stateMetrics[item.state].pfaTierReason === 'NONE') {
+              stateMetrics[item.state].pfaTierReason = 'SHIELD';
+          }
+          availablePfaPool -= shieldAlloc;
+          totalPfaAllocated += shieldAlloc;
       }
   }
+
   let actualPfaPsYield = Math.min(totalPfaAllocated, totalPfaPsCap);
+  let effectivePfaSharePct = totalPsDemFull > 0 ? Math.round((actualPfaPsYield / totalPsDemFull) * 100) : 0;
+  let effPfaEl = document.getElementById('disp-eff-pfa-share');
+  if (effPfaEl) effPfaEl.innerText = effectivePfaSharePct;
 
   // Populate weekly breakdown per state
   MASTER_STATES.forEach(s => {
@@ -1184,8 +1219,8 @@ function recalculateDashboardMetrics() {
               <div class="telemetry-hdr"><span>System Phone Screen Utilization</span><span style="color:${psThemeColor};">${Math.round(d_psUtilPct)}%</span></div>
               <div class="telemetry-main"><span class="telemetry-val" style="color:${psThemeColor};">${Math.round(d_psUtilPct)}%</span><span class="telemetry-sub">${fmt(d_psSched)} Demand / ${fmt(totalSystemPsCap)} Capacity</span></div>
               <div class="telemetry-bars-wrap">
-                  <div class="telemetry-bar-row"><span style="width:24px;">CEs:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, cePsUtilPct)}%; background:#10b981;"></div></div><span style="width:110px; text-align:right;">${Math.round(cePsUtilPct)}% (${fmt(remCePsDem)}/${fmt(totalCeStrictPsCap)})</span></div>
-                  <div class="telemetry-bar-row"><span style="width:24px;">PFAs:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, pfaPsUtilPct)}%; background:#3b82f6;"></div></div><span style="width:110px; text-align:right;">${Math.round(pfaPsUtilPct)}% (${fmt(actualPfaPsYield)}/${fmt(totalPfaPsCap)})</span></div>
+                  <div class="telemetry-bar-row"><span style="width:28px;">CEs:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, cePsUtilPct)}%; background:#10b981;"></div></div><span style="width:110px; text-align:right;">${Math.round(cePsUtilPct)}% (${fmt(remCePsDem)}/${fmt(totalCeStrictPsCap)})</span></div>
+                  <div class="telemetry-bar-row"><span style="width:28px;">PFAs:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, pfaPsUtilPct)}%; background:#3b82f6;"></div></div><span style="width:110px; text-align:right;">${Math.round(pfaPsUtilPct)}% (${fmt(actualPfaPsYield)}/${fmt(totalPfaPsCap)})</span></div>
               </div>
           </div>
           <div class="telemetry-card theme-ev" style="border-left-color:${evThemeColor};">
@@ -1786,7 +1821,7 @@ function undoOptimization() {
 function renderStaffingModeler() {
     let activeMonth = ACTIVE_TIMELINE[activeMonthIdx]; if (!activeMonth) return;
     let pfaQuota = parseFloat(FUNNEL.pfaDailyStaffQuota) || 10; let pfaInp = document.getElementById('pfa-daily-quota-inp'); if (pfaInp && pfaInp.value != pfaQuota) pfaInp.value = pfaQuota;
-    let mult = 1 + (FUNNEL.volBump / 100); let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+    let mult = 1 + (FUNNEL.volBump / 100);
     
     let evW0 = (FUNNEL.evSplitM0 !== undefined ? FUNNEL.evSplitM0 : 50) / 100;
     let evW1 = (FUNNEL.evSplitM1 !== undefined ? FUNNEL.evSplitM1 : 50) / 100;
@@ -1962,12 +1997,39 @@ function renderExecutiveBanner(evDem, evSup, finalYield, activeMonth, customTitl
   const container = document.getElementById('executive-insight-banner'); if (!container) return; let evShort = Math.max(0, evDem - evSup);
   let title = customTitle || `MONTHLY INSIGHT ANALYSIS: ${activeMonth.split('_')[0].toUpperCase()}`; if(dateRangeStr && !customTitle) title = `WEEK ${activeWeekFilter + 1} TACTICAL DRILL-DOWN (${dateRangeStr})`;
   if (activeWeekFilter !== null) container.classList.add('wk-mode'); else container.classList.remove('wk-mode');
-  let overflowStates = []; let shieldStates = []; let sweepStates = [];
-  if (window.stateMetricsCache && window.stateMetricsCache.metrics) { let metrics = window.stateMetricsCache.metrics; MASTER_STATES.forEach(s => { let r = metrics[s]; if (!r) return; let psBal = Math.round(r.psCapCe - r.psDemandCE); let target = Math.round(r.pfaTargetPs); if (r.psDemandFull > 0 || r.apps > 0) { if (psBal < 0) { overflowStates.push({ state: s, deficit: Math.abs(psBal), target: target, apps: r.apps, tier: 1 }); } else if (r.assigned.length > 0 && r.assigned.length <= 2) { shieldStates.push({ state: s, count: r.assigned.length, target: target, apps: r.apps, tier: 2 }); } else { sweepStates.push({ state: s, target: target, apps: r.apps, tier: 3 }); } } }); }
-  overflowStates.sort((a, b) => b.deficit - a.deficit || b.apps - a.apps); shieldStates.sort((a, b) => b.apps - a.apps || a.count - b.count); sweepStates.sort((a, b) => b.apps - a.apps);
-  let top5 = [...overflowStates, ...shieldStates].slice(0, 5); let top5Sum = top5.reduce((sum, item) => sum + item.target, 0); let generalSum = Math.max(0, Math.round(totalPfaPool || 0) - top5Sum);
+  let overflowStates = []; let shieldStates = []; let surplusZeroStates = [];
+  if (window.stateMetricsCache && window.stateMetricsCache.metrics) {
+      let metrics = window.stateMetricsCache.metrics;
+      MASTER_STATES.forEach(s => {
+          let r = metrics[s]; if (!r) return;
+          let target = Math.round(r.pfaTargetPs);
+          let rawPsDeficit = Math.round(r.psDemandFull - r.psCapCe);
+          if (target > 0) {
+              if (r.pfaTierReason === 'OVERFLOW') {
+                  overflowStates.push({ state: s, deficit: Math.max(0, rawPsDeficit), target: target, apps: r.apps, tier: 1 });
+              } else {
+                  shieldStates.push({ state: s, count: r.assigned.length, target: target, apps: r.apps, tier: 2 });
+              }
+          } else if (r.psDemandFull > 0) {
+              surplusZeroStates.push(s);
+          }
+      });
+  }
+  overflowStates.sort((a, b) => b.target - a.target || b.apps - a.apps);
+  shieldStates.sort((a, b) => b.target - a.target || b.apps - a.apps);
+  let allPfaTargets = [...overflowStates, ...shieldStates];
+  let top5 = allPfaTargets.slice(0, 5);
+  let top5Sum = top5.reduce((sum, item) => sum + item.target, 0);
+  let remTargetsSum = Math.max(0, Math.round(totalPfaPool || 0) - top5Sum);
   let pfaGuidance = '';
-  if (top5.length > 0) { let top5Badges = top5.map((item, idx) => { let note = item.tier === 1 ? `clear overflow (-${item.deficit})` : `shield ${item.count} CE`; return `<span style="background:rgba(15,23,42,0.8); border:1px solid #334155; padding:2px 6px; border-radius:3px; font-size:9.5px; white-space:nowrap; margin-right:4px;"><strong>${idx+1}. ${item.state}:</strong> <span style="color:#93c5fd; font-weight:bold;">${item.target} PS</span> <span style="color:#64748b; font-size:8.5px;">(${note})</span></span>`; }).join(' '); let sweepSample = sweepStates.slice(0, 3).map(s => `${s.state}: ${s.target} PS`).join(', '); pfaGuidance = `<div style="margin-top:8px; font-size:10.5px; color:#cbd5e1; border-top:1px dashed #374151; padding-top:6px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;"><strong style="color:#93c5fd; font-size:11px;">Top 5 PFA Action Directives (Pool Target: ${fmt(totalPfaPool)} PS):</strong><span style="font-size:9px; color:#94a3b8;">Top 5 Targets: <strong>${top5Sum} PS</strong></span></div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">${top5Badges}</div><p style="font-size:9.5px; color:#94a3b8; margin:0;">↳ <strong>General Sweep Buffer (${generalSum} PS):</strong> Absorbs routine screens across high-volume states (${sweepSample}${sweepStates.length > 3 ? ', etc.' : ''}).</p></div>`; }
+  if (allPfaTargets.length > 0) {
+      let top5Badges = top5.map((item, idx) => {
+          let note = item.tier === 1 ? `rescue PS gap` : `shield ${item.count} CE evals`;
+          return `<span style="background:rgba(15,23,42,0.8); border:1px solid #334155; padding:2px 6px; border-radius:3px; font-size:9.5px; white-space:nowrap; margin-right:4px;"><strong>${idx+1}. ${item.state}:</strong> <span style="color:#93c5fd; font-weight:bold;">${item.target} PS</span> <span style="color:#64748b; font-size:8.5px;">(${note})</span></span>`;
+      }).join(' ');
+      let surplusNote = surplusZeroStates.length > 0 ? ` · <strong>0 PS</strong> routed to ${surplusZeroStates.length} CE-surplus states (${surplusZeroStates.slice(0, 4).join(', ')}${surplusZeroStates.length > 4 ? ', etc.' : ''})` : '';
+      pfaGuidance = `<div style="margin-top:8px; font-size:10.5px; color:#cbd5e1; border-top:1px dashed #374151; padding-top:6px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;"><strong style="color:#93c5fd; font-size:11px;">Need-Based PFA Directives (Pool Deployed: ${fmt(totalPfaPool)} PS):</strong><span style="font-size:9px; color:#94a3b8;">Top ${top5.length} Targets: <strong>${top5Sum} PS</strong></span></div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">${top5Badges}</div><p style="font-size:9.5px; color:#94a3b8; margin:0;">↳ <strong>Arbitrage Routing:</strong> ${remTargetsSum > 0 ? `Remaining <strong>${remTargetsSum} PS</strong> distributed across secondary deficit states` : '100% of PFA targets concentrated in priority deficit territories'}${surplusNote}.</p></div>`;
+  }
   
   let lagNoticeHtml = activeDemandMode === 'cohort' ? `<div style="margin-top:8px; padding:8px; background:rgba(99,102,241,0.1); border-left:3px solid #6366f1; border-radius:4px; font-size:11px; color:#cbd5e1;"><strong>Lagged Cohort Buffer:</strong> This month's ${fmt(finalYield)} projected enrollments are heavily insulated by <strong>${fmt(enrollCarryover)} pipeline carryover enrollments</strong> from previous months. Operational Evaluation workload similarly consists of ${fmt(evalCarryover)} Evals originating from prior-month intake.</div>` : '';
 
@@ -1999,8 +2061,16 @@ function renderDualHeatmap() {
       tbody.innerHTML = MASTER_STATES.map(s => {
         let r = metrics[s]; let psPct = r.psDemandCE > 0 ? (r.psCapCe / r.psDemandCE) * 100 : 0; let psBal = Math.round(r.psCapCe - r.psDemandCE); let psStr = r.psDemandCE === 0 ? '-' : `${Math.round(psPct)}%`; let psCol = psPct < 70 ? 'status-red' : (psPct < 80 ? 'status-yellow' : (psPct < 90 ? 'status-green' : 'status-blue')); let psBarColor = psPct < 70 ? '#ef4444' : (psPct < 80 ? '#eab308' : (psPct < 90 ? '#22c55e' : '#3b82f6')); let evPct = r.evDemand > 0 ? (r.evCapCe / r.evDemand) * 100 : 0; let evBal = Math.round(r.evCapCe - r.evDemand); let evStr = r.evDemand === 0 ? '-' : `${Math.round(evPct)}%`; let evCol = evPct < 70 ? 'status-red' : (evPct < 80 ? 'status-yellow' : (evPct < 90 ? 'status-green' : 'status-blue')); let evBarColor = evPct < 70 ? '#ef4444' : (evPct < 80 ? '#eab308' : (evPct < 90 ? '#22c55e' : '#3b82f6'));
         if(r.evDemand > 0) { if(evPct >= 90) countEvBlue++; else if(evPct >= 80) countEvGreen++; else if(evPct >= 70) countEvYellow++; else countEvRed++; }
-        let pfaDirectiveHtml = '<span style="color:#475569;">—</span>'; let pfaTargetDisplay = r.pfaTargetPs > 0 ? `${Math.round(r.pfaTargetPs)} PS` : '-';
-        if (r.apps > 0 || r.psDemandFull > 0) { if (psBal < 0) { pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-overflow" title="CEs are at max quota. Route screens to PFA to clear front-door backlog.">🚨 PFA: PS Overflow</span>`; } else if (r.assigned.length > 0 && r.assigned.length <= 2) { pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-shield" title="Scarce territory (≤2 CEs). Route screens to PFA to reserve rare clinicians for evaluations.">⭐ PFA: Shield Licensure</span>`; } else if (r.assigned.length > 2) { pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-std" title="Healthy CE capacity. CEs fulfill their standard 4 PS/day quota.">📞 CE Standard</span>`; } }
+        let pfaDirectiveHtml = '<span style="color:#475569;">—</span>'; let pfaTargetDisplay = r.pfaTargetPs > 0 ? `${Math.round(r.pfaTargetPs)} PS` : '<span style="color:#475569;">0 PS</span>';
+        if (r.apps > 0 || r.psDemandFull > 0) {
+            if (r.pfaTierReason === 'OVERFLOW' || psBal < 0) {
+                pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-overflow" title="CE Phone Screen capacity is exceeded. PFAs deployed to clear front-door backlog.">🚨 PFA: PS Overflow</span>`;
+            } else if (r.pfaTierReason === 'SHIELD') {
+                pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-shield" title="Evaluations below 90% target. PFAs absorb screens so CEs reinvest 30m blocks into Evals.">⭐ PFA: Shield Evals</span>`;
+            } else {
+                pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-std" title="Assigned CEs cover 100% of Phone Screens on their own. 0 PFA hours needed.">✅ CE Self-Sufficient</span>`;
+            }
+        }
         let grossPs = Math.round(r.psDemandFull); let ceNetPs = Math.round(r.psDemandCE); let grossToNetHtml = r.psDemandFull > 0 ? `<span style="color:#64748b; font-size:9.5px;">${grossPs} →</span> <strong style="color:#f8fafc;">${ceNetPs}</strong>` : '-';
         return `<tr><td style="border-right:1px solid #374151;"><strong>${s}</strong></td><td style="text-align:center; border-right:1px solid #374151; font-weight:700;">${r.apps === 0 ? '-' : fmt(r.apps)}</td><td style="text-align:center; border-right:1px solid #374151;">${pfaDirectiveHtml}</td><td style="text-align:center; border-right:1px solid #374151; font-weight:bold; color:#a5b4fc; background:rgba(99,102,241,0.03);">${pfaTargetDisplay}</td><td style="background:rgba(59,130,246,0.02); text-align:center; white-space:nowrap;">${grossToNetHtml}</td><td style="background:rgba(59,130,246,0.02); text-align:center; font-weight:700; color:#93c5fd;">${r.psDemandCE===0?'-':fmt(r.psCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.psDemandCE>0?psCol:''}">${psStr}</span></td><td style="background:rgba(59,130,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.psDemandCE===0?'':(psBal<0?'status-red':'status-green')}"><div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><span>${r.psDemandCE===0?'-':(psBal>0?'+':'')+fmt(psBal)}</span>${r.psDemandCE > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, psPct)}%; background:${psBarColor};"></div></div>` : ''}</div></td><td style="background:rgba(139,92,246,0.02); text-align:center;">${r.evDemand===0?'-':fmt(r.evDemand)}</td><td style="background:rgba(139,92,246,0.02); text-align:center; font-weight:700; color:#c4b5fd;">${r.evDemand===0?'-':fmt(r.evCapCe)} <span style="font-size:8px; font-weight:normal;" class="${r.evDemand>0?evCol:''}">${evStr}</span></td><td style="background:rgba(139,92,246,0.02); text-align:center; border-right:1px solid #374151;" class="${r.evDemand===0?'':(evBal<0?'status-red':'status-green')}"><div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><span>${r.evDemand===0?'-':(evBal>0?'+':'')+fmt(evBal)}</span>${r.evDemand > 0 ? `<div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100, evPct)}%; background:${evBarColor};"></div></div>` : ''}</div></td><td style="text-align:center; color:#94a3b8;">${r.assigned.length}</td></tr>`;
       }).join('');
@@ -2009,12 +2079,20 @@ function renderDualHeatmap() {
   } else {
       let colsHtml = '';
       for(let w=0; w<5; w++) { if(wdArray[w] > 0) { let isActive = activeWeekFilter === w; let bg = isActive ? '#3b82f6' : 'transparent'; let color = isActive ? '#fff' : '#c4b5fd'; let displayLabel = weekLabels[w] || `Week ${w+1}`; colsHtml += `<th style="background: rgba(139,92,246,0.05); text-align:center; padding: 2px;"><button style="width:100%; border:1px solid ${isActive ? '#60a5fa' : '#4c1d95'}; background:${bg}; color:${color}; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:4px; transition: 0.2s;" onclick="setWeekFilter(${w})">${displayLabel}</button></th>`; } }
-      thead.innerHTML = `<tr><th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target / Wk</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Monthly EV Bal</th><th colspan="5" style="text-align:color: #c4b5fd; background: rgba(139,92,246,0.05);">WEEKLY EVALUATION VOLATILITY (COVERAGE %)</th></tr><tr>${colsHtml}</tr>`;
+      thead.innerHTML = `<tr><th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target / Wk</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Monthly EV Bal</th><th colspan="5" style="text-align:center; color: #c4b5fd; background: rgba(139,92,246,0.05);">WEEKLY EVALUATION VOLATILITY (COVERAGE %)</th></tr><tr>${colsHtml}</tr>`;
       tbody.innerHTML = MASTER_STATES.map(s => {
           let r = metrics[s]; let moEvBal = Math.round(r.evCapCe - r.evDemand); let moEvStr = r.evDemand === 0 ? '-' : (moEvBal>0?'+':'')+fmt(moEvBal); let psBal = Math.round(r.psCapCe - r.psDemandCE);
           let pfaDirectiveHtml = '<span style="color:#475569;">—</span>';
-          if (r.apps > 0 || r.psDemandFull > 0) { if (psBal < 0) { pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-overflow" title="CEs are at max quota. Route screens to PFA to clear front-door backlog.">🚨 PFA: PS Overflow</span>`; } else if (r.assigned.length > 0 && r.assigned.length <= 2) { pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-shield" title="Scarce territory (≤2 CEs). Route screens to PFA to reserve rare clinicians for evaluations.">⭐ PFA: Shield Licensure</span>`; } else if (r.assigned.length > 2) { pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-std" title="Healthy CE capacity. CEs fulfill their standard 4 PS/day quota.">📞 CE Standard</span>`; } }
-          let weeklyPfaTargetAvg = r.pfaTargetPs > 0 ? `${Math.round(r.pfaTargetPs / 4.33)} / wk` : '-';
+          if (r.apps > 0 || r.psDemandFull > 0) {
+              if (r.pfaTierReason === 'OVERFLOW' || psBal < 0) {
+                  pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-overflow" title="CE Phone Screen capacity is exceeded. PFAs deployed to clear front-door backlog.">🚨 PFA: PS Overflow</span>`;
+              } else if (r.pfaTierReason === 'SHIELD') {
+                  pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-shield" title="Evaluations below 90% target. PFAs absorb screens so CEs reinvest 30m blocks into Evals.">⭐ PFA: Shield Evals</span>`;
+              } else {
+                  pfaDirectiveHtml = `<span class="pfa-badge pfa-badge-std" title="Assigned CEs cover 100% of Phone Screens on their own. 0 PFA hours needed.">✅ CE Self-Sufficient</span>`;
+              }
+          }
+          let weeklyPfaTargetAvg = r.pfaTargetPs > 0 ? `${Math.round(r.pfaTargetPs / 4.33)} / wk` : '<span style="color:#475569;">0 / wk</span>';
           let wksHtml = '';
           for(let w=0; w<5; w++) { if(wdArray[w] <= 0) continue; let w_st = r.weekly[w]; let evPct = w_st.evDemand > 0 ? (w_st.evCapCe / w_st.evDemand) * 100 : 0; let pctStr = w_st.evDemand === 0 ? '-' : `${Math.round(evPct)}%`; let evCol = evPct < 70 ? 'status-red' : (evPct < 80 ? 'status-yellow' : (evPct < 90 ? 'status-green' : 'status-blue')); let evBarColor = evPct < 70 ? '#ef4444' : (evPct < 80 ? '#eab308' : (evPct < 90 ? '#22c55e' : '#3b82f6')); let isActive = activeWeekFilter === w; let cellBg = isActive ? 'rgba(59,130,246,0.1)' : 'rgba(139,92,246,0.02)'; wksHtml += `<td style="background:${cellBg}; text-align:center; border-left: 1px solid #1e293b;"><div style="font-weight:700;" class="${w_st.evDemand>0?evCol:''}">${pctStr}</div>${w_st.evDemand > 0 ? `<div class="progress-bg" style="height:3px;"><div class="progress-fill" style="width:${Math.min(100, evPct)}%; background:${evBarColor};"></div></div>` : ''}</td>`; }
           return `<tr><td style="border-right:1px solid #374151;"><strong>${s}</strong></td><td style="text-align:center; border-right:1px solid #374151;">${pfaDirectiveHtml}</td><td style="text-align:center; border-right:1px solid #374151; font-weight:bold; color:#a5b4fc; background:rgba(99,102,241,0.03);">${weeklyPfaTargetAvg}</td><td style="text-align:center; border-right:1px solid #374151; font-weight:bold;" class="${r.evDemand===0?'':(moEvBal<0?'status-red':'status-green')}">${moEvStr}</td>${wksHtml}</tr>`;
