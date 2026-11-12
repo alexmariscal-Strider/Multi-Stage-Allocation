@@ -833,6 +833,15 @@ function buildTimelineControls() {
     container.appendChild(btn);
   });
 }
+
+function getHistoricalLedgerName(currentIdx, offset) {
+    let targetIdx = currentIdx + offset;
+    if (targetIdx >= 0 && targetIdx < ACTIVE_TIMELINE.length) return ACTIVE_TIMELINE[targetIdx];
+    let archTarget = ARCHIVED_TIMELINE.length + targetIdx;
+    if (archTarget >= 0 && archTarget < ARCHIVED_TIMELINE.length) return ARCHIVED_TIMELINE[archTarget];
+    return ACTIVE_TIMELINE[0];
+}
+
 function getMonthEvMetrics(mName, isHistorical = false) {
     let ldg = LEDGER[mName] || ARCHIVED_LEDGER[mName] || { wd: 21, apps: {}, conv: {} };
     let wd = ldg.wd || 21;
@@ -1478,8 +1487,9 @@ function renderWeeklyCapacityByProvider() {
         let rowSum = 0;
         let cells = '';
         for (let i = 0; i < 5; i++) {
-            let net = Math.max(0, wdArray[i] - (ptoArr[i] || 0));
-            let cap = Math.round(net * q);
+            let net = Math.max(0, Number(wdArray[i] || 0) - Number(ptoArr[i] || 0));
+            let cap = Math.round(net * Number(q || 0));
+            if (isNaN(cap)) cap = 0;
             totals[i] += cap;
             rowSum += cap;
             cells += `<td style="text-align:center;">${cap}</td>`;
