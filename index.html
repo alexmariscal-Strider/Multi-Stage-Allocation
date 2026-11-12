@@ -994,12 +994,9 @@ function recalculateDashboardMetrics() {
       }
   });
 
-  let actualPfaPsYield = Math.min(totalPsDemFull * (FUNNEL.pfaRouteRate / 100), totalPfaPsCap);
-  let pfaRatio = totalPsDemFull > 0 ? (actualPfaPsYield / totalPsDemFull) : 0;
-  MASTER_STATES.forEach(s => {
-      stateMetrics[s].pfaTargetPs = stateMetrics[s].psDemandFull * pfaRatio;
-      stateMetrics[s].psDemandCE = Math.max(0, stateMetrics[s].psDemandFull - stateMetrics[s].pfaTargetPs);
-  });
+  // Calculate global unused PFA capacity
+  let basePfaRequirement = totalPsDemFull * (FUNNEL.pfaRouteRate / 100);
+  let globalUnusedPfaCapacity = Math.max(0, totalPfaPsCap - basePfaRequirement);
 
   // Bottom-up CE State Allocations
   let ceAllocations = [];
@@ -1025,6 +1022,37 @@ function recalculateDashboardMetrics() {
 
       ceAllocations.push({ name: n, activeStates, denom, cePsTotal, ceEvTotal });
   });
+
+  // Initial State-Level PS Deficit Calculation
+  let totalPfaAllocated = 0;
+  MASTER_STATES.forEach(s => {
+      let baseStateTarget = stateMetrics[s].psDemandFull * (FUNNEL.pfaRouteRate / 100);
+      let initialNetDemandCE = Math.max(0, stateMetrics[s].psDemandFull - baseStateTarget);
+      stateMetrics[s].pfaTargetPs = baseStateTarget;
+      stateMetrics[s].psDemandCE = initialNetDemandCE;
+      totalPfaAllocated += baseStateTarget;
+  });
+
+  // DYNAMIC PFA OVERFLOW SWEEP: Reroute unused PFA capacity to states with CE PS deficits
+  if (globalUnusedPfaCapacity > 0) {
+      let deficitStates = MASTER_STATES
+          .map(s => {
+              let deficit = stateMetrics[s].psDemandCE - stateMetrics[s].psCapCe;
+              return { state: s, deficit: deficit > 0 ? deficit : 0 };
+          })
+          .filter(d => d.deficit > 0)
+          .sort((a, b) => b.deficit - a.deficit);
+
+      for (let dState of deficitStates) {
+          if (globalUnusedPfaCapacity <= 0) break;
+          let sweepAmount = Math.min(dState.deficit, globalUnusedPfaCapacity);
+          stateMetrics[dState.state].pfaTargetPs += sweepAmount;
+          stateMetrics[dState.state].psDemandCE -= sweepAmount;
+          globalUnusedPfaCapacity -= sweepAmount;
+          totalPfaAllocated += sweepAmount;
+      }
+  }
+  let actualPfaPsYield = Math.min(totalPfaAllocated, totalPfaPsCap);
 
   // Populate weekly breakdown per state
   MASTER_STATES.forEach(s => {
@@ -1156,8 +1184,8 @@ function recalculateDashboardMetrics() {
               <div class="telemetry-hdr"><span>System Phone Screen Utilization</span><span style="color:${psThemeColor};">${Math.round(d_psUtilPct)}%</span></div>
               <div class="telemetry-main"><span class="telemetry-val" style="color:${psThemeColor};">${Math.round(d_psUtilPct)}%</span><span class="telemetry-sub">${fmt(d_psSched)} Demand / ${fmt(totalSystemPsCap)} Capacity</span></div>
               <div class="telemetry-bars-wrap">
-                  <div class="telemetry-bar-row"><span style="width:24px;">CE:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, cePsUtilPct)}%; background:#10b981;"></div></div><span style="width:74px; text-align:right;">${fmt(remCePsDem)}/${fmt(totalCeStrictPsCap)}</span></div>
-                  <div class="telemetry-bar-row"><span style="width:24px;">PFA:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, pfaPsUtilPct)}%; background:#3b82f6;"></div></div><span style="width:74px; text-align:right;">${fmt(actualPfaPsYield)}/${fmt(totalPfaPsCap)}</span></div>
+                  <div class="telemetry-bar-row"><span style="width:24px;">CEs:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, cePsUtilPct)}%; background:#10b981;"></div></div><span style="width:110px; text-align:right;">${Math.round(cePsUtilPct)}% (${fmt(remCePsDem)}/${fmt(totalCeStrictPsCap)})</span></div>
+                  <div class="telemetry-bar-row"><span style="width:24px;">PFAs:</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, pfaPsUtilPct)}%; background:#3b82f6;"></div></div><span style="width:110px; text-align:right;">${Math.round(pfaPsUtilPct)}% (${fmt(actualPfaPsYield)}/${fmt(totalPfaPsCap)})</span></div>
               </div>
           </div>
           <div class="telemetry-card theme-ev" style="border-left-color:${evThemeColor};">
