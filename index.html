@@ -606,13 +606,30 @@ const PS_HANDLE = 0.5; const EV_HANDLE = 1.0;
 function getCalendarWeeks(monthStr) {
     let cleanName = monthStr.split('_')[0].trim(); let monthIdx = ALL_KNOWN_MONTHS.findIndex(m => cleanName.toLowerCase().startsWith(m.toLowerCase())); if (monthIdx === -1) return null; 
     let year = new Date().getFullYear(); let match = cleanName.match(/\d{4}/); if(match) year = parseInt(match[0]);
+    let holidaySet = new Set();
+    if (FUNNEL && FUNNEL.holidays) {
+        FUNNEL.holidays.split(',').forEach(h => {
+            let d = new Date(h.trim());
+            if (!isNaN(d.getTime())) {
+                holidaySet.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+            }
+        });
+    }
     let weeks = []; let date = new Date(year, monthIdx, 1);
     while (date.getMonth() === monthIdx) {
         let weekStart = new Date(date); let day = weekStart.getDay(); let diffToMon = day === 0 ? -6 : -(day - 1); weekStart.setDate(weekStart.getDate() + diffToMon);
         let weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6); 
         let wdCount = 0; let bizStart = null; let bizEnd = null;
         let d = new Date(weekStart);
-        for(let i=0; i<7; i++) { if (d.getMonth() === monthIdx && d.getDay() !== 0 && d.getDay() !== 6) { wdCount++; if(!bizStart) bizStart = new Date(d); bizEnd = new Date(d); } d.setDate(d.getDate() + 1); }
+        for(let i=0; i<7; i++) {
+            let isHol = holidaySet.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+            if (d.getMonth() === monthIdx && d.getDay() !== 0 && d.getDay() !== 6 && !isHol) {
+                wdCount++;
+                if(!bizStart) bizStart = new Date(d);
+                bizEnd = new Date(d);
+            }
+            d.setDate(d.getDate() + 1);
+        }
         if (wdCount > 0) { let exists = weeks.find(w => w.start.getTime() === weekStart.getTime()); if(!exists) { weeks.push({ start: new Date(weekStart), end: new Date(weekEnd), bizStart: bizStart, bizEnd: bizEnd, wd: wdCount }); } }
         date.setDate(date.getDate() + 1);
     }
@@ -712,8 +729,8 @@ function ensureDataIntegrity() {
         if (!r.exactPto) r.exactPto = {};
 
         ACTIVE_TIMELINE.forEach(m => {
-            if (r.qPs[m] === undefined) r.qPs[m] = r.role === 'PFA' ? 10 : 4;
-            if (r.qEv[m] === undefined) r.qEv[m] = r.role === 'PFA' ? 0 : 3;
+            if (r.qPs[m] === undefined) r.qPs[m] = r.role === 'PFA' ? 10 : (r.role === 'LEAD' ? 3 : 4);
+            if (r.qEv[m] === undefined) r.qEv[m] = (r.role === 'PFA' || r.role === 'LEAD') ? 0 : 3;
             if (r.pto[m] === undefined) r.pto[m] = 0;
             if (!r.pto_weekly[m]) r.pto_weekly[m] = [0,0,0,0,0];
             if (!r.mix[m]) r.mix[m] = [...r.profile];
@@ -816,26 +833,24 @@ function buildTimelineControls() {
     container.appendChild(btn);
   });
 }
-
-function getHistoricalLedgerName(currIdx, offset) {
-    let targetIdx = currIdx + offset;
-    if (targetIdx >= 0 && targetIdx < ACTIVE_TIMELINE.length) return ACTIVE_TIMELINE[targetIdx];
-    let archOffset = ARCHIVED_TIMELINE.length + targetIdx;
-    if (archOffset >= 0 && archOffset < ARCHIVED_TIMELINE.length) return ARCHIVED_TIMELINE[archOffset];
-    return ACTIVE_TIMELINE[0];
-}
-
-function getMonthEvMetrics(mName) {
+function getMonthEvMetrics(mName, isHistorical = false) {
     let ldg = LEDGER[mName] || ARCHIVED_LEDGER[mName] || { wd: 21, apps: {}, conv: {} };
     let wd = ldg.wd || 21;
-    let mult = 1 + (FUNNEL.volBump / 100);
-    let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+    let mult = isHistorical ? 1 : (1 + (FUNNEL.volBump / 100));
+    let appToPs = isHistorical ? 0.90 : (FUNNEL.appToPsRate / 100);
+    let psComp = isHistorical ? 0.76 : (FUNNEL.psCompRate / 100);
+    let scrIn = isHistorical ? 0.88 : (FUNNEL.screenInRate / 100);
+    let evSched = isHistorical ? 0.83 : (FUNNEL.evSchedRate / 100);
+    let evComp = isHistorical ? 0.85 : (FUNNEL.evCompRate / 100);
+    let enroll = isHistorical ? 0.80 : (FUNNEL.enrollRate / 100);
+    let pfaRoute = isHistorical ? 0.25 : (FUNNEL.pfaRouteRate / 100);
+    let globalAppToEvRate = appToPs * psComp * scrIn * evSched;
 
     let apps = 0, psDem = 0, evDem = 0;
     MASTER_STATES.forEach(s => {
         let a = (ldg.apps[s] || 0) * mult;
         apps += a;
-        psDem += a * (FUNNEL.appToPsRate / 100);
+        psDem += a * appToPs;
         let conv = ldg.conv ? (ldg.conv[s] || 0) : 0;
         evDem += a * (conv > 0 ? conv / 100 : globalAppToEvRate);
     });
@@ -844,8 +859,10 @@ function getMonthEvMetrics(mName) {
     Object.keys(ROSTER).forEach(n => {
         let r = ROSTER[n];
         let pto = (r.pto && r.pto[mName] !== undefined) ? parseFloat(r.pto[mName]) : 0;
-        let qPs = (r.qPs && r.qPs[mName] !== undefined) ? parseFloat(r.qPs[mName]) : (r.role === 'PFA' ? 10 : 4);
-        let qEv = (r.qEv && r.qEv[mName] !== undefined) ? parseFloat(r.qEv[mName]) : (r.role === 'PFA' ? 0 : 3);
+        let defaultPs = r.role === 'PFA' ? 10 : (r.role === 'LEAD' ? 3 : 4);
+        let defaultEv = (r.role === 'PFA' || r.role === 'LEAD') ? 0 : 3;
+        let qPs = (r.qPs && r.qPs[mName] !== undefined) ? parseFloat(r.qPs[mName]) : defaultPs;
+        let qEv = (r.qEv && r.qEv[mName] !== undefined) ? parseFloat(r.qEv[mName]) : defaultEv;
         let net = Math.max(0, wd - pto);
         if (r.role === 'PFA') {
             pfaPsCap += net * qPs;
@@ -856,16 +873,16 @@ function getMonthEvMetrics(mName) {
         }
     });
 
-    let pfaAllocated = Math.min(psDem * (FUNNEL.pfaRouteRate / 100), pfaPsCap);
+    let pfaAllocated = Math.min(psDem * pfaRoute, pfaPsCap);
     let ceRemPs = psDem - pfaAllocated;
     let ceFluidEvCap = Math.max(0, ceTotalH - (ceRemPs * PS_HANDLE)) / EV_HANDLE;
     let maxPsSched = Math.min(psDem, pfaPsCap + ceStrictPsCap);
-    let maxScrIn = maxPsSched * (FUNNEL.psCompRate / 100) * (FUNNEL.screenInRate / 100);
-    let maxEvDemFromPs = maxScrIn * (FUNNEL.evSchedRate / 100);
+    let maxScrIn = maxPsSched * psComp * scrIn;
+    let maxEvDemFromPs = maxScrIn * evSched;
     let maxEvSched = Math.min(maxEvDemFromPs, ceFluidEvCap);
 
-    let yieldEnroll = evDem * (FUNNEL.evCompRate / 100) * (FUNNEL.enrollRate / 100);
-    let maxYieldEnroll = maxEvSched * (FUNNEL.evCompRate / 100) * (FUNNEL.enrollRate / 100);
+    let yieldEnroll = evDem * evComp * enroll;
+    let maxYieldEnroll = maxEvSched * evComp * enroll;
 
     return {
         apps, psDem, dem: evDem, maxEvSched,
@@ -903,11 +920,10 @@ function recalculateDashboardMetrics() {
   let enW1 = lagR1 / lagTotalCurve;
   let enW2 = lagR2 / lagTotalCurve;
   let enW3 = lagR3 / lagTotalCurve;
-
-  let m0_metrics = getMonthEvMetrics(activeMonth);
-  let m1_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -1)) : m0_metrics;
-  let m2_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -2)) : m1_metrics;
-  let m3_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -3)) : m2_metrics;
+  let m0_metrics = getMonthEvMetrics(activeMonth, false);
+  let m1_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -1), true) : m0_metrics;
+  let m2_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -2), true) : m1_metrics;
+  let m3_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -3), true) : m2_metrics;
 
   let calWeeks = getCalendarWeeks(activeMonth); let wdArray = [0,0,0,0,0]; let weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
   if (calWeeks && calWeeks.length > 0) {
@@ -920,6 +936,7 @@ function recalculateDashboardMetrics() {
 
   let totalBaseApps = 0, totalBumpedApps = 0, totalPsDemFull = 0, totalEvDemInMonth = 0;
   let stateMetrics = {};
+  const histBaseAppToEvRate = 0.90 * 0.76 * 0.88 * 0.83;
   MASTER_STATES.forEach(s => {
       let baseA = LEDGER[activeMonth].apps[s] || 0;
       let a = baseA * mult;
@@ -930,9 +947,9 @@ function recalculateDashboardMetrics() {
       if (activeDemandMode === 'cohort') {
           let prevM = getHistoricalLedgerName(activeMonthIdx, -1);
           let pLdg = LEDGER[prevM] || ARCHIVED_LEDGER[prevM];
-          let pApps = pLdg && pLdg.apps ? (pLdg.apps[s] || 0) * mult : baseA * mult;
+          let pApps = pLdg && pLdg.apps ? (pLdg.apps[s] || 0) : baseA;
           let pConv = pLdg && pLdg.conv ? (pLdg.conv[s] || 0) : 0;
-          let pEvD = pApps * (pConv > 0 ? pConv / 100 : globalAppToEvRate);
+          let pEvD = pApps * (pConv > 0 ? pConv / 100 : histBaseAppToEvRate);
           evD = (evW0 * evD) + (evW1 * pEvD);
       }
 
@@ -1932,7 +1949,7 @@ function renderDualHeatmap() {
   if(!window.stateMetricsCache || !window.stateMetricsCache.metrics) return; let metrics = window.stateMetricsCache.metrics; let wdArray = window.stateMetricsCache.wdArray; let weekLabels = window.stateMetricsCache.weekLabels;
   let thead = document.getElementById('heatmap-thead'); let tbody = document.getElementById('heatmap-body'); let summaryContainer = document.getElementById('heatmap-summary');
   if(heatmapViewMode === 'mo') {
-      thead.innerHTML = `<tr><th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Apps</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target</th><th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #93c5fd; background: rgba(59,130,246,0.05);">📞 PHONE SCREENS (CE)</th><th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #c4b5fd; background: rgba(139,92,246,0.05);">📋 EVALUATIONS</th><th rowspan="2" style="text-align:center;">Assigned</th></tr><tr><th style="background: rgba(59,130,246,0.05); color:#60a5fa;" title="Gross State Demand → Net Demand left for CEs after PFA sweep">Gross → CE Net</th><th style="background: rgba(59,130,246,0.05); color:#60a5fa;">Cov</th><th style="border-right: 1px solid #374151; background: rgba(59,130,246,0.05); color:#60a5fa;">Bal</th><th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Dem</th><th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Cov</th><th style="border-right: 1px solid #374151; background: rgba(139,92,246,0.05); color:#a78bfa;">Bal</th></tr>`;
+      thead.innerHTML = `<tr><th rowspan="2" style="border-right: 1px solid #374151;">State Territory</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151;">Apps</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#fcd34d;">PFA Routing Directive</th><th rowspan="2" style="text-align:center; border-right: 1px solid #374151; color:#a5b4fc; background: rgba(99,102,241,0.06);">🤖 PFA Target</th><th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #93c5fd; background: rgba(59,130,246,0.05);">📞 PHONE SCREENS (CE)</th><th colspan="3" style="text-align:center; border-right: 1px solid #374151; color: #c4b5fd; background: rgba(139,92,246,0.05);">📋 EVALUATIONS</th><th rowspan="2" style="text-align:center;">Assigned</th></tr><tr><th style="background: rgba(59,130,246,0.05); color:#60a5fa;" title="Gross State PS Demand → Net Demand left for CEs after PFA sweep">Gross → CE Net</th><th style="background: rgba(59,130,246,0.05); color:#60a5fa;">CE Supply (Cov %)</th><th style="border-right: 1px solid #374151; background: rgba(59,130,246,0.05); color:#60a5fa;">Bal</th><th style="background: rgba(139,92,246,0.05); color:#a78bfa;">Dem</th><th style="background: rgba(139,92,246,0.05); color:#a78bfa;">CE Supply (Cov %)</th><th style="border-right: 1px solid #374151; background: rgba(139,92,246,0.05); color:#a78bfa;">Bal</th></tr>`;
       let countEvBlue=0, countEvGreen=0, countEvYellow=0, countEvRed=0;
       tbody.innerHTML = MASTER_STATES.map(s => {
         let r = metrics[s]; let psPct = r.psDemandCE > 0 ? (r.psCapCe / r.psDemandCE) * 100 : 0; let psBal = Math.round(r.psCapCe - r.psDemandCE); let psStr = r.psDemandCE === 0 ? '-' : `${Math.round(psPct)}%`; let psCol = psPct < 70 ? 'status-red' : (psPct < 80 ? 'status-yellow' : (psPct < 90 ? 'status-green' : 'status-blue')); let psBarColor = psPct < 70 ? '#ef4444' : (psPct < 80 ? '#eab308' : (psPct < 90 ? '#22c55e' : '#3b82f6')); let evPct = r.evDemand > 0 ? (r.evCapCe / r.evDemand) * 100 : 0; let evBal = Math.round(r.evCapCe - r.evDemand); let evStr = r.evDemand === 0 ? '-' : `${Math.round(evPct)}%`; let evCol = evPct < 70 ? 'status-red' : (evPct < 80 ? 'status-yellow' : (evPct < 90 ? 'status-green' : 'status-blue')); let evBarColor = evPct < 70 ? '#ef4444' : (evPct < 80 ? '#eab308' : (evPct < 90 ? '#22c55e' : '#3b82f6'));
@@ -2031,10 +2048,17 @@ async function syncPtoFromGoogleSheets(isSilent = false) {
                         if (!isNaN(f) && f > 0) {
                             let dKey = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); let ceName = ceColMap[cIdx];
                             if (!exactPtoData[ceName]) exactPtoData[ceName] = {}; exactPtoData[ceName][dKey] = (exactPtoData[ceName][dKey] || 0) + f;
-                            let calWeeks = getCalendarWeeks(tMonth); let weekIdx = -1;
-                            if (calWeeks && calWeeks.length > 0) { for(let i=0; i<calWeeks.length; i++) { let wStart = new Date(calWeeks[i].start); wStart.setHours(0,0,0,0); let wEnd = new Date(calWeeks[i].end); wEnd.setHours(23,59,59,999); if (d >= wStart && d <= wEnd) { weekIdx = i; break; } } }
-                            if (weekIdx === -1) weekIdx = Math.floor((d.getDate() - 1) / 7); if (weekIdx > 4) weekIdx = 4;
-                            ptoCounts[ceColMap[cIdx]][tMonth].total += f; ptoCounts[ceColMap[cIdx]][tMonth].weekly[weekIdx] += f;
+                            ptoCounts[ceName][tMonth].total += f;
+                            let cWeeks = getCalendarWeeks(tMonth);
+                            let wIdx = 0;
+                            if (cWeeks && cWeeks.length > 0) {
+                                let foundIdx = cWeeks.findIndex(w => d >= w.start && d <= w.end);
+                                if (foundIdx !== -1) wIdx = foundIdx;
+                                else if (d > cWeeks[cWeeks.length - 1].end) wIdx = cWeeks.length - 1;
+                            } else {
+                                wIdx = Math.min(4, Math.floor((d.getDate() - 1) / 7));
+                            }
+                            ptoCounts[ceName][tMonth].weekly[wIdx] = (ptoCounts[ceName][tMonth].weekly[wIdx] || 0) + f;
                         }
                     }); 
                 }
