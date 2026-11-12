@@ -1305,9 +1305,16 @@ function renderSidebarProfileManager(ceAllocations) {
     const container = document.getElementById('ce-controls');
     if (!container) return;
     let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    const stateSortOrder = ["MA","NJ","NH","CT","NY","PA","RI","ME","VA","OH","TX","IL","DC","FL","NC","GA","SC","MD","DE","WV","MO","WI","NV","AZ","CO","NM","MT","OK","VT"];
     container.innerHTML = ceAllocations.map(ce => {
         let r = ROSTER[ce.name];
-        let profile = r.profile || [];
+        let profile = [...(r.profile || [])].sort((a, b) => {
+            let idxA = stateSortOrder.indexOf(a);
+            let idxB = stateSortOrder.indexOf(b);
+            if (idxA === -1) idxA = 999;
+            if (idxB === -1) idxB = 999;
+            return idxA - idxB || a.localeCompare(b);
+        });
         let activeMix = (r.mix && r.mix[activeMonth]) ? r.mix[activeMonth] : [];
         let pills = profile.map(st => {
             let isOn = activeMix.includes(st);
