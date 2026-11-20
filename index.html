@@ -621,8 +621,8 @@
         <div id="cal-narrative-box" style="font-size:11.5px; color:#f8fafc; line-height:1.5; font-style:italic;">Enter actuals above to generate summary...</div>
         <button class="btn-action" style="background:transparent; border:1px solid #4f46e5; color:#a5b4fc; padding:2px 8px; font-size:9px; margin-top:8px;" onclick="copyNarrative()">COPY TO CLIPBOARD</button>
     </div>
-    
-    <div style="text-align: right; border-top: 1px solid #374151; padding-top: 16px;">
+    <div style="text-align: right; border-top: 1px solid #374151; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-action" style="background:transparent; border: 1px solid #475569; color: #94a3b8; padding: 6px 12px; font-size: 10px;" onclick="resetCalibratedActuals()">↺ RESET TO MODEL</button>
         <button class="btn-action" style="background:#10b981; padding: 8px 16px; font-size: 11px;" onclick="applyCalibratedCurve()">APPLY TO LAG CURVE (SYNC)</button>
     </div>
   </div>
@@ -659,14 +659,89 @@ function openCalibrateModal() {
         let uiEl = document.getElementById(`tbl-dem-en-m${i}`); let exp = uiEl ? parseInt(uiEl.innerText.replace(/,/g, '')) || 0 : 0; currentCalExp.push(exp);
         let eff = a > 0 ? (exp / a) * 100 : 0; currentCalEffPct.push(eff);
     }
+
+    let savedAct = (LEDGER[activeMonth] && Array.isArray(LEDGER[activeMonth].actuals)) ? LEDGER[activeMonth].actuals : null;
+    let initVals = savedAct ? savedAct : currentCalExp;
     
     let tbody = document.getElementById('calibrate-tbody');
-    tbody.innerHTML = `<tr><td style="color:#93c5fd; font-weight:bold;">M0 (Curr: ${currentCalNames[0]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[0])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[0].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[0])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-0" value="${currentCalExp[0]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-0">-</td></tr>
-    <tr><td style="color:#a5b4fc; font-weight:bold;">M-1 (Prev: ${currentCalNames[1]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[1])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[1].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[1])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-1" value="${currentCalExp[1]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-1">-</td></tr>
-    <tr><td style="color:#cbd5e1; font-weight:bold;">M-2 (Tail: ${currentCalNames[2]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[2])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[2].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[2])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-2" value="${currentCalExp[2]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-2">-</td></tr>
-    <tr><td style="color:#94a3b8; font-weight:bold;">M-3 (Deep: ${currentCalNames[3]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[3])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[3].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[3])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-3" value="${currentCalExp[3]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-3">-</td></tr>`;
+    tbody.innerHTML = `<tr><td style="color:#93c5fd; font-weight:bold;">M0 (Curr: ${currentCalNames[0]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[0])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[0].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[0])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-0" value="${initVals[0]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-0">-</td></tr>
+    <tr><td style="color:#a5b4fc; font-weight:bold;">M-1 (Prev: ${currentCalNames[1]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[1])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[1].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[1])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-1" value="${initVals[1]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-1">-</td></tr>
+    <tr><td style="color:#cbd5e1; font-weight:bold;">M-2 (Tail: ${currentCalNames[2]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[2])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[2].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[2])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-2" value="${initVals[2]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-2">-</td></tr>
+    <tr><td style="color:#94a3b8; font-weight:bold;">M-3 (Deep: ${currentCalNames[3]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[3])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[3].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[3])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-3" value="${initVals[3]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-3">-</td></tr>`;
     
     updateCalibrationSummary(); document.getElementById('calibrate-modal').style.display = 'flex';
+}
+
+function updateCalibrationSummary() {
+    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    let actVals = []; let actPcts = []; let totAct = 0; let totExp = 0;
+    
+    for(let i=0; i<4; i++) {
+        let val = parseInt(document.getElementById(`cal-inp-${i}`).value) || 0; actVals.push(val); totAct += val; totExp += currentCalExp[i];
+        let pct = currentCalApps[i] > 0 ? (val / currentCalApps[i]) * 100 : 0; actPcts.push(pct);
+        let td = document.getElementById(`cal-act-pct-${i}`);
+        if (td) { 
+            td.innerText = pct.toFixed(1) + '%'; 
+            td.style.color = Math.abs(pct - currentCalEffPct[i]) > 1.0 ? (pct > currentCalEffPct[i] ? '#34d399' : '#f87171') : '#10b981'; 
+        }
+    }
+
+    if (LEDGER[activeMonth]) {
+        LEDGER[activeMonth].actuals = [...actVals];
+        saveState();
+    }
+    
+    let varTot = totAct - totExp; let varPct = totExp > 0 ? (varTot / totExp) * 100 : 0;
+    let varStr = varTot > 0 ? `+${varTot}` : `${varTot}`; let varPctStr = varPct > 0 ? `+${varPct.toFixed(1)}` : `${varPct.toFixed(1)}`;
+    let m1Var = actVals[1] - currentCalExp[1]; let m0Var = actVals[0] - currentCalExp[0];
+    let m1Trend = m1Var > 0 ? 'ahead of' : (m1Var < 0 ? 'behind' : 'on'); let m0Trend = m0Var > 0 ? 'ahead of' : (m0Var < 0 ? 'behind' : 'on');
+    
+    let narrative = `Total Actuals: ${fmt(totAct)} vs. ${fmt(totExp)} Projected (${varStr} / ${varPctStr}%).\n\n`;
+    narrative += `• M-1 (${currentCalNames[1]} cohort) is converting at ${actPcts[1].toFixed(1)}% vs. ${currentCalEffPct[1].toFixed(1)}% expected (${m1Var > 0 ? '+'+m1Var : m1Var} enrollments ${m1Trend} pace).\n`;
+    narrative += `• M0 (${currentCalNames[0]}) is pacing at ${actPcts[0].toFixed(1)}% vs. ${currentCalEffPct[0].toFixed(1)}% expected (${m0Var > 0 ? '+'+m0Var : m0Var} enrollments, with remaining business days to close).`;
+    
+    document.getElementById('cal-narrative-box').innerText = narrative;
+}
+
+function resetCalibratedActuals() {
+    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    if (LEDGER[activeMonth] && LEDGER[activeMonth].actuals) {
+        delete LEDGER[activeMonth].actuals;
+        saveState();
+    }
+    for (let i = 0; i < 4; i++) {
+        let inp = document.getElementById(`cal-inp-${i}`);
+        if (inp) inp.value = currentCalExp[i];
+    }
+    updateCalibrationSummary();
+}
+
+function copyNarrative() { 
+    const text = document.getElementById('cal-narrative-box').innerText; 
+    navigator.clipboard.writeText(text).then(() => promptAlert("Copied to clipboard!")); 
+}
+
+function applyCalibratedCurve() {
+    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    let actVals = [];
+    for (let i = 0; i < 4; i++) {
+        actVals.push(parseInt(document.getElementById(`cal-inp-${i}`).value) || 0);
+    }
+    if (LEDGER[activeMonth]) LEDGER[activeMonth].actuals = [...actVals];
+
+    // Calculate unscaled baseline curve weights so normalized weights (enWi) yield exact actuals
+    let rawRates = actVals.map((v, i) => currentCalApps[i] > 0 ? (v / currentCalApps[i]) * 100 : 0);
+    let rawSum = rawRates.reduce((a, b) => a + b, 0);
+    let currentCurveSum = ((FUNNEL.enSplitM0 || 0) + (FUNNEL.enSplitM1 || 0) + (FUNNEL.enSplitM2 || 0) + (FUNNEL.enSplitM3 || 0)) || 33.8;
+    let scaleBack = rawSum > 0 ? (currentCurveSum / rawSum) : 1;
+
+    FUNNEL.enSplitM0 = parseFloat((rawRates[0] * scaleBack).toFixed(2)); 
+    FUNNEL.enSplitM1 = parseFloat((rawRates[1] * scaleBack).toFixed(2)); 
+    FUNNEL.enSplitM2 = parseFloat((rawRates[2] * scaleBack).toFixed(2)); 
+    FUNNEL.enSplitM3 = parseFloat((rawRates[3] * scaleBack).toFixed(2));
+    
+    saveState(); closeCalibrateModal(); recalculateDashboardMetrics(); populateGlobalModalViews(); 
+    promptAlert("Lag Curve Updated & Actuals Saved for " + activeMonth.split('_')[0] + "!");
 }
 
 function updateCalibrationSummary() {
