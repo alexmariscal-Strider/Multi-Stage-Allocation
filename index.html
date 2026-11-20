@@ -364,7 +364,15 @@
                     <tr class="cohort-subrow" style="display:none; background:rgba(30,41,59,0.3);"><td style="padding-left: 20px; font-size: 10px; color:#94a3b8;"><span id="lbl-ev-title-m0">↳ Immediate (<span id="lbl-ev-split-m0">50</span>% of Curr Mo)</span></td><td class="col-dem" id="tbl-dem-ev-m0">-</td><td class="col-pot" id="tbl-pot-ev-m0">-</td><td></td></tr>
                     <tr><td style="color: #c4b5fd;"><strong>Evals Scheduled</strong></td><td class="col-dem" id="tbl-dem-ev-sched">-</td><td class="col-pot" id="tbl-pot-ev-sched">-</td><td id="tbl-var-ev-sched">-</td></tr>
                     <tr><td style="padding-left: 20px; font-size: 10px;">↳ Eval Completed</td><td class="col-dem" id="tbl-dem-ev-comp">-</td><td class="col-pot" id="tbl-pot-ev-comp">-</td><td id="tbl-var-ev-comp">-</td></tr>
-                    <tr class="row-final"><td><strong>FINAL ENROLLMENTS</strong></td><td id="tbl-dem-enroll">-</td><td id="tbl-pot-enroll">-</td><td id="tbl-var-enroll">-</td></tr>
+                    <tr class="row-final">
+                        <td>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong>FINAL ENROLLMENTS</strong>
+                                <button class="btn-action" style="background:#8b5cf6; padding:2px 6px; font-size:8px; border:1px solid #7c3aed; letter-spacing: 0.05em;" onclick="openCalibrateModal()">🎯 CALIBRATE</button>
+                            </div>
+                        </td>
+                        <td id="tbl-dem-enroll">-</td><td id="tbl-pot-enroll">-</td><td id="tbl-var-enroll">-</td>
+                    </tr>
                     <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;"><span id="lbl-en-title-m3">↳ Deep Tail (3-Mo Prior)</span></td><td class="col-dem" id="tbl-dem-en-m3">-</td><td class="col-pot" id="tbl-pot-en-m3">-</td><td></td></tr>
                     <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;"><span id="lbl-en-title-m2">↳ Tail Pipeline (2-Mo Prior)</span></td><td class="col-dem" id="tbl-dem-en-m2">-</td><td class="col-pot" id="tbl-pot-en-m2">-</td><td></td></tr>
                     <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;"><span id="lbl-en-title-m1">↳ Core Pipeline (Prev Mo)</span></td><td class="col-dem" id="tbl-dem-en-m1">-</td><td class="col-pot" id="tbl-pot-en-m1">-</td><td></td></tr>
@@ -592,6 +600,34 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="calibrate-modal">
+  <div class="modal-content" style="max-width: 600px;">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #374151; padding-bottom: 12px;">
+        <h2 style="margin:0; border:none; color:#fff; font-size:15px;">🎯 Cohort Actuals Calibrator (<span id="cal-month-title"></span>)</h2>
+        <button class="btn-action" style="background:#475569; padding: 6px 16px; font-size: 10px;" onclick="closeCalibrateModal()">CLOSE</button>
+    </div>
+    <p style="font-size:11.5px; color:#cbd5e1; margin-bottom:16px;">Enter the actual raw enrollments yielded from each historical accepted app cohort to diagnose conversion velocity and generate your leadership summary.</p>
+    
+    <table class="compact-modal-table" style="width: 100%; margin-bottom: 16px; background:#0f172a; border:1px solid #374151; border-radius:6px;">
+        <thead>
+            <tr><th style="text-align:left;">Origin Cohort</th><th style="text-align:center;">Accepted Apps</th><th style="text-align:center;">Model % (Expected)</th><th style="text-align:center;">Actual Enrollments</th><th style="text-align:center;">Actual %</th></tr>
+        </thead>
+        <tbody id="calibrate-tbody">
+        </tbody>
+    </table>
+    
+    <div style="background:#111827; border-left:3px solid #8b5cf6; padding:12px; border-radius:4px; margin-bottom:16px; border-top:1px solid #1f2937; border-right:1px solid #1f2937; border-bottom:1px solid #1f2937;">
+        <h3 style="font-size:10px; text-transform:uppercase; color:#c4b5fd; margin-bottom:6px;">📋 Leadership Narrative</h3>
+        <div id="cal-narrative-box" style="font-size:11.5px; color:#f8fafc; line-height:1.5; font-style:italic;">Enter actuals above to generate summary...</div>
+        <button class="btn-action" style="background:transparent; border:1px solid #4f46e5; color:#a5b4fc; padding:2px 8px; font-size:9px; margin-top:8px;" onclick="copyNarrative()">COPY TO CLIPBOARD</button>
+    </div>
+    
+    <div style="text-align: right; border-top: 1px solid #374151; padding-top: 16px;">
+        <button class="btn-action" style="background:#10b981; padding: 8px 16px; font-size: 11px;" onclick="applyCalibratedCurve()">APPLY TO LAG CURVE (SYNC)</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const firebaseConfig = { apiKey: "AIzaSyBU1tPMTjYtRSbmlttGfLKebl7gnwLzgBw", authDomain: "ce-wfm-suite.firebaseapp.com", databaseURL: "https://ce-wfm-suite-default-rtdb.firebaseio.com", projectId: "ce-wfm-suite", storageBucket: "ce-wfm-suite.firebasestorage.app", messagingSenderId: "590100182080", appId: "1:590100182080:web:b52ae564a6aa4377709ba5" };
 firebase.initializeApp(firebaseConfig); const db = firebase.database();
@@ -607,6 +643,78 @@ function closeSettingsModal() { const modal = document.getElementById('settings-
 function promptAlert(message) { document.getElementById('dialog-message').innerText = message; document.getElementById('dialog-cancel-btn').style.display = 'none'; document.getElementById('dialog-confirm-btn').innerText = 'OK'; document.getElementById('dialog-confirm-btn').onclick = closeDialog; document.getElementById('custom-dialog-overlay').style.display = 'flex'; }
 function promptConfirm(message, actionFunc) { document.getElementById('dialog-message').innerText = message; document.getElementById('dialog-cancel-btn').style.display = 'block'; document.getElementById('dialog-confirm-btn').innerText = 'Confirm'; document.getElementById('dialog-confirm-btn').onclick = () => { closeDialog(); actionFunc(); }; document.getElementById('custom-dialog-overlay').style.display = 'flex'; }
 function closeDialog() { document.getElementById('custom-dialog-overlay').style.display = 'none'; }
+
+let currentCalApps = [0, 0, 0, 0]; let currentCalExp = [0, 0, 0, 0]; let currentCalEffPct = [0, 0, 0, 0]; let currentCalNames = ["", "", "", ""];
+
+function openCalibrateModal() {
+    if (activeDemandMode !== 'cohort') return promptAlert("Calibration is only available in 'Lagged Cohort' forecast mode.");
+    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx]; document.getElementById('cal-month-title').innerText = activeMonth.split('_')[0].toUpperCase();
+    let mult = 1 + ((FUNNEL.volBump || 0) / 100);
+    currentCalNames = []; currentCalApps = []; currentCalExp = []; currentCalEffPct = [];
+    
+    for (let i = 0; i < 4; i++) {
+        let mName = (getHistoricalLedgerName(activeMonthIdx, -i) || activeMonth); currentCalNames.push(mName.split('_')[0]);
+        let ldg = LEDGER[mName] || ARCHIVED_LEDGER[mName] || {apps:{}};
+        let a = 0; MASTER_STATES.forEach(s => a += (ldg.apps[s]||0) * mult); currentCalApps.push(a);
+        let uiEl = document.getElementById(`tbl-dem-en-m${i}`); let exp = uiEl ? parseInt(uiEl.innerText.replace(/,/g, '')) || 0 : 0; currentCalExp.push(exp);
+        let eff = a > 0 ? (exp / a) * 100 : 0; currentCalEffPct.push(eff);
+    }
+    
+    let tbody = document.getElementById('calibrate-tbody');
+    tbody.innerHTML = `<tr><td style="color:#93c5fd; font-weight:bold;">M0 (Curr: ${currentCalNames[0]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[0])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[0].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[0])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-0" value="${currentCalExp[0]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-0">-</td></tr>
+    <tr><td style="color:#a5b4fc; font-weight:bold;">M-1 (Prev: ${currentCalNames[1]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[1])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[1].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[1])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-1" value="${currentCalExp[1]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-1">-</td></tr>
+    <tr><td style="color:#cbd5e1; font-weight:bold;">M-2 (Tail: ${currentCalNames[2]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[2])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[2].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[2])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-2" value="${currentCalExp[2]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-2">-</td></tr>
+    <tr><td style="color:#94a3b8; font-weight:bold;">M-3 (Deep: ${currentCalNames[3]})</td><td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[3])}</td><td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[3].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[3])})</span></td><td style="text-align:center;"><input type="number" id="cal-inp-3" value="${currentCalExp[3]}" style="width:60px; text-align:center; color:#f8fafc;" onkeyup="updateCalibrationSummary()" onchange="updateCalibrationSummary()"></td><td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-3">-</td></tr>`;
+    
+    updateCalibrationSummary(); document.getElementById('calibrate-modal').style.display = 'flex';
+}
+
+function updateCalibrationSummary() {
+    let actVals = []; let actPcts = []; let totAct = 0; let totExp = 0;
+    
+    for(let i=0; i<4; i++) {
+        let val = parseInt(document.getElementById(`cal-inp-${i}`).value) || 0; actVals.push(val); totAct += val; totExp += currentCalExp[i];
+        let pct = currentCalApps[i] > 0 ? (val / currentCalApps[i]) * 100 : 0; actPcts.push(pct);
+        let td = document.getElementById(`cal-act-pct-${i}`);
+        if (td) { 
+            td.innerText = pct.toFixed(1) + '%'; 
+            td.style.color = Math.abs(pct - currentCalEffPct[i]) > 1.0 ? (pct > currentCalEffPct[i] ? '#34d399' : '#f87171') : '#10b981'; 
+        }
+    }
+    
+    let varTot = totAct - totExp; let varPct = totExp > 0 ? (varTot / totExp) * 100 : 0;
+    let varStr = varTot > 0 ? `+${varTot}` : `${varTot}`; let varPctStr = varPct > 0 ? `+${varPct.toFixed(1)}` : `${varPct.toFixed(1)}`;
+    let m1Var = actVals[1] - currentCalExp[1]; let m0Var = actVals[0] - currentCalExp[0];
+    let m1Trend = m1Var > 0 ? 'ahead of' : (m1Var < 0 ? 'behind' : 'on'); let m0Trend = m0Var > 0 ? 'ahead of' : (m0Var < 0 ? 'behind' : 'on');
+    
+    let narrative = `Total Actuals: ${fmt(totAct)} vs. ${fmt(totExp)} Projected (${varStr} / ${varPctStr}%).\n\n`;
+    narrative += `• M-1 (${currentCalNames[1]} cohort) is converting at ${actPcts[1].toFixed(1)}% vs. ${currentCalEffPct[1].toFixed(1)}% expected (${m1Var > 0 ? '+'+m1Var : m1Var} enrollments ${m1Trend} pace).\n`;
+    narrative += `• M0 (${currentCalNames[0]}) is pacing at ${actPcts[0].toFixed(1)}% vs. ${currentCalEffPct[0].toFixed(1)}% expected (${m0Var > 0 ? '+'+m0Var : m0Var} enrollments, with remaining business days to close).`;
+    
+    document.getElementById('cal-narrative-box').innerText = narrative;
+}
+
+function copyNarrative() { 
+    const text = document.getElementById('cal-narrative-box').innerText; 
+    navigator.clipboard.writeText(text).then(() => promptAlert("Copied to clipboard!")); 
+}
+
+function applyCalibratedCurve() {
+    let p0 = currentCalApps[0] > 0 ? ((parseInt(document.getElementById('cal-inp-0').value)||0) / currentCalApps[0]) * 100 : 0;
+    let p1 = currentCalApps[1] > 0 ? ((parseInt(document.getElementById('cal-inp-1').value)||0) / currentCalApps[1]) * 100 : 0;
+    let p2 = currentCalApps[2] > 0 ? ((parseInt(document.getElementById('cal-inp-2').value)||0) / currentCalApps[2]) * 100 : 0;
+    let p3 = currentCalApps[3] > 0 ? ((parseInt(document.getElementById('cal-inp-3').value)||0) / currentCalApps[3]) * 100 : 0;
+    
+    FUNNEL.enSplitM0 = parseFloat(p0.toFixed(2)); 
+    FUNNEL.enSplitM1 = parseFloat(p1.toFixed(2)); 
+    FUNNEL.enSplitM2 = parseFloat(p2.toFixed(2)); 
+    FUNNEL.enSplitM3 = parseFloat(p3.toFixed(2));
+    
+    saveState(); closeCalibrateModal(); recalculateDashboardMetrics(); populateGlobalModalViews(); 
+    promptAlert("Lag Curve Updated Successfully!");
+}
+
+function closeCalibrateModal() { document.getElementById('calibrate-modal').style.display = 'none'; }
 
 const ALL_KNOWN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DEFAULT_STATE_LIST = ["MA","NJ","NH","CT","NY","PA","RI","ME","VA","OH","TX","IL","DC","FL","NC","GA","SC","MD","DE","WV","MO","WI","NV","AZ","CO","NM","MT","OK"];
