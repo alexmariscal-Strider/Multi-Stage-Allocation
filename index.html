@@ -1332,6 +1332,7 @@
 
     let d_evComp = d_evSched * (FUNNEL.evCompRate / 100);
     let p_evComp = p_evSched * (FUNNEL.evCompRate / 100);
+    let d_evStrictCap = ceStrictEvCap > 0 ? ceStrictEvCap : fluidEvCap;
 
     let d_enroll = 0, p_enroll = 0, d_en_m0 = 0, d_en_m1 = 0, d_en_m2 = 0, d_en_m3 = 0, p_en_m0 = 0, p_en_m1 = 0, p_en_m2 = 0, p_en_m3 = 0;
     let hasLockedActuals = false;
@@ -1364,6 +1365,24 @@
 
     const lockBadge = document.getElementById('final-enroll-lock-badge');
     if (lockBadge) lockBadge.style.display = hasLockedActuals ? 'inline-block' : 'none';
+
+    let unifiedTitle = null;
+    let dateRangeStr = null;
+
+    if (heatmapViewMode === 'wk' && activeWeekFilter !== null) {
+        let wStats = getQuickWeekStats(activeMonth, activeWeekFilter);
+        if (wStats) {
+            d_bumped = wStats.apps;
+            p_bumped = wStats.apps;
+            d_psSched = wStats.cePsDem + wStats.pfaPsDem;
+            totalSystemPsCap = wStats.pfaPsCap + wStats.cePsCap;
+            totalPfaPsCap = wStats.pfaPsCap;
+            totalCeStrictPsCap = wStats.cePsCap;
+            actualPfaPsYield = wStats.pfaPsDem;
+            remCePsDem = wStats.cePsDem;
+            p_psSched = Math.min(d_psSched, totalSystemPsCap);
+            d_psComp = d_psSched * (FUNNEL.psCompRate / 100);
+            p_psComp = p_psSched * (FUNNEL.psCompRate / 100);
             d_scrIn = d_psComp * (FUNNEL.screenInRate / 100);
             p_scrIn = p_psComp * (FUNNEL.screenInRate / 100);
             d_evDem = wStats.evDem;
