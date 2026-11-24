@@ -725,6 +725,7 @@ const EV_HANDLE = 1.0;
 const GSHEET_ID = "1R9gyVy1FXbSQz5P0YugdHW58YckNx-o7847w4SCXbdQ";
 const PTO_SHEET_GID = "1443603617";
 const LICENSURE_SHEET_GID = "748848576";
+const ASSIGNMENTS_SHEET_GID = "529230803";
 
 const STATE_NAME_TO_CODE = {
     "ALABAMA":"AL","ALASKA":"AK","ARIZONA":"AZ","ARKANSAS":"AR","CALIFORNIA":"CA","COLORADO":"CO","CONNECTICUT":"CT",
@@ -1075,8 +1076,6 @@ function normalizeStateIntegrity() {
             r.pto[m] = r.pto_weekly[m].reduce((a, b) => a + (parseFloat(b) || 0), 0);
             if (!r.mix[m] || typeof r.mix[m] !== 'object' || Array.isArray(r.mix[m])) {
                 r.mix[m] = {};
-                r.licensedStates.forEach(s => { r.mix[m][s] = true; });
-            } else if (Object.keys(r.mix[m]).length === 0 && r.licensedStates.length > 0) {
                 r.licensedStates.forEach(s => { r.mix[m][s] = true; });
             }
         });
@@ -2069,24 +2068,30 @@ function toggleMatrixState(name, state) {
     saveState();
     recalculateDashboardMetrics();
     renderLicensureMatrix();
+    renderCeProfileManager();
 }
 
 function renderCeProfileManager() {
+    const activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
     const ces = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA');
     document.getElementById('ce-controls').innerHTML = ces.map(n => {
         const p = ROSTER[n];
-        const pills = MASTER_STATES.map(s => {
-            const has = p.licensedStates.includes(s);
-            return `<span class="state-pill-toggle ${has ? 'state-on' : 'state-off'}" onclick="toggleClinicianLicense('${n.replace(/'/g, "\\'")}', '${s}')">${s}</span>`;
-        }).join('');
+        const activeSts = MASTER_STATES.filter(s => p.mix[activeMonth] && p.mix[activeMonth][s]);
+        const pills = activeSts.length > 0
+            ? activeSts.map(s => `<span class="state-pill-toggle state-on" title="Click to unassign ${s} for ${formatShortMonthTab(activeMonth)}" onclick="toggleMatrixState('${n.replace(/'/g, "\\'")}', '${s}')">${s}</span>`).join('')
+            : `<span style="font-size:8.5px; color:#64748b; font-style:italic;">No active states assigned</span>`;
         return `<div class="ce-row">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                 <strong style="color:#f8fafc;">${n} <span style="font-size:8.5px; color:#94a3b8; font-weight:normal;">(${p.role})</span></strong>
-                <span style="font-size:8.5px; color:#93c5fd;">${p.licensedStates.length} States</span>
+                <span style="font-size:8.5px; color:#93c5fd;" title="${p.licensedStates.length} legally licensed states">${activeSts.length} Assigned <span style="color:#64748b;">· ${p.licensedStates.length} Lic</span></span>
             </div>
             <div style="display:flex; flex-wrap:wrap;">${pills}</div>
         </div>`;
     }).join('');
+}
+
+function addAllStatesToAllProviders() {
+    syncLicensureToActiveMonth();
 }
 
 function toggleClinicianLicense(name, state) {
@@ -2118,7 +2123,91 @@ function syncLicensureToActiveMonth() {
     recalculateDashboardMetrics();
     renderLicensureMatrix();
     renderCeProfileManager();
-    promptAlert(`Synced all licensed states into ${activeMonth.split('_')[0]}'s matrix.`);
+    promptAlert(`Provisioned all legally licensed states into ${activeMonth.split('_')[0]}'s matrix.`);
+}
+
+function parseStateSheetRows(rows) {
+    const result = { byRoster: {}, discoveredStates: new Set() };
+    if (!rows || rows.length < 2) return result;
+
+    // Detect header row (first row with >= 3 state codes)
+    let headerIdx = 0;
+    let stateColMap = {};
+    for (let r = 0; r < Math.min(5, rows.length); r++) {
+        const candidate = {};
+        rows[r].forEach((cell, cIdx) => {
+            const code = normalizeStateCode(cell);
+            if (code) candidate[cIdx] = code;
+        });
+        if (Object.keys(candidate).length >= 3) {
+            headerIdx = r;
+            stateColMap = candidate;
+            break;
+        }
+    }
+
+    const isMatrixLayout = Object.keys(stateColMap).length >= 3;
+    const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
+    let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('evaluator') || h.includes('provider') || h === 'ce');
+    if (nameCol === -1) nameCol = 0;
+
+    const positiveTokens = new Set(['x','yes','y','true','1','active','licensed','on','✓','✔','approved','assigned']);
+
+    if (isMatrixLayout) {
+        Object.values(stateColMap).forEach(code => result.discoveredStates.add(code));
+        for (let r = headerIdx + 1; r < rows.length; r++) {
+            const match = findRosterMatch(rows[r][nameCol]);
+            if (!match) continue;
+            if (!result.byRoster[match]) result.byRoster[match] = new Set();
+            Object.keys(stateColMap).forEach(cIdx => {
+                const val = String(rows[r][cIdx] || '').trim().toLowerCase();
+                if (!val || val === '0' || val === 'no' || val === 'false' || val === 'n' || val === '-' || val === 'off' || val === 'pending' || val === 'expired') return;
+                if (positiveTokens.has(val) || val.includes('active') || val.includes('licen') || val.includes('yes') || val.includes('assign') || val === 'x' || !isNaN(parseFloat(val))) {
+                    result.byRoster[match].add(stateColMap[cIdx]);
+                }
+            });
+        }
+    } else {
+        let stateCol = headers.findIndex(h => h.includes('state') || h.includes('licens') || h.includes('assign') || h.includes('jurisdiction') || h.includes('territory'));
+        if (stateCol === -1) stateCol = 1;
+        const statusCol = headers.findIndex(h => h.includes('status'));
+
+        for (let r = headerIdx + 1; r < rows.length; r++) {
+            const match = findRosterMatch(rows[r][nameCol]);
+            if (!match) continue;
+            if (statusCol > -1) {
+                const stVal = String(rows[r][statusCol] || '').trim().toLowerCase();
+                if (stVal && (stVal.includes('inactive') || stVal.includes('expired') || stVal.includes('pending') || stVal.includes('denied') || stVal === 'no')) continue;
+            }
+            if (!result.byRoster[match]) result.byRoster[match] = new Set();
+            const rawStates = String(rows[r][stateCol] || '');
+            rawStates.split(/[,;/|\n]+/).forEach(tok => {
+                const code = normalizeStateCode(tok);
+                if (code) {
+                    result.byRoster[match].add(code);
+                    result.discoveredStates.add(code);
+                }
+            });
+        }
+    }
+    return result;
+}
+
+function registerNewTerritories(stateIterable) {
+    let added = 0;
+    stateIterable.forEach(st => {
+        if (st && !MASTER_STATES.includes(st)) {
+            MASTER_STATES.push(st);
+            ACTIVE_TIMELINE.forEach(m => {
+                if (LEDGER[m]) {
+                    if (LEDGER[m].apps[st] === undefined) LEDGER[m].apps[st] = 0;
+                    if (LEDGER[m].conv[st] === undefined) LEDGER[m].conv[st] = 0;
+                }
+            });
+            added++;
+        }
+    });
+    return added;
 }
 
 async function syncLicensureFromSheet() {
@@ -2127,112 +2216,68 @@ async function syncLicensureFromSheet() {
     if (btn) { btn.disabled = true; btn.innerText = '⏳ SYNCING...'; }
 
     try {
-        const rows = await fetchGoogleSheetCsv(LICENSURE_SHEET_GID);
-        if (!rows || rows.length < 2) throw new Error('Licensure tab appears empty.');
+        const [licRows, assignRows] = await Promise.all([
+            fetchGoogleSheetCsv(LICENSURE_SHEET_GID),
+            fetchGoogleSheetCsv(ASSIGNMENTS_SHEET_GID)
+        ]);
 
-        // Detect header row (first row with >= 3 state codes OR clinician/name header)
-        let headerIdx = 0;
-        let stateColMap = {};
-        for (let r = 0; r < Math.min(5, rows.length); r++) {
-            const candidate = {};
-            rows[r].forEach((cell, cIdx) => {
-                const code = normalizeStateCode(cell);
-                if (code) candidate[cIdx] = code;
-            });
-            if (Object.keys(candidate).length >= 3) {
-                headerIdx = r;
-                stateColMap = candidate;
-                break;
-            }
+        const licParsed = parseStateSheetRows(licRows);
+        const assignParsed = parseStateSheetRows(assignRows);
+
+        const allMatched = new Set([
+            ...Object.keys(licParsed.byRoster),
+            ...Object.keys(assignParsed.byRoster)
+        ]);
+
+        if (allMatched.size === 0) {
+            throw new Error('Connected to Google Sheets, but no clinician names matched your active roster.');
         }
 
-        const isMatrixLayout = Object.keys(stateColMap).length >= 3;
-        const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
-        let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('evaluator') || h.includes('provider') || h === 'ce');
-        if (nameCol === -1) nameCol = 0;
-
-        const syncedByRoster = {};
-        const positiveTokens = new Set(['x','yes','y','true','1','active','licensed','on','✓','✔','approved']);
-
-        if (isMatrixLayout) {
-            for (let r = headerIdx + 1; r < rows.length; r++) {
-                const rawName = rows[r][nameCol];
-                const match = findRosterMatch(rawName);
-                if (!match) continue;
-                if (!syncedByRoster[match]) syncedByRoster[match] = new Set();
-                Object.keys(stateColMap).forEach(cIdx => {
-                    const val = String(rows[r][cIdx] || '').trim().toLowerCase();
-                    if (!val || val === '0' || val === 'no' || val === 'false' || val === 'n' || val === '-' || val === 'off' || val === 'pending' || val === 'expired') return;
-                    if (positiveTokens.has(val) || val.includes('active') || val.includes('licen') || val.includes('yes') || val === 'x' || !isNaN(parseFloat(val))) {
-                        syncedByRoster[match].add(stateColMap[cIdx]);
-                    }
-                });
-            }
-        } else {
-            // List or row-per-license layout (e.g., Clinician | State(s) | Status)
-            let stateCol = headers.findIndex(h => h.includes('state') || h.includes('licens') || h.includes('jurisdiction') || h.includes('territory'));
-            if (stateCol === -1) stateCol = 1;
-            const statusCol = headers.findIndex(h => h.includes('status'));
-
-            for (let r = headerIdx + 1; r < rows.length; r++) {
-                const rawName = rows[r][nameCol];
-                const match = findRosterMatch(rawName);
-                if (!match) continue;
-                if (statusCol > -1) {
-                    const stVal = String(rows[r][statusCol] || '').trim().toLowerCase();
-                    if (stVal && (stVal.includes('inactive') || stVal.includes('expired') || stVal.includes('pending') || stVal.includes('denied') || stVal === 'no')) continue;
-                }
-                if (!syncedByRoster[match]) syncedByRoster[match] = new Set();
-                const rawStates = String(rows[r][stateCol] || '');
-                rawStates.split(/[,;/|\n]+/).forEach(tok => {
-                    const code = normalizeStateCode(tok);
-                    if (code) syncedByRoster[match].add(code);
-                });
-            }
-        }
-
-        const matchedNames = Object.keys(syncedByRoster);
-        if (matchedNames.length === 0) {
-            throw new Error('Connected to Google Sheet, but no clinician names matched your active roster.');
-        }
+        // Auto-register any new states (UT, ID, OR, AR, ND, CA, TN, WA, etc.) from either tab
+        let newStatesAdded = 0;
+        newStatesAdded += registerNewTerritories(licParsed.discoveredStates);
+        newStatesAdded += registerNewTerritories(assignParsed.discoveredStates);
 
         const activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
         let totalLicenses = 0;
-        let newStatesAdded = 0;
+        let totalAssigned = 0;
 
-        matchedNames.forEach(name => {
+        allMatched.forEach(name => {
             const p = ROSTER[name];
             if (!p || p.role === 'PFA') return;
-            const stateList = Array.from(syncedByRoster[name]);
-            p.licensedStates = stateList;
-            p.states = [...stateList];
-            totalLicenses += stateList.length;
 
-            stateList.forEach(st => {
-                if (!MASTER_STATES.includes(st)) {
-                    MASTER_STATES.push(st);
-                    ACTIVE_TIMELINE.forEach(m => {
-                        if (LEDGER[m]) {
-                            if (LEDGER[m].apps[st] === undefined) LEDGER[m].apps[st] = 0;
-                            if (LEDGER[m].conv[st] === undefined) LEDGER[m].conv[st] = 0;
-                        }
-                    });
-                    newStatesAdded++;
-                }
-            });
+            const licSet = new Set(licParsed.byRoster[name] || p.licensedStates || []);
+            const assignSet = assignParsed.byRoster[name] ? new Set(assignParsed.byRoster[name]) : null;
 
-            // Activate synced licenses in the active month (and remove unlicensed states)
-            if (!p.mix[activeMonth]) p.mix[activeMonth] = {};
-            const nextMix = {};
-            stateList.forEach(st => { nextMix[st] = true; });
-            p.mix[activeMonth] = nextMix;
+            // Safeguard: ensure any actively assigned state is also recorded in licensedStates
+            if (assignSet) {
+                assignSet.forEach(st => licSet.add(st));
+            }
+
+            const finalLicList = Array.from(licSet);
+            p.licensedStates = finalLicList;
+            p.states = [...finalLicList];
+            totalLicenses += finalLicList.length;
+
+            // Update activeMonth assignments strictly from the Assignments tab (gid=529230803)
+            if (assignSet) {
+                const nextMix = {};
+                assignSet.forEach(st => { nextMix[st] = true; });
+                p.mix[activeMonth] = nextMix;
+                totalAssigned += assignSet.size;
+            }
         });
 
         saveState();
         recalculateDashboardMetrics();
         renderLicensureMatrix();
         renderCeProfileManager();
-        promptAlert(`Licensure Sync Complete: Updated ${matchedNames.length} clinicians (${totalLicenses} total state licenses activated for ${activeMonth.split('_')[0]}${newStatesAdded > 0 ? `, +${newStatesAdded} new territories added` : ''}).`);
+        promptAlert(
+            `Two-Tier Sync Complete for ${activeMonth.split('_')[0]}:\n` +
+            `• Master Licenses (gid=748848576): ${totalLicenses} eligible licenses synced across ${allMatched.size} clinicians.\n` +
+            `• Active Assignments (gid=529230803): ${totalAssigned} state assignments activated.` +
+            (newStatesAdded > 0 ? `\n• Territories Expanded: +${newStatesAdded} new states added to matrix & ledger.` : '')
+        );
     } catch (err) {
         console.error('Licensure Sync Error:', err);
         promptAlert(`Licensure Sync failed (${err.message}). Verify the Google Sheet is shared as "Anyone with the link can view".`);
