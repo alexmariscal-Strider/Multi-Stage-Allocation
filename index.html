@@ -207,6 +207,16 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
 .week-card { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; min-width: 145px; flex: 1; cursor: pointer; transition: 0.2s; }
 .week-card:hover { border-color: #6366f1; }
 .week-card.active-wk { border-color: #f59e0b; background: rgba(245,158,11,0.08); }
+.gap-pill { display: inline-block; min-width: 42px; padding: 2px 7px; border-radius: 4px; font-size: 9.5px; font-weight: 800; text-align: center; }
+.gap-pill-surplus { background: rgba(59,130,246,0.18); color: #93c5fd; border: 1px solid rgba(59,130,246,0.35); }
+.gap-pill-ok { background: rgba(16,185,129,0.18); color: #86efac; border: 1px solid rgba(16,185,129,0.35); }
+.gap-pill-hire { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+.dir-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 4px; font-size: 8.5px; font-weight: 800; letter-spacing: 0.03em; white-space: nowrap; }
+.dir-pill-overflow { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+.dir-pill-ok { background: rgba(16,185,129,0.15); color: #86efac; border: 1px solid rgba(16,185,129,0.35); }
+.bal-cell-wrap { display: inline-flex; flex-direction: column; align-items: center; min-width: 44px; gap: 3px; }
+.bal-bar-track { width: 42px; height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden; }
+.bal-bar-fill { height: 100%; border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -364,18 +374,18 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
             <table class="hover-row-trace" style="width:100%; font-size:10.5px;">
                 <thead>
                     <tr>
-                        <th>Period</th>
-                        <th style="text-align:center;">Apps</th>
-                        <th style="text-align:center;">PFA Bench</th>
-                        <th style="text-align:center;">Eval Demand</th>
-                        <th style="text-align:center;">Producing CEs</th>
+                        <th>Month Horizon</th>
+                        <th style="text-align:center;">Apps Vol</th>
+                        <th style="text-align:center;">PFA Bench %</th>
+                        <th style="text-align:center;">Total Workload (EV+PS)</th>
+                        <th style="text-align:center;">Active CEs</th>
                         <th style="text-align:center;">Req CE FTE</th>
-                        <th style="text-align:center;">CE Delta</th>
-                        <th style="text-align:center;">PFA Target PS</th>
+                        <th style="text-align:center;">CE Hiring Gap</th>
+                        <th style="text-align:center;">PFA Bench Dem</th>
                         <th style="text-align:center;">Active PFAs</th>
                         <th style="text-align:center;">Req PFA FTE</th>
-                        <th style="text-align:center;">PFA Delta</th>
-                        <th style="text-align:left; padding-left:12px;">Hiring Advisory</th>
+                        <th style="text-align:center;">PFA Hiring Gap</th>
+                        <th style="text-align:left; padding-left:12px;">Hiring Action (0% Ramp / 60d Lead)</th>
                     </tr>
                 </thead>
                 <tbody id="staffing-rolling-tbody"></tbody>
@@ -429,6 +439,7 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
         <h2 id="mix-title" style="align-items: center; display: flex; flex-wrap: wrap; gap: 4px;">
             <span>CE Profile Manager</span>
             <div style="display: inline-flex; gap: 4px; align-items: center; margin-left: auto;">
+                <button class="btn-action" id="btn-sync-licensure" style="padding: 2px 6px; font-size: 8px; background: #059669;" onclick="promptConfirm('Sync all clinicians\' licensed states into the active month matrix?', syncLicensureToActiveMonth)">🔄 SYNC LICENSURE</button>
                 <button class="btn-action" id="btn-sync-all-states" style="padding: 2px 6px; font-size: 8px; background: #6366f1;" onclick="promptConfirm('Provision all active states to all licensed CEs?', addAllStatesToAllProviders)">+ ALL TO ALL</button>
             </div>
         </h2>
@@ -914,11 +925,19 @@ function normalizeStateIntegrity() {
         if (!r.pto) r.pto = {};
         if (!r.pto_weekly) r.pto_weekly = {};
         if (!r.mix) r.mix = {};
-        if (!Array.isArray(r.licensedStates)) {
-            const stSet = new Set();
-            Object.values(r.mix).forEach(mObj => Object.keys(mObj || {}).forEach(s => { if (mObj[s]) stSet.add(s); }));
-            r.licensedStates = Array.from(stSet);
-        }
+
+        // Merge any legacy `states`, `licensedStates`, or active `mix` keys so existing roster data is never lost
+        const stSet = new Set();
+        if (Array.isArray(r.licensedStates)) r.licensedStates.forEach(s => { if (s) stSet.add(s); });
+        if (Array.isArray(r.states)) r.states.forEach(s => { if (s) stSet.add(s); });
+        Object.values(r.mix).forEach(mObj => {
+            if (mObj && typeof mObj === 'object') {
+                Object.keys(mObj).forEach(s => { if (mObj[s]) stSet.add(s); });
+            }
+        });
+        r.licensedStates = Array.from(stSet);
+        r.states = [...r.licensedStates];
+
         ACTIVE_TIMELINE.forEach(m => {
             if (r.qPs[m] === undefined) r.qPs[m] = r.role === 'PFA' ? 12 : (r.role === 'LEAD' ? 1 : 3);
             if (r.qEv[m] === undefined) r.qEv[m] = r.role === 'PFA' ? 0 : (r.role === 'LEAD' ? 3 : 4);
@@ -1368,101 +1387,106 @@ function recalculateDashboardMetrics() {
     const globalAppToEv = (r.appToPsRate / 100) * (r.psCompRate / 100) * (r.screenInRate / 100) * (r.evSchedRate / 100);
     const mktPsCeiling = (r.appToPsRate > 0) ? (totalSysPsCap / (r.appToPsRate / 100)) : 0;
     const mktEvCeiling = (globalAppToEv > 0) ? (fluidEvCap / globalAppToEv) : 0;
-    const mktMaxApps = Math.min(mktPsCeiling, mktEvCeiling);
-    const mktBottleneck = mktEvCeiling <= mktPsCeiling ? "Clinical Evals" : "Phone Screens";
-    const mktHeadroom = mktMaxApps - d_apps;
+    const mktCeiling = Math.min(mktPsCeiling, mktEvCeiling);
+    const mktHeadroom = mktCeiling - d_apps;
+    const mktBottleneck = mktPsCeiling <= mktEvCeiling ? 'Phone Screens' : 'Clinical Evals';
     const mktHeadroomPct = d_apps > 0 ? (mktHeadroom / d_apps) * 100 : 0;
 
-    // 4. Populate Unified Funnel Table
-    document.getElementById('tbl-dem-apps').innerText = fmt(d_apps);
-    document.getElementById('tbl-pot-apps').innerText = fmt(mktMaxApps);
-    document.getElementById('tbl-var-apps').innerHTML = formatVar(mktMaxApps - d_apps);
-
-    document.getElementById('tbl-dem-ps-sched').innerText = fmt(d_psSched);
-    document.getElementById('tbl-pot-ps-sched').innerText = fmt(cap_psSched);
-    document.getElementById('tbl-var-ps-sched').innerHTML = formatVar(cap_psSched - d_psSched);
-
-    document.getElementById('tbl-dem-ps-comp').innerText = fmt(d_psComp);
-    document.getElementById('tbl-pot-ps-comp').innerText = fmt(cap_psComp);
-    document.getElementById('tbl-var-ps-comp').innerHTML = formatVar(cap_psComp - d_psComp);
-
-    document.getElementById('tbl-dem-scr-in').innerText = fmt(d_scrIn);
-    document.getElementById('tbl-pot-scr-in').innerText = fmt(cap_scrIn);
-    document.getElementById('tbl-var-scr-in').innerHTML = formatVar(cap_scrIn - d_scrIn);
-
-    document.getElementById('tbl-dem-ev-dem').innerText = fmt(d_evDem);
-    document.getElementById('tbl-pot-ev-dem').innerText = fmt(cap_evSched);
-    document.getElementById('tbl-var-ev-dem').innerHTML = formatVar(cap_evSched - d_evDem);
-
-    document.getElementById('tbl-dem-ev-sched').innerText = fmt(d_evDem);
-    document.getElementById('tbl-pot-ev-sched').innerText = fmt(cap_evSched);
-    document.getElementById('tbl-var-ev-sched').innerHTML = formatVar(cap_evSched - d_evDem);
-
-    document.getElementById('tbl-dem-ev-comp').innerText = fmt(d_evComp);
-    document.getElementById('tbl-pot-ev-comp').innerText = fmt(cap_evComp);
-    document.getElementById('tbl-var-ev-comp').innerHTML = formatVar(cap_evComp - d_evComp);
-
-    document.getElementById('tbl-dem-enroll').innerText = fmt(d_enroll);
-    document.getElementById('tbl-pot-enroll').innerText = fmt(cap_enroll);
-    document.getElementById('tbl-var-enroll').innerHTML = formatVar(cap_enroll - d_enroll);
-
-    document.getElementById('tbl-dem-pace').innerText = (d_enroll / 4.33).toFixed(1) + '/wk';
-    document.getElementById('tbl-pot-pace').innerText = (cap_enroll / 4.33).toFixed(1) + '/wk';
-
-    document.getElementById('mkt-bottleneck-tag').innerText = `(Bottleneck: ${mktBottleneck})`;
-    document.getElementById('tbl-mkt-curr').innerText = fmt(d_apps) + ' apps';
-    document.getElementById('tbl-mkt-ceil').innerText = fmt(mktMaxApps) + ' apps';
-    document.getElementById('tbl-mkt-headroom').innerHTML = mktHeadroom >= 0
-        ? `<span style="color:#86efac;">+${fmt(mktHeadroom)} (+${mktHeadroomPct.toFixed(0)}%)</span>`
-        : `<span style="color:#fca5a5;">${fmt(mktHeadroom)} (${mktHeadroomPct.toFixed(0)}%)</span>`;
-
-    // Cohort Subrows Visibility & Details
+    // 4. Populate Unified Arbitrage Funnel Table
     const showCohort = activeDemandMode === 'cohort';
-    document.querySelectorAll('.cohort-subrow').forEach(tr => tr.style.display = showCohort ? 'table-row' : 'none');
-    if (showCohort) {
-        const pM1 = Math.round(evM1Split * 100), pM0 = Math.round(evM0Split * 100);
-        document.getElementById('lbl-ev-title-m1').innerText = `↳ Carryover (${pM1}% of ${m1Name.split('_')[0]}) [${fmt(m1.evDem)} × ${pM1}%]`;
-        document.getElementById('lbl-ev-title-m0').innerText = `↳ Immediate (${pM0}% of ${activeMonth.split('_')[0]}) [${fmt(m0.evDem)} × ${pM0}%]`;
-        document.getElementById('tbl-dem-ev-m1').innerText = fmt(m1.evDem * evM1Split);
-        document.getElementById('tbl-pot-ev-m1').innerText = fmt(m1.fluidEvCap * evM1Split);
-        document.getElementById('tbl-dem-ev-m0').innerText = fmt(m0.evDem * evM0Split);
-        document.getElementById('tbl-pot-ev-m0').innerText = fmt(fluidEvCap * evM0Split);
+    document.querySelectorAll('.cohort-subrow').forEach(el => {
+        el.style.display = showCohort ? 'table-row' : 'none';
+    });
 
-        const r3 = m3.apps > 0 ? ((enM3 / m3.apps) * 100).toFixed(1) : '0.0';
-        const r2 = m2.apps > 0 ? ((enM2 / m2.apps) * 100).toFixed(1) : '0.0';
-        const r1 = m1.apps > 0 ? ((enM1 / m1.apps) * 100).toFixed(1) : '0.0';
-        const r0 = m0.apps > 0 ? ((enM0 / m0.apps) * 100).toFixed(1) : '0.0';
-        document.getElementById('lbl-en-title-m3').innerText = `↳ Deep Tail (3-Mo Prior) [${m3Name.split('_')[0]} ${fmt(m3.apps)} Apps × ${r3}%]`;
-        document.getElementById('lbl-en-title-m2').innerText = `↳ Tail Pipeline (2-Mo Prior) [${m2Name.split('_')[0]} ${fmt(m2.apps)} Apps × ${r2}%]`;
-        document.getElementById('lbl-en-title-m1').innerText = `↳ Core Pipeline (Prev Mo) [${m1Name.split('_')[0]} ${fmt(m1.apps)} Apps × ${r1}%]`;
-        document.getElementById('lbl-en-title-m0').innerText = `↳ Immediate Yield (Curr Mo) [${activeMonth.split('_')[0]} ${fmt(m0.apps)} Apps × ${r0}%]`;
-        document.getElementById('tbl-dem-en-m3').innerText = fmt(enM3);
-        document.getElementById('tbl-pot-en-m3').innerText = fmt(enM3);
-        document.getElementById('tbl-dem-en-m2').innerText = fmt(enM2);
-        document.getElementById('tbl-pot-en-m2').innerText = fmt(enM2);
-        document.getElementById('tbl-dem-en-m1').innerText = fmt(enM1);
-        document.getElementById('tbl-pot-en-m1').innerText = fmt(enM1);
-        document.getElementById('tbl-dem-en-m0').innerText = fmt(enM0);
-        document.getElementById('tbl-pot-en-m0').innerText = fmt(Math.max(enM0, cap_enroll - (enM3 + enM2 + enM1)));
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+    const setHtml = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+
+    setTxt('tbl-dem-apps', fmt(d_apps));
+    setTxt('tbl-pot-apps', fmt(mktCeiling));
+    setHtml('tbl-var-apps', formatVar(mktCeiling - d_apps));
+
+    setTxt('tbl-dem-ps-sched', fmt(d_psSched));
+    setTxt('tbl-pot-ps-sched', fmt(cap_psSched));
+    setHtml('tbl-var-ps-sched', formatVar(cap_psSched - d_psSched));
+
+    setTxt('tbl-dem-ps-comp', fmt(d_psComp));
+    setTxt('tbl-pot-ps-comp', fmt(cap_psComp));
+    setHtml('tbl-var-ps-comp', formatVar(cap_psComp - d_psComp));
+
+    setTxt('tbl-dem-scr-in', fmt(d_scrIn));
+    setTxt('tbl-pot-scr-in', fmt(cap_scrIn));
+    setHtml('tbl-var-scr-in', formatVar(cap_scrIn - d_scrIn));
+
+    setTxt('tbl-dem-ev-dem', fmt(d_evDem));
+    setTxt('tbl-pot-ev-dem', fmt(cap_evSched));
+    setHtml('tbl-var-ev-dem', formatVar(cap_evSched - d_evDem));
+
+    if (showCohort) {
+        const prevEvDem = m1.evDem * evM1Split;
+        const currEvDem = m0.evDem * evM0Split;
+        const prevEvCap = m1.fluidEvCap * evM1Split;
+        const currEvCap = fluidEvCap * evM0Split;
+        setHtml('lbl-ev-title-m1', `↳ Carryover (${Math.round(evM1Split * 100)}% of Prev Mo) <span style="color:#64748b; font-size:9px;">[${m1Name.split('_')[0]} Demand ${fmt(m1.evDem)} × ${Math.round(evM1Split * 100)}% = ${fmt(prevEvDem)}]</span>`);
+        setTxt('tbl-dem-ev-m1', fmt(prevEvDem));
+        setTxt('tbl-pot-ev-m1', fmt(prevEvCap));
+
+        setHtml('lbl-ev-title-m0', `↳ Immediate (${Math.round(evM0Split * 100)}% of Curr Mo) <span style="color:#64748b; font-size:9px;">[${activeMonth.split('_')[0]} Demand ${fmt(m0.evDem)} × ${Math.round(evM0Split * 100)}% = ${fmt(currEvDem)}]</span>`);
+        setTxt('tbl-dem-ev-m0', fmt(currEvDem));
+        setTxt('tbl-pot-ev-m0', fmt(currEvCap));
+
+        const p3 = m3.apps > 0 ? ((enM3 / m3.apps) * 100).toFixed(1) : '0.0';
+        const p2 = m2.apps > 0 ? ((enM2 / m2.apps) * 100).toFixed(1) : '0.0';
+        const p1 = m1.apps > 0 ? ((enM1 / m1.apps) * 100).toFixed(1) : '0.0';
+        const p0 = m0.apps > 0 ? ((enM0 / m0.apps) * 100).toFixed(1) : '0.0';
+
+        setHtml('lbl-en-title-m3', `↳ Deep Tail (3-Mo Prior) <span style="color:#64748b; font-size:9px;">[${m3Name.split('_')[0]} ${fmt(m3.apps)} Apps × ${p3}% = ${fmt(enM3)}]</span>`);
+        setTxt('tbl-dem-en-m3', fmt(enM3));
+        setTxt('tbl-pot-en-m3', fmt(enM3));
+
+        setHtml('lbl-en-title-m2', `↳ Tail Pipeline (2-Mo Prior) <span style="color:#64748b; font-size:9px;">[${m2Name.split('_')[0]} ${fmt(m2.apps)} Apps × ${p2}% = ${fmt(enM2)}]</span>`);
+        setTxt('tbl-dem-en-m2', fmt(enM2));
+        setTxt('tbl-pot-en-m2', fmt(enM2));
+
+        setHtml('lbl-en-title-m1', `↳ Core Pipeline (Prev Mo) <span style="color:#64748b; font-size:9px;">[${m1Name.split('_')[0]} ${fmt(m1.apps)} Apps × ${p1}% = ${fmt(enM1)}]</span>`);
+        setTxt('tbl-dem-en-m1', fmt(enM1));
+        setTxt('tbl-pot-en-m1', fmt(enM1));
+
+        const capEnM0 = Math.max(enM0, cap_enroll - (enM3 + enM2 + enM1));
+        setHtml('lbl-en-title-m0', `↳ Immediate Yield (Curr Mo) <span style="color:#64748b; font-size:9px;">[${activeMonth.split('_')[0]} ${fmt(m0.apps)} Apps × ${p0}% = ${fmt(enM0)}]</span>`);
+        setTxt('tbl-dem-en-m0', fmt(enM0));
+        setTxt('tbl-pot-en-m0', fmt(capEnM0));
     }
 
-    // 5. Render Telemetry Strip, Insight Banner & Cohort Waterfall
-    const sysPsUtil = totalSysPsCap > 0 ? (d_psSched / totalSysPsCap) * 100 : 0;
-    const ceEvUtil = fluidEvCap > 0 ? (d_evDem / fluidEvCap) * 100 : 0;
-    const pfaUtil = totalPfaPsCap > 0 ? (pfaPsAbsorbed / totalPfaPsCap) * 100 : 0;
-    const cePsUtil = totalCeStrictPsCap > 0 ? (remCePsDem / totalCeStrictPsCap) * 100 : 0;
+    setTxt('tbl-dem-ev-sched', fmt(d_evDem));
+    setTxt('tbl-pot-ev-sched', fmt(cap_evSched));
+    setHtml('tbl-var-ev-sched', formatVar(cap_evSched - d_evDem));
 
-    renderTopTelemetry(activeMonth, wd, d_apps, totalPtoCe, totalPtoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, d_psSched, totalSysPsCap, d_evDem, fluidEvCap);
-    renderExecutiveInsight(activeMonth, d_apps, d_psSched, totalSysPsCap, d_evDem, fluidEvCap, sysPsUtil, ceEvUtil, effPfaSharePct, mktHeadroom, mktBottleneck);
-    renderCohortWaterfall(showCohort, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, [enM0, enM1, enM2, enM3]);
+    setTxt('tbl-dem-ev-comp', fmt(d_evComp));
+    setTxt('tbl-pot-ev-comp', fmt(cap_evComp));
+    setHtml('tbl-var-ev-comp', formatVar(cap_evComp - d_evComp));
 
-    // 6. State Cascading Distribution (PS & Evals)
+    setTxt('tbl-dem-enroll', fmt(d_enroll));
+    setTxt('tbl-pot-enroll', fmt(cap_enroll));
+    setHtml('tbl-var-enroll', formatVar(cap_enroll - d_enroll));
+
+    setTxt('tbl-dem-pace', fmt(d_enroll / 4.33));
+    setTxt('tbl-pot-pace', fmt(cap_enroll / 4.33));
+
+    setTxt('mkt-bottleneck-tag', `(Bottleneck: ${mktBottleneck})`);
+    setTxt('tbl-mkt-curr', `${fmt(d_apps)} apps`);
+    setTxt('tbl-mkt-ceil', `${fmt(mktCeiling)} apps`);
+    setHtml('tbl-mkt-headroom', mktHeadroom >= 0
+        ? `<span style="color:#86efac;">+${fmt(mktHeadroom)} (+${Math.round(mktHeadroomPct)}%)</span>`
+        : `<span style="color:#fca5a5;">${fmt(mktHeadroom)} (${Math.round(mktHeadroomPct)}%)</span>`);
+
+    // 5. State Cascading Distribution & Need-Based PFA Overflow Routing
     stateMetricsCache = {};
+    let totalOverflowNeed = 0;
+    const rawStates = {};
+
     MASTER_STATES.forEach(s => {
         const sApps = (LEDGER[activeMonth].apps[s] || 0) * (1 + (r.volBump / 100));
         const sPsDem = sApps * (r.appToPsRate / 100);
-        const sPfaRelief = d_psSched > 0 ? (pfaPsAbsorbed * (sPsDem / d_psSched)) : 0;
-        const sRemCePs = Math.max(0, sPsDem - sPfaRelief);
         const ov = parseFloat(LEDGER[activeMonth].conv[s]) || 0;
         const sEvDemInMo = sApps * (ov > 0 ? ov / 100 : globalAppToEv);
 
@@ -1478,16 +1502,44 @@ function recalculateDashboardMetrics() {
         }
 
         const alloc = stateAlloc[s];
-        const sFluidEvCap = Math.max(0, alloc.ceHours - (sRemCePs * PS_HANDLE)) / EV_HANDLE;
-        const sEvCov = sEvDem > 0 ? (sFluidEvCap / sEvDem) * 100 : 100;
-        const sPsCov = sRemCePs > 0 ? (alloc.strictPs / sRemCePs) * 100 : 100;
+        const psOverflowNeed = Math.max(0, sPsDem - alloc.strictPs);
+        totalOverflowNeed += psOverflowNeed;
+        rawStates[s] = { sApps, sPsDem, sEvDem, alloc, psOverflowNeed, ov };
+    });
+
+    const pfaPoolDeployed = Math.min(totalPfaPsCap, totalOverflowNeed);
+    const pfaDirectivesList = [];
+
+    MASTER_STATES.forEach(s => {
+        const rs = rawStates[s];
+        const sPfaTarget = totalOverflowNeed > 0 ? (pfaPoolDeployed * (rs.psOverflowNeed / totalOverflowNeed)) : 0;
+        const sRemCePs = Math.max(0, rs.sPsDem - sPfaTarget);
+        const sFluidEvCap = Math.max(0, rs.alloc.ceHours - (sRemCePs * PS_HANDLE)) / EV_HANDLE;
+        const sEvCov = rs.sEvDem > 0 ? (sFluidEvCap / rs.sEvDem) * 100 : 100;
+        const sPsCov = sRemCePs > 0 ? (rs.alloc.strictPs / sRemCePs) * 100 : 100;
+        const isOverflow = rs.psOverflowNeed > 0.5;
+
+        if (sPfaTarget >= 1) pfaDirectivesList.push({ state: s, ps: Math.round(sPfaTarget) });
 
         stateMetricsCache[s] = {
-            state: s, apps: sApps, psDem: sPsDem, pfaRelief: sPfaRelief, remCePs: sRemCePs,
-            cePsCap: alloc.strictPs, psCov: sPsCov, evDem: sEvDem, evCap: sFluidEvCap,
-            evCov: sEvCov, providers: alloc.providers, ovRate: ov
+            state: s, apps: rs.sApps, psDem: rs.sPsDem, pfaRelief: sPfaTarget, remCePs: sRemCePs,
+            cePsCap: rs.alloc.strictPs, psBal: rs.alloc.strictPs - sRemCePs, psCov: sPsCov,
+            evDem: rs.sEvDem, evCap: sFluidEvCap, evBal: sFluidEvCap - rs.sEvDem,
+            evCov: sEvCov, providers: rs.alloc.providers, ovRate: rs.ov, isOverflow
         };
     });
+
+    pfaDirectivesList.sort((a, b) => b.ps - a.ps);
+
+    // 6. Render Telemetry Strip, Insight Banner & Cohort Waterfall
+    const sysPsUtil = totalSysPsCap > 0 ? (d_psSched / totalSysPsCap) * 100 : 0;
+    const ceEvUtil = fluidEvCap > 0 ? (d_evDem / fluidEvCap) * 100 : 0;
+    const pfaUtil = totalPfaPsCap > 0 ? (pfaPsAbsorbed / totalPfaPsCap) * 100 : 0;
+    const cePsUtil = totalCeStrictPsCap > 0 ? (remCePsDem / totalCeStrictPsCap) * 100 : 0;
+
+    renderTopTelemetry(activeMonth, wd, d_apps, totalPtoCe, totalPtoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, d_psSched, totalSysPsCap, d_evDem, fluidEvCap);
+    renderExecutiveInsight(activeMonth, d_apps, d_psSched, totalSysPsCap, d_evDem, fluidEvCap, sysPsUtil, ceEvUtil, effPfaSharePct, mktHeadroom, mktBottleneck, pfaPoolDeployed, pfaDirectivesList);
+    renderCohortWaterfall(showCohort, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, [enM0, enM1, enM2, enM3], evM0Split, evM1Split);
 
     renderHeatmap();
     renderStaffingModeler();
@@ -1506,11 +1558,11 @@ function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, 
             </div>
         </div>
         <div class="telemetry-card theme-pto">
-            <div class="telemetry-hdr"><span>Scheduled PTO Shrinkage</span><span>${(ptoCe + ptoPfa).toFixed(1)} Total Days</span></div>
-            <div class="telemetry-main"><span class="telemetry-val">${ptoCe.toFixed(1)}d</span><span class="telemetry-sub">CE PTO · ${ptoPfa.toFixed(1)}d PFA</span></div>
+            <div class="telemetry-hdr"><span>Scheduled PTO Shrinkage</span><span>${Math.round(ptoCe + ptoPfa)} Total Days</span></div>
+            <div class="telemetry-main"><span class="telemetry-val">${Math.round(ptoCe)}</span><span class="telemetry-sub">CE PTO · ${Math.round(ptoPfa)} PFA</span></div>
             <div class="telemetry-bars-wrap">
-                <div class="telemetry-bar-row"><span style="width:42px;">CEs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, ptoCe * 2)}%; background:#f43f5e;"></div></div><span>${ptoCe.toFixed(1)}d</span></div>
-                <div class="telemetry-bar-row"><span style="width:42px;">PFAs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, ptoPfa * 4)}%; background:#fb7185;"></div></div><span>${ptoPfa.toFixed(1)}d</span></div>
+                <div class="telemetry-bar-row"><span style="width:42px;">CEs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, ptoCe * 2)}%; background:#f43f5e;"></div></div><span>${Math.round(ptoCe)}</span></div>
+                <div class="telemetry-bar-row"><span style="width:42px;">PFAs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, ptoPfa * 4)}%; background:#fb7185;"></div></div><span>${Math.round(ptoPfa)}</span></div>
             </div>
         </div>
         <div class="telemetry-card theme-ps">
@@ -1530,7 +1582,7 @@ function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, 
         </div>`;
 }
 
-function renderExecutiveInsight(month, apps, psDem, psCap, evDem, evCap, sysPsUtil, ceEvUtil, effPfaPct, mktHeadroom, mktBottleneck) {
+function renderExecutiveInsight(month, apps, psDem, psCap, evDem, evCap, sysPsUtil, ceEvUtil, effPfaPct, mktHeadroom, mktBottleneck, pfaPoolDeployed, pfaDirectivesList) {
     const banner = document.getElementById('executive-insight-banner');
     const evStatus = ceEvUtil > 90 ? `<strong style="color:#fca5a5;">Over-Capacity (${ceEvUtil.toFixed(1)}%)</strong>` : (ceEvUtil >= 80 ? `<strong style="color:#86efac;">Optimal Zone (${ceEvUtil.toFixed(1)}%)</strong>` : `<strong style="color:#fde047;">Surplus Capacity (${ceEvUtil.toFixed(1)}%)</strong>`);
     const psStatus = sysPsUtil > 100 ? `<strong style="color:#fca5a5;">Front-Door Bottleneck (${sysPsUtil.toFixed(1)}%)</strong>` : `<strong style="color:#93c5fd;">${sysPsUtil.toFixed(1)}% Utilized</strong>`;
@@ -1538,39 +1590,56 @@ function renderExecutiveInsight(month, apps, psDem, psCap, evDem, evCap, sysPsUt
         ? `Current roster can absorb <strong style="color:#86efac;">+${fmt(mktHeadroom)} additional Accepted Apps</strong> before <strong>${mktBottleneck}</strong> hits ceiling.`
         : `Roster is currently <strong style="color:#fca5a5;">${fmt(Math.abs(mktHeadroom))} Accepted Apps</strong> above physical ceiling (constrained by <strong>${mktBottleneck}</strong>).`;
 
+    const directivePills = pfaDirectivesList && pfaDirectivesList.length > 0
+        ? pfaDirectivesList.slice(0, 8).map(d => `<span style="display:inline-block; background:rgba(59,130,246,0.16); color:#93c5fd; border:1px solid rgba(59,130,246,0.35); padding:1px 5px; border-radius:3px; font-size:9px; font-weight:700; margin-right:3px; margin-top:2px;">${d.state}: ${d.ps} PS</span>`).join('') + (pfaDirectivesList.length > 8 ? `<span style="font-size:9px; color:#64748b;"> +${pfaDirectivesList.length - 8} more</span>` : '')
+        : `<span style="color:#86efac; font-size:10px;">All states CE self-sufficient (0 overflow routing required)</span>`;
+
     banner.innerHTML = `
         <h3>🧠 Executive WFM Arbitrage Diagnosis — ${month.split('_')[0]}</h3>
         <p>• <strong>Clinical Evaluations:</strong> ${evStatus} — ${fmt(evDem)} Eval demand vs. ${fmt(evCap)} dynamic fluid-time Eval slots.</p>
         <p>• <strong>Front-Door Intake:</strong> ${psStatus} — Global PFA pool is absorbing <strong>${effPfaPct.toFixed(0)}%</strong> of ${fmt(psDem)} Phone Screens, refunding freed clinical hours directly into CE Evaluations.</p>
+        <p>• <strong>Need-Based PFA Directives (Pool Deployed: ${fmt(pfaPoolDeployed)} PS):</strong> ${directivePills}</p>
         <p>• <strong>Marketing Spend Headroom:</strong> ${headroomTxt}</p>`;
 }
 
-function renderCohortWaterfall(show, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, enrolls) {
+function renderCohortWaterfall(show, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, enrolls, evM0Split, evM1Split) {
     const panel = document.getElementById('cohort-waterfall-container');
     panel.style.display = show ? 'flex' : 'none';
     if (!show) return;
+
+    const lag0 = (FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 5.0);
+    const lag1 = (FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 22.0);
+    const lag2 = (FUNNEL.enSplitM2 !== undefined ? FUNNEL.enSplitM2 : 4.8);
+    const lag3 = (FUNNEL.enSplitM3 !== undefined ? FUNNEL.enSplitM3 : 1.0);
+    const lagSum = lag0 + lag1 + lag2 + lag3;
+    const totEnroll = enrolls.reduce((a, b) => a + b, 0);
+
     const rows = [
-        { tag: 'M0 CURR', color: '#3b82f6', name: activeMonth.split('_')[0], apps: m0.apps, en: enrolls[0] },
-        { tag: 'M-1 CORE', color: '#8b5cf6', name: m1Name.split('_')[0], apps: m1.apps, en: enrolls[1] },
-        { tag: 'M-2 TAIL', color: '#10b981', name: m2Name.split('_')[0], apps: m2.apps, en: enrolls[2] },
-        { tag: 'M-3 DEEP', color: '#64748b', name: m3Name.split('_')[0], apps: m3.apps, en: enrolls[3] }
+        { tag: 'M0 CURR', color: '#3b82f6', name: activeMonth.split('_')[0], apps: m0.apps, en: enrolls[0], lagCfg: lag0, evNote: `Eval M0 (${Math.round(evM0Split*100)}%): ${fmt(m0.evDem * evM0Split)}` },
+        { tag: 'M-1 CORE', color: '#8b5cf6', name: m1Name.split('_')[0], apps: m1.apps, en: enrolls[1], lagCfg: lag1, evNote: `Eval M-1 (${Math.round(evM1Split*100)}%): ${fmt(m1.evDem * evM1Split)}` },
+        { tag: 'M-2 TAIL', color: '#10b981', name: m2Name.split('_')[0], apps: m2.apps, en: enrolls[2], lagCfg: lag2, evNote: `Tail Carryover` },
+        { tag: 'M-3 DEEP', color: '#64748b', name: m3Name.split('_')[0], apps: m3.apps, en: enrolls[3], lagCfg: lag3, evNote: `Deep Tail` }
     ];
+
     panel.innerHTML = `
         <div class="cohort-waterfall-title">
-            <span>🌊 Cohort Pipeline Origin Ledger (${activeMonth.split('_')[0]})</span>
-            <span>Total Yield: ${fmt(enrolls.reduce((a,b)=>a+b,0))} Enrollments</span>
+            <span>🌊 Row-Based Cohort Origin & Lag Curve Flow (${activeMonth.split('_')[0]})</span>
+            <span style="font-size:8.5px; color:#cbd5e1; font-weight:600;">4-Mo Lag: M0 ${lag0}% · M-1 ${lag1}% · M-2 ${lag2}% · M-3 ${lag3}% (Σ ${lagSum.toFixed(1)}%)</span>
         </div>
         ${rows.map(r => {
-            const pct = r.apps > 0 ? ((r.en / r.apps) * 100).toFixed(1) : '0.0';
+            const effPct = r.apps > 0 ? ((r.en / r.apps) * 100).toFixed(1) : '0.0';
+            const mixShare = totEnroll > 0 ? ((r.en / totEnroll) * 100).toFixed(0) : '0';
             return `<div class="waterfall-row">
                 <div class="waterfall-meta">
                     <span class="waterfall-badge" style="background:${r.color}22; color:${r.color}; border:1px solid ${r.color}66;">${r.tag}</span>
                     <strong>${r.name}</strong>
                     <span style="color:#64748b;">(${fmt(r.apps)} Apps)</span>
+                    <span style="color:#94a3b8; font-size:8.5px; border-left:1px solid #334155; padding-left:6px;">${r.evNote}</span>
                 </div>
                 <div class="waterfall-outputs">
-                    <span style="color:#94a3b8;">Rate: <strong style="color:#e2e8f0;">${pct}%</strong></span>
-                    <span style="color:#10b981; font-weight:800;">${fmt(r.en)} Enrolls</span>
+                    <span style="color:#94a3b8;">Eff: <strong style="color:#e2e8f0;">${effPct}%</strong></span>
+                    <span style="color:#64748b;">Share: <strong style="color:#cbd5e1;">${mixShare}%</strong></span>
+                    <span style="color:#10b981; font-weight:800; min-width:64px; text-align:right;">${fmt(r.en)} Enrolls</span>
                 </div>
             </div>`;
         }).join('')}`;
@@ -1631,34 +1700,47 @@ function renderStaffingModeler() {
         const reqCePs = avgCePsCap > 0 ? remPsAfterPfa / (avgCePsCap * targetCeUtil) : 0;
         const reqCe = Math.max(reqCeEv, reqCePs);
         const ceDelta = reqCe - ceCount;
+        const nonProdCe = Math.max(0, totalRosterCe - ceCount);
 
         if (idx === activeMonthIdx) {
             activeSummary = { m, evDem, avgCeEvCap, reqCe, ceCount, totalRosterCe, ceDelta, pfaBenchDem, avgPfaCap, reqPfa, pfaCount, pfaDelta };
         }
-        if (!firstDeficitMonth && (ceDelta > 0.5 || pfaDelta > 0.5) && idx >= activeMonthIdx) {
+        if (!firstDeficitMonth && (ceDelta > 0.4 || pfaDelta > 0.4) && idx >= activeMonthIdx) {
             firstDeficitMonth = { m, ceDelta, pfaDelta };
         }
 
-        const ceDeltaHtml = ceDelta > 0.5 ? `<span class="status-red">+${ceDelta.toFixed(1)} Hire</span>` : `<span class="status-green">${ceDelta.toFixed(1)}</span>`;
-        const pfaDeltaHtml = pfaDelta > 0.5 ? `<span class="status-red">+${pfaDelta.toFixed(1)} Hire</span>` : `<span class="status-green">${pfaDelta.toFixed(1)}</span>`;
-        const advisory = (ceDelta > 0.5 || pfaDelta > 0.5)
-            ? `<span style="color:#fca5a5;">Post Req 60d Prior (${ceDelta > 0.5 ? '+' + Math.ceil(ceDelta) + ' CE ' : ''}${pfaDelta > 0.5 ? '+' + Math.ceil(pfaDelta) + ' PFA' : ''})</span>`
-            : `<span style="color:#86efac;">Balanced / Buffer</span>`;
+        const cePillCls = ceDelta > 0.4 ? 'gap-pill-hire' : (ceDelta > -0.6 ? 'gap-pill-ok' : 'gap-pill-surplus');
+        const pfaPillCls = pfaDelta > 0.4 ? 'gap-pill-hire' : (pfaDelta > -0.6 ? 'gap-pill-ok' : 'gap-pill-surplus');
+        const ceDeltaHtml = `<span class="gap-pill ${cePillCls}">${ceDelta > 0 ? '+' : ''}${ceDelta.toFixed(1)}</span>`;
+        const pfaDeltaHtml = `<span class="gap-pill ${pfaPillCls}">${pfaDelta > 0 ? '+' : ''}${pfaDelta.toFixed(1)}</span>`;
 
-        const rowStyle = idx === activeMonthIdx ? 'background:rgba(59,130,246,0.12); font-weight:bold;' : '';
+        let actionHtml = '';
+        if (ceDelta > 0.4 && pfaDelta > 0.4) {
+            actionHtml = `<span style="color:#fca5a5; font-weight:700;">🚨 Hire ${Math.ceil(ceDelta)} CEs & ${Math.ceil(pfaDelta)} PFAs</span>`;
+        } else if (ceDelta > 0.4) {
+            actionHtml = `<span style="color:#fca5a5; font-weight:700;">🚨 Hire ${Math.ceil(ceDelta)} CEs</span>`;
+        } else if (pfaDelta > 0.4) {
+            actionHtml = `<span style="color:#fca5a5; font-weight:700;">🚨 Hire ${Math.ceil(pfaDelta)} PFAs</span>`;
+        } else if (ceDelta >= -0.6) {
+            actionHtml = `<span style="color:#86efac; font-weight:700;">✅ Balanced (Within 87% Target)</span>`;
+        } else {
+            actionHtml = `<span style="color:#93c5fd;">Surplus (${Math.abs(ceDelta).toFixed(1)} CE buffer at 87% util)</span>`;
+        }
+
+        const rowStyle = idx === activeMonthIdx ? 'background:rgba(59,130,246,0.14); font-weight:bold;' : '';
         rollingHtml += `<tr style="${rowStyle}">
-            <td>${formatShortMonthTab(m)}</td>
+            <td style="white-space:nowrap;">${m.split('_')[0]}${idx === activeMonthIdx ? ' <span style="color:#fbbf24;">⭐</span>' : ''}</td>
             <td style="text-align:center;">${fmt(metrics.apps)}</td>
-            <td style="text-align:center;">${Math.round(pfaBenchPct * 100)}%</td>
-            <td style="text-align:center;">${fmt(evDem)}</td>
-            <td style="text-align:center;">${ceCount}</td>
-            <td style="text-align:center; color:#93c5fd;">${reqCe.toFixed(1)}</td>
+            <td style="text-align:center; color:#94a3b8;">${Math.round(pfaBenchPct * 100)}%</td>
+            <td style="text-align:center; white-space:nowrap;"><strong>${fmt(evDem)} Evals</strong> <span style="font-size:8.5px; color:#64748b;">(${fmt(remPsAfterPfa)} rem ps)</span></td>
+            <td style="text-align:center;"><strong>${ceCount}</strong> <span style="font-size:8.5px; color:#64748b;">(+${nonProdCe})</span></td>
+            <td style="text-align:center; color:#cbd5e1; font-weight:700;">${reqCe.toFixed(1)}</td>
             <td style="text-align:center;">${ceDeltaHtml}</td>
-            <td style="text-align:center;">${fmt(pfaBenchDem)}</td>
+            <td style="text-align:center; color:#cbd5e1;">${fmt(pfaBenchDem)}</td>
             <td style="text-align:center;">${pfaCount}</td>
-            <td style="text-align:center; color:#93c5fd;">${reqPfa.toFixed(1)}</td>
+            <td style="text-align:center; color:#cbd5e1; font-weight:700;">${reqPfa.toFixed(1)}</td>
             <td style="text-align:center;">${pfaDeltaHtml}</td>
-            <td style="text-align:left; padding-left:12px;">${advisory}</td>
+            <td style="text-align:left; padding-left:12px; white-space:nowrap;">${actionHtml}</td>
         </tr>`;
     });
 
@@ -1684,11 +1766,11 @@ function renderStaffingModeler() {
 
         document.getElementById('staffing-header-pills').innerHTML = `
             <span class="staff-pill ${activeSummary.ceDelta > 0.4 ? 'staff-pill-alert' : 'staff-pill-ok'}">CE: ${activeSummary.ceDelta > 0.4 ? '+' + activeSummary.ceDelta.toFixed(1) + ' Hire' : 'Balanced'}</span>
-            <span class="staff-pill ${activeSummary.pfaDelta > 0.4 ? 'staff-pill-alert' : 'staff-pill-ok'}">PFA: ${activeSummary.pfaDelta > 0.4 ? '+' + activeSummary.pfaDelta.toFixed(1) + ' Hire' : 'Balanced'}</span>`;
+            <span class="staff-pill ${activeSummary.pfaDelta > 0.4 ? 'staff-pill-alert' : 'staff-pill-ok'}">PFA: ${activeSummary.pfaDelta > 0.4 ? 'Need: +' + activeSummary.pfaDelta.toFixed(1) : 'Balanced'}</span>`;
 
         const rampEl = document.getElementById('staff-ramp-notice');
         if (firstDeficitMonth) {
-            rampEl.innerHTML = `<strong style="color:#fcd34d;">Upcoming Requisition Trigger:</strong> First staffing deficit hits in <strong>${firstDeficitMonth.m.split('_')[0]}</strong> (${firstDeficitMonth.ceDelta > 0.5 ? '+' + firstDeficitMonth.ceDelta.toFixed(1) + ' CE ' : ''}${firstDeficitMonth.pfaDelta > 0.5 ? '+' + firstDeficitMonth.pfaDelta.toFixed(1) + ' PFA' : ''}). Post requisitions 60–90 days prior.`;
+            rampEl.innerHTML = `<strong style="color:#fcd34d;">Upcoming Requisition Trigger:</strong> First staffing deficit hits in <strong>${firstDeficitMonth.m.split('_')[0]}</strong> (${firstDeficitMonth.ceDelta > 0.4 ? '+' + firstDeficitMonth.ceDelta.toFixed(1) + ' CE ' : ''}${firstDeficitMonth.pfaDelta > 0.4 ? '+' + firstDeficitMonth.pfaDelta.toFixed(1) + ' PFA' : ''}). Post requisitions 60–90 days prior.`;
         } else {
             rampEl.innerHTML = `<strong style="color:#86efac;">Horizon Fully Staffed:</strong> No CE or PFA deficits projected from <strong>${activeSummary.m.split('_')[0]}</strong> through the end of the active timeline.`;
         }
@@ -1746,17 +1828,24 @@ function renderHeatmap() {
             <div style="font-size:8.5px; color:#fca5a5; font-weight:700;">CRITICAL EVAL COV (<70%)</div>
         </div>`;
 
-    document.getElementById('heatmap-thead').innerHTML = `<tr>
-        <th style="cursor:pointer;" onclick="sortHeatmap('state')">State</th>
-        <th style="text-align:right; cursor:pointer;" onclick="sortHeatmap('apps')">Apps (${heatmapViewMode==='wk'?'Wk':'Mo'})</th>
-        <th style="text-align:right; cursor:pointer;" onclick="sortHeatmap('psDem')">PS Demand</th>
-        <th style="text-align:right;">PFA Relief</th>
-        <th style="text-align:right;">CE Rem PS</th>
-        <th style="text-align:right; cursor:pointer;" onclick="sortHeatmap('evDem')">Eval Demand</th>
-        <th style="text-align:right; cursor:pointer;" onclick="sortHeatmap('evCap')">Fluid Eval Cap</th>
-        <th style="text-align:center; cursor:pointer;" onclick="sortHeatmap('providers')">Active CEs</th>
-        <th style="text-align:right; cursor:pointer;" onclick="sortHeatmap('evCov')">Eval Coverage %</th>
-    </tr>`;
+    document.getElementById('heatmap-thead').innerHTML = `
+        <tr>
+            <th rowspan="2" style="cursor:pointer; vertical-align:middle;" onclick="sortHeatmap('state')">State Territory</th>
+            <th rowspan="2" style="text-align:center; cursor:pointer; vertical-align:middle;" onclick="sortHeatmap('apps')">Apps</th>
+            <th rowspan="2" style="text-align:center; vertical-align:middle;">PFA Routing Directive</th>
+            <th rowspan="2" style="text-align:center; cursor:pointer; vertical-align:middle;" onclick="sortHeatmap('pfaRelief')">🤖 PFA Target</th>
+            <th colspan="3" style="text-align:center; border-left:1px solid #334155; color:#93c5fd;">📞 Phone Screens (CE)</th>
+            <th colspan="3" style="text-align:center; border-left:1px solid #334155; color:#c4b5fd;">📋 Evaluations</th>
+            <th rowspan="2" style="text-align:center; cursor:pointer; border-left:1px solid #334155; vertical-align:middle;" onclick="sortHeatmap('providers')">Assigned</th>
+        </tr>
+        <tr>
+            <th style="text-align:center; border-left:1px solid #334155; font-size:8px;">Gross → CE Net</th>
+            <th style="text-align:center; font-size:8px; cursor:pointer;" onclick="sortHeatmap('psCov')">CE Supply (Cov %)</th>
+            <th style="text-align:center; font-size:8px; cursor:pointer;" onclick="sortHeatmap('psBal')">Bal</th>
+            <th style="text-align:center; border-left:1px solid #334155; font-size:8px; cursor:pointer;" onclick="sortHeatmap('evDem')">Dem</th>
+            <th style="text-align:center; font-size:8px; cursor:pointer;" onclick="sortHeatmap('evCov')">CE Supply (Cov %)</th>
+            <th style="text-align:center; font-size:8px; cursor:pointer;" onclick="sortHeatmap('evBal')">Bal</th>
+        </tr>`;
 
     const filtered = rows.filter(r => heatmapTierFilter === 'ALL' || r.tier === heatmapTierFilter);
     filtered.sort((a, b) => {
@@ -1765,18 +1854,40 @@ function renderHeatmap() {
         return heatmapSort.dir === 'asc' ? av - bv : bv - av;
     });
 
+    const getCovColor = (cov) => cov >= 90 ? '#60a5fa' : (cov >= 80 ? '#34d399' : (cov >= 70 ? '#fbbf24' : '#f87171'));
+
     document.getElementById('heatmap-body').innerHTML = filtered.map(r => {
-        const cls = r.evCov >= 90 ? 'status-blue' : (r.evCov >= 80 ? 'status-green' : (r.evCov >= 70 ? 'status-yellow' : 'status-red'));
+        const psCovColor = getCovColor(r.psCov);
+        const evCovColor = getCovColor(r.evCov);
+        const psBalVal = Math.round(r.psBal * mult);
+        const evBalVal = Math.round(r.evBal * mult);
+        const pfaTgtVal = Math.round(r.pfaRelief * mult);
+        const dirBadge = r.isOverflow
+            ? `<span class="dir-pill dir-pill-overflow">🚨 PFA: PS OVERFLOW</span>`
+            : `<span class="dir-pill dir-pill-ok">✅ CE SELF-SUFFICIENT</span>`;
+
         return `<tr>
             <td><strong>${r.state}</strong> ${r.ovRate > 0 ? `<span style="font-size:8px; color:#c4b5fd;">(${r.ovRate}%)</span>` : ''}</td>
-            <td style="text-align:right;">${fmt(r.apps * mult)}</td>
-            <td style="text-align:right;">${fmt(r.psDem * mult)}</td>
-            <td style="text-align:right; color:#93c5fd;">${fmt(r.pfaRelief * mult)}</td>
-            <td style="text-align:right;">${fmt(r.remCePs * mult)}</td>
-            <td style="text-align:right; color:#c4b5fd; font-weight:700;">${fmt(r.evDem * mult)}</td>
-            <td style="text-align:right; color:#86efac;">${fmt(r.evCap * mult)}</td>
-            <td style="text-align:center;">${r.providers}</td>
-            <td style="text-align:right;" class="${cls}">${Math.min(999, r.evCov).toFixed(0)}%</td>
+            <td style="text-align:center; font-weight:700;">${fmt(r.apps * mult)}</td>
+            <td style="text-align:center;">${dirBadge}</td>
+            <td style="text-align:center; font-weight:700; color:${pfaTgtVal > 0 ? '#93c5fd' : '#475569'};">${pfaTgtVal} PS</td>
+            <td style="text-align:center; border-left:1px solid #1e293b; white-space:nowrap;"><span style="color:#94a3b8;">${fmt(r.psDem * mult)}</span> → <strong>${fmt(r.remCePs * mult)}</strong></td>
+            <td style="text-align:center; white-space:nowrap;"><strong>${fmt(r.cePsCap * mult)}</strong> <span style="font-size:9px; font-weight:700; color:${psCovColor};">${Math.min(999, r.psCov).toFixed(0)}%</span></td>
+            <td style="text-align:center;">
+                <div class="bal-cell-wrap">
+                    <span style="font-size:9.5px; font-weight:700; color:${psBalVal >= 0 ? psCovColor : '#fca5a5'};">${psBalVal > 0 ? '+' : ''}${psBalVal}</span>
+                    <div class="bal-bar-track"><div class="bal-bar-fill" style="width:${Math.min(100, Math.max(8, r.psCov))}%; background:${psCovColor};"></div></div>
+                </div>
+            </td>
+            <td style="text-align:center; border-left:1px solid #1e293b; font-weight:700;">${fmt(r.evDem * mult)}</td>
+            <td style="text-align:center; white-space:nowrap;"><strong>${fmt(r.evCap * mult)}</strong> <span style="font-size:9px; font-weight:700; color:${evCovColor};">${Math.min(999, r.evCov).toFixed(0)}%</span></td>
+            <td style="text-align:center;">
+                <div class="bal-cell-wrap">
+                    <span style="font-size:9.5px; font-weight:700; color:${evBalVal >= 0 ? evCovColor : '#fca5a5'};">${evBalVal > 0 ? '+' : ''}${evBalVal}</span>
+                    <div class="bal-bar-track"><div class="bal-bar-fill" style="width:${Math.min(100, Math.max(8, r.evCov))}%; background:${evCovColor};"></div></div>
+                </div>
+            </td>
+            <td style="text-align:center; border-left:1px solid #1e293b; color:#cbd5e1; font-weight:700;">${r.providers}</td>
         </tr>`;
     }).join('');
 }
@@ -1859,10 +1970,26 @@ function toggleClinicianLicense(name, state) {
         p.licensedStates.push(state);
         ACTIVE_TIMELINE.forEach(m => { if (!p.mix[m]) p.mix[m] = {}; p.mix[m][state] = true; });
     }
+    p.states = [...p.licensedStates];
     saveState();
     recalculateDashboardMetrics();
     renderLicensureMatrix();
     renderCeProfileManager();
+}
+
+function syncLicensureToActiveMonth() {
+    const activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    Object.keys(ROSTER).forEach(n => {
+        const p = ROSTER[n];
+        if (p.role === 'PFA') return;
+        if (!p.mix[activeMonth]) p.mix[activeMonth] = {};
+        p.licensedStates.forEach(s => { p.mix[activeMonth][s] = true; });
+    });
+    saveState();
+    recalculateDashboardMetrics();
+    renderLicensureMatrix();
+    renderCeProfileManager();
+    promptAlert(`Synced all licensed states into ${activeMonth.split('_')[0]}'s matrix.`);
 }
 
 function addAllStatesToAllProviders() {
@@ -1870,6 +1997,7 @@ function addAllStatesToAllProviders() {
         const p = ROSTER[n];
         if (p.role === 'PFA') return;
         p.licensedStates = [...MASTER_STATES];
+        p.states = [...MASTER_STATES];
         ACTIVE_TIMELINE.forEach(m => {
             if (!p.mix[m]) p.mix[m] = {};
             MASTER_STATES.forEach(s => { p.mix[m][s] = true; });
@@ -2075,7 +2203,7 @@ function addNewClinicianToRoster() {
         mix[m] = {};
         defaultStates.forEach(s => { mix[m][s] = true; });
     });
-    ROSTER[name] = { role, licensedStates: [...defaultStates], qPs, qEv, pto, pto_weekly, mix };
+    ROSTER[name] = { role, licensedStates: [...defaultStates], states: [...defaultStates], qPs, qEv, pto, pto_weekly, mix };
     nameInp.value = '';
     saveState();
     renderAll();
