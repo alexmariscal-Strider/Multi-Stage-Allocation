@@ -333,7 +333,11 @@
         <div class="top-right panel">
             <h2 style="cursor: pointer; margin-bottom: 0;" onclick="toggleFunnelCollapse()">
                 <span style="display:flex; align-items:center; gap:6px;"><span id="funnel-toggle-icon">▼</span> Unified Arbitrage Funnel</span>
-                <span style="font-size: 8px; color: #64748b; font-weight: normal;">Bottom-Up Capacity Logic</span>
+                <span style="display:flex; align-items:center; gap:6px;">
+                    <span id="month-conv-stamp-badge" style="display:none; font-size:8px; background:rgba(139,92,246,0.2); color:#c4b5fd; border:1px solid #7c3aed; padding:1px 6px; border-radius:3px;">📌 MONTH STAMP</span>
+                    <button id="btn-reset-month-conv" class="btn-action" style="display:none; background:#334155; color:#e2e8f0; border:1px solid #475569; padding:1px 6px; font-size:8px;" onclick="event.stopPropagation(); resetMonthConversionStamp()">↺ RESET TO GLOBAL</button>
+                    <span style="font-size: 8px; color: #64748b; font-weight: normal;">Bottom-Up Capacity Logic</span>
+                </span>
             </h2>
             <div id="unified-funnel-wrapper" style="margin-top: 10px;">
                 <div class="params-strip-funnel">
@@ -378,6 +382,7 @@
                         <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;"><span id="lbl-en-title-m1">↳ Core Pipeline (Prev Mo)</span></td><td class="col-dem" id="tbl-dem-en-m1">-</td><td class="col-pot" id="tbl-pot-en-m1">-</td><td></td></tr>
                         <tr class="cohort-subrow" style="display:none; background:rgba(16,185,129,0.05);"><td style="padding-left: 20px; font-size: 10px; color:#10b981;"><span id="lbl-en-title-m0">↳ Immediate Yield (Curr Mo)</span></td><td class="col-dem" id="tbl-dem-en-m0">-</td><td class="col-pot" id="tbl-pot-en-m0">-</td><td></td></tr>
                         <tr><td style="color:#10b981; font-weight:bold; font-size:10px;">↳ Weekly Pace (4.33 wks/mo)</td><td style="color:#64748b; font-size:10px;" id="tbl-dem-pace">-</td><td style="color:#10b981; font-size:11px;" id="tbl-pot-pace">-</td><td>-</td></tr>
+                        <tr style="background: rgba(59, 130, 246, 0.06); border-top: 1px dashed #334155;"><td style="color:#93c5fd; font-weight:bold; font-size:10px;">📣 Marketing Spend Headroom <span id="mkt-bottleneck-tag" style="font-size:8px; color:#94a3b8; font-weight:normal;">(Max Intake Ceiling)</span></td><td style="color:#94a3b8; font-size:10px;" id="tbl-mkt-curr">-</td><td style="color:#93c5fd; font-size:11px;" id="tbl-mkt-ceil">-</td><td id="tbl-mkt-headroom">-</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -405,13 +410,22 @@
             <table class="hover-row-trace" style="width:100%; font-size:10.5px;">
                 <thead>
                     <tr>
-                        <th style="background:#1f2937;">Month Horizon</th><th style="text-align:center; background:#1f2937;">Apps Vol</th><th style="text-align:center; background:#1f2937;">PFA Bench %</th>
-                        <th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Total Workload (EV+PS)</th><th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Active CEs</th><th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">Req CE FTE</th><th style="text-align:center; color:#c4b5fd; background:rgba(139,92,246,0.08);">CE Hiring Gap</th>
-                        <th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Bench Dem</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Active PFAs</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">Req PFA FTE</th><th style="text-align:center; color:#93c5fd; background:rgba(59,130,246,0.08);">PFA Hiring Gap</th><th style="text-align:center; background:#1f2937;">Hiring Action (0% Ramp / 60d Lead)</th>
-                    </tr>
-                </thead>
-                <tbody id="staffing-rolling-tbody"></tbody>
-            </table>
+                        <th>Period</th>
+                        <th style="text-align:center;">Apps</th>
+                        <th style="text-align:center;">PFA Bench</th>
+                        <th style="text-align:center;">Eval Demand</th>
+                        <th style="text-align:center;">Producing CEs</th>
+                        <th style="text-align:center;">Req CE FTE</th>
+                        <th style="text-align:center;">CE Delta</th>
+        <div style="text-align: right; border-top: 1px solid #374151; padding-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-action" style="background:transparent; border: 1px solid #475569; color: #94a3b8; padding: 6px 12px; font-size: 10px;" onclick="resetCalibratedActuals()">↺ RESET TO MODEL</button>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <select id="cal-sync-mode" style="background:#0f172a; border:1px solid #475569; color:#cbd5e1; padding:6px 8px; border-radius:4px; font-size:10px; text-align:left;">
+                    <option value="yield_and_shape">Sync Empirical Yield + Shape</option>
+                    <option value="shape_only">Sync Timing Shape Only</option>
+                </select>
+                <button class="btn-action" style="background:#10b981; padding: 8px 16px; font-size: 11px;" onclick="applyCalibratedCurve()">APPLY TO LAG CURVE (SYNC)</button>
+            </div>
         </div>
     </div>
     </div>
@@ -646,6 +660,21 @@
 
     let currentCalApps = [0, 0, 0, 0]; let currentCalExp = [0, 0, 0, 0]; let currentCalEffPct = [0, 0, 0, 0]; let currentCalNames = ["", "", "", ""];
 
+    function getEffectiveMonthRates(mName) {
+        let ldg = LEDGER[mName] || ARCHIVED_LEDGER[mName] || {};
+        let stamp = ldg.conversions || {};
+        return {
+            isStamped: !!(ldg.conversions && Object.keys(ldg.conversions).length > 0),
+            volBump: stamp.volBump !== undefined ? stamp.volBump : (FUNNEL.volBump || 0),
+            appToPsRate: stamp.appToPsRate !== undefined ? stamp.appToPsRate : (FUNNEL.appToPsRate || 90),
+            psCompRate: stamp.psCompRate !== undefined ? stamp.psCompRate : (FUNNEL.psCompRate || 76),
+            screenInRate: stamp.screenInRate !== undefined ? stamp.screenInRate : (FUNNEL.screenInRate || 88),
+            evSchedRate: stamp.evSchedRate !== undefined ? stamp.evSchedRate : (FUNNEL.evSchedRate || 83),
+            evCompRate: stamp.evCompRate !== undefined ? stamp.evCompRate : (FUNNEL.evCompRate || 85),
+            enrollRate: stamp.enrollRate !== undefined ? stamp.enrollRate : (FUNNEL.enrollRate || 80)
+        };
+    }
+
     function getModelExpectedEnrollmentsForMonth(mName, mIdx) {
         let lagR0 = FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 5.0;
         let lagR1 = FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 22.0;
@@ -657,25 +686,28 @@
         let enW2 = lagR2 / lagTotalCurve;
         let enW3 = lagR3 / lagTotalCurve;
 
+        let useEmpiricalYield = !!FUNNEL.useEmpiricalYield;
         let m0 = getMonthEvMetrics(mName, false);
         let m1 = getMonthEvMetrics(getHistoricalLedgerName(mIdx, -1), true);
         let m2 = getMonthEvMetrics(getHistoricalLedgerName(mIdx, -2), true);
         let m3 = getMonthEvMetrics(getHistoricalLedgerName(mIdx, -3), true);
 
+        let exp0 = useEmpiricalYield ? (m0.apps * (lagR0 / 100)) : (m0.yield * enW0);
+        let exp1 = useEmpiricalYield ? (m1.apps * (lagR1 / 100)) : (m1.yield * enW1);
+        let exp2 = useEmpiricalYield ? (m2.apps * (lagR2 / 100)) : (m2.yield * enW2);
+        let exp3 = useEmpiricalYield ? (m3.apps * (lagR3 / 100)) : (m3.yield * enW3);
+
         return {
             apps: [m0.apps, m1.apps, m2.apps, m3.apps],
-            exp: [
-                Math.round(m0.yield * enW0),
-                Math.round(m1.yield * enW1),
-                Math.round(m2.yield * enW2),
-                Math.round(m3.yield * enW3)
-            ]
+            exp: [Math.round(exp0), Math.round(exp1), Math.round(exp2), Math.round(exp3)]
         };
     }
 
     function openCalibrateModal() {
         if (activeDemandMode !== 'cohort') return promptAlert("Calibration is only available in 'Lagged Cohort' forecast mode.");
         let activeMonth = ACTIVE_TIMELINE[activeMonthIdx]; document.getElementById('cal-month-title').innerText = activeMonth.split('_')[0].toUpperCase();
+        let syncModeSel = document.getElementById('cal-sync-mode');
+        if (syncModeSel) syncModeSel.value = FUNNEL.useEmpiricalYield ? 'yield_and_shape' : 'shape_only';
         currentCalNames = [];
         for (let i = 0; i < 4; i++) {
             let mName = (getHistoricalLedgerName(activeMonthIdx, -i) || activeMonth);
@@ -768,6 +800,10 @@
 
     function applyCalibratedCurve() {
         let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+        let syncModeEl = document.getElementById('cal-sync-mode');
+        let syncMode = syncModeEl ? syncModeEl.value : 'yield_and_shape';
+        let useEmpiricalYield = (syncMode === 'yield_and_shape');
+
         let actVals = [];
         for (let i = 0; i < 4; i++) {
             actVals.push(parseInt(document.getElementById(`cal-inp-${i}`).value) || 0);
@@ -777,7 +813,6 @@
         // Multi-Month Rolling Average across ALL calibrated months in the timeline
         let sumRates = [0, 0, 0, 0];
         let calibratedMonths = [];
-        let mult = 1 + ((FUNNEL.volBump || 0) / 100);
 
         ACTIVE_TIMELINE.forEach((m, idx) => {
             if (LEDGER[m] && Array.isArray(LEDGER[m].actuals) && LEDGER[m].actuals.length === 4) {
@@ -785,8 +820,10 @@
                 for (let i = 0; i < 4; i++) {
                     let cName = getHistoricalLedgerName(idx, -i) || m;
                     let cLdg = LEDGER[cName] || ARCHIVED_LEDGER[cName] || { apps: {} };
+                    let cRates = getEffectiveMonthRates(cName);
+                    let cMult = 1 + ((cRates.volBump || 0) / 100);
                     let cApps = 0;
-                    MASTER_STATES.forEach(s => cApps += (cLdg.apps[s] || 0) * mult);
+                    MASTER_STATES.forEach(s => cApps += (cLdg.apps[s] || 0) * cMult);
                     let rate = cApps > 0 ? (LEDGER[m].actuals[i] / cApps) * 100 : 0;
                     sumRates[i] += rate;
                 }
@@ -797,15 +834,17 @@
         let avgRates = sumRates.map(r => r / count);
         let avgSum = avgRates.reduce((a, b) => a + b, 0);
         let currentCurveSum = ((FUNNEL.enSplitM0 || 0) + (FUNNEL.enSplitM1 || 0) + (FUNNEL.enSplitM2 || 0) + (FUNNEL.enSplitM3 || 0)) || 33.8;
-        let scaleBack = avgSum > 0 ? (currentCurveSum / avgSum) : 1;
+        let scaleBack = (!useEmpiricalYield && avgSum > 0) ? (currentCurveSum / avgSum) : 1;
 
+        FUNNEL.useEmpiricalYield = useEmpiricalYield;
         FUNNEL.enSplitM0 = parseFloat((avgRates[0] * scaleBack).toFixed(2)); 
         FUNNEL.enSplitM1 = parseFloat((avgRates[1] * scaleBack).toFixed(2)); 
         FUNNEL.enSplitM2 = parseFloat((avgRates[2] * scaleBack).toFixed(2)); 
         FUNNEL.enSplitM3 = parseFloat((avgRates[3] * scaleBack).toFixed(2));
         
         saveState(); closeCalibrateModal(); recalculateDashboardMetrics(); populateGlobalModalViews(); 
-        promptAlert(`Locked actuals for ${activeMonth.split('_')[0]} & synced rolling average lag curve across ${count} calibrated month(s) (${calibratedMonths.join(', ')})!`);
+        let modeDesc = useEmpiricalYield ? `Empirical Yield (${avgSum.toFixed(1)}%) + Timing Shape` : `Timing Shape Only`;
+        promptAlert(`Locked actuals for ${activeMonth.split('_')[0]} & synced [${modeDesc}] across ${count} calibrated month(s) (${calibratedMonths.join(', ')})!`);
     }
 
     function closeCalibrateModal() { document.getElementById('calibrate-modal').style.display = 'none'; }
@@ -864,6 +903,45 @@
 
     let ACTIVE_TIMELINE = []; let LEDGER = {}; let ROSTER = {}; let FUNNEL = {}; let MASTER_STATES = []; let activeMonthIdx = 0; let ARCHIVED_TIMELINE = []; let ARCHIVED_LEDGER = {}; let ARCHIVED_ROSTER = {}; let lastMatrixBackup = null; let heatmapViewMode = 'mo'; let stateMetricsCache = {}; let activeWeekFilter = null; let weeklyCapacityViewMode = 'PS'; 
     let activeDemandMode = 'intake';
+
+    function buildTimelineControls() {
+        const container = document.getElementById('month-tabs');
+        if (!container) return;
+        container.innerHTML = ACTIVE_TIMELINE.map((m, idx) => {
+            const label = m.split('_')[0];
+            const isActive = idx === activeMonthIdx;
+            return `<button class="month-btn ${isActive ? 'active' : ''}" onclick="selectActiveMonth(${idx})">${label}</button>`;
+        }).join('');
+    }
+
+    function selectActiveMonth(idx) {
+        if (idx < 0 || idx >= ACTIVE_TIMELINE.length) return;
+        activeMonthIdx = idx;
+        activeWeekFilter = null;
+        buildTimelineControls();
+        recalculateDashboardMetrics();
+    }
+
+    function getHistoricalLedgerName(currIdx, offset) {
+        let targetIdx = currIdx + offset;
+        if (targetIdx >= 0 && targetIdx < ACTIVE_TIMELINE.length) {
+            return ACTIVE_TIMELINE[targetIdx];
+        }
+        let currName = ACTIVE_TIMELINE[currIdx] || '';
+        let clean = currName.split('_')[0].trim();
+        let mIdx = ALL_KNOWN_MONTHS.findIndex(m => clean.toLowerCase().startsWith(m.toLowerCase()));
+        if (mIdx === -1) return null;
+        let yearMatch = clean.match(/\d{4}/);
+        let year = yearMatch ? parseInt(yearMatch[0], 10) : new Date().getFullYear();
+        let absMonth = (year * 12) + mIdx + offset;
+        let targetYear = Math.floor(absMonth / 12);
+        let targetMIdx = ((absMonth % 12) + 12) % 12;
+        let baseMonthName = ALL_KNOWN_MONTHS[targetMIdx];
+        let withYear = `${baseMonthName} ${targetYear}`;
+        if (LEDGER[withYear] || ARCHIVED_LEDGER[withYear]) return withYear;
+        if (LEDGER[baseMonthName] || ARCHIVED_LEDGER[baseMonthName]) return baseMonthName;
+        return null;
+    }
 
     function bootstrapDataEngine() {
         ACTIVE_TIMELINE = JSON.parse(localStorage.getItem('funnel_v2_time')) || ["May","June","July","August","September","October","November","December","January 2027","February 2027","March 2027"];
@@ -1016,54 +1094,59 @@
     }
 
     function triggerUpdate() {
-        FUNNEL.volBump = parseFloat(document.getElementById('mod-global-bump').value) || 0;
-        FUNNEL.appToPsRate = parseFloat(document.getElementById('mod-global-ps-rate').value) || 0;
-        FUNNEL.psCompRate = parseFloat(document.getElementById('mod-global-ps-comp').value) || 0;
-        FUNNEL.screenInRate = parseFloat(document.getElementById('mod-global-scr-in').value) || 0;
-        FUNNEL.evSchedRate = parseFloat(document.getElementById('mod-global-ev-sched').value) || 0;
-        FUNNEL.evCompRate = parseFloat(document.getElementById('mod-global-ev-comp').value) || 0;
-        FUNNEL.enrollRate = parseFloat(document.getElementById('mod-global-enroll').value) || 0;
+        let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+        let vBump = parseFloat(document.getElementById('mod-global-bump').value) || 0;
+        let aToPs = parseFloat(document.getElementById('mod-global-ps-rate').value) || 0;
+        let psComp = parseFloat(document.getElementById('mod-global-ps-comp').value) || 0;
+        let scrIn = parseFloat(document.getElementById('mod-global-scr-in').value) || 0;
+        let evSched = parseFloat(document.getElementById('mod-global-ev-sched').value) || 0;
+        let evComp = parseFloat(document.getElementById('mod-global-ev-comp').value) || 0;
+        let enroll = parseFloat(document.getElementById('mod-global-enroll').value) || 0;
+
+        if (activeMonth && LEDGER[activeMonth]) {
+            LEDGER[activeMonth].conversions = {
+                volBump: vBump,
+                appToPsRate: aToPs,
+                psCompRate: psComp,
+                screenInRate: scrIn,
+                evSchedRate: evSched,
+                evCompRate: evComp,
+                enrollRate: enroll
+            };
+        } else {
+            FUNNEL.volBump = vBump;
+            FUNNEL.appToPsRate = aToPs;
+            FUNNEL.psCompRate = psComp;
+            FUNNEL.screenInRate = scrIn;
+            FUNNEL.evSchedRate = evSched;
+            FUNNEL.evCompRate = evComp;
+            FUNNEL.enrollRate = enroll;
+        }
         saveState();
         recalculateDashboardMetrics();
     }
 
-    function buildTimelineControls() {
-    const container = document.getElementById('month-tabs'); container.innerHTML = '';
-    const shortMonthMap = { january: 'JAN', february: 'FEB', march: 'MAR', april: 'APR', may: 'MAY', june: 'JUN', july: 'JUL', august: 'AUG', september: 'SEP', october: 'OCT', november: 'NOV', december: 'DEC' };
-    ACTIVE_TIMELINE.forEach((m, i) => {
-        const btn = document.createElement('button');
-        btn.className = `month-btn ${i === activeMonthIdx ? 'active' : ''}`;
-        let clean = m.split('_')[0].trim();
-        let lower = clean.toLowerCase();
-        let matchedKey = Object.keys(shortMonthMap).find(k => lower.startsWith(k));
-        let yearMatch = clean.match(/\d{4}/);
-        let label = matchedKey ? `${shortMonthMap[matchedKey]}${yearMatch ? " '" + yearMatch[0].slice(-2) : ''}` : clean;
-        btn.innerText = label;
-        btn.title = clean;
-        btn.onclick = () => { activeMonthIdx = i; window.lastMatrixBackup = null; document.getElementById('undo-opt-btn').style.display = 'none'; activeWeekFilter = null; buildTimelineControls(); recalculateDashboardMetrics(); };
-        container.appendChild(btn);
-    });
+    function resetMonthConversionStamp() {
+        let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+        if (activeMonth && LEDGER[activeMonth] && LEDGER[activeMonth].conversions) {
+            delete LEDGER[activeMonth].conversions;
+            saveState();
+            recalculateDashboardMetrics();
+            promptAlert(`Reset ${activeMonth.split('_')[0]} conversion rates to Global Baseline.`);
+        }
     }
-
-    function getHistoricalLedgerName(currentIdx, offset) {
-        let targetIdx = currentIdx + offset;
-        if (targetIdx >= 0 && targetIdx < ACTIVE_TIMELINE.length) return ACTIVE_TIMELINE[targetIdx];
-        let archTarget = ARCHIVED_TIMELINE.length + targetIdx;
-        if (archTarget >= 0 && archTarget < ARCHIVED_TIMELINE.length) return ARCHIVED_TIMELINE[archTarget];
-        return ACTIVE_TIMELINE[0];
-    }
-
     function getMonthEvMetrics(mName, isHistorical = false) {
         let ldg = LEDGER[mName] || ARCHIVED_LEDGER[mName] || { wd: 21, apps: {}, conv: {} };
         let wd = ldg.wd || 21;
-        let mult = isHistorical ? 1 : (1 + (FUNNEL.volBump / 100));
-        let appToPs = isHistorical ? 0.90 : (FUNNEL.appToPsRate / 100);
-        let psComp = isHistorical ? 0.76 : (FUNNEL.psCompRate / 100);
-        let scrIn = isHistorical ? 0.88 : (FUNNEL.screenInRate / 100);
-        let evSched = isHistorical ? 0.83 : (FUNNEL.evSchedRate / 100);
-        let evComp = isHistorical ? 0.85 : (FUNNEL.evCompRate / 100);
-        let enroll = isHistorical ? 0.80 : (FUNNEL.enrollRate / 100);
-        let pfaRoute = isHistorical ? 0.25 : (FUNNEL.pfaRouteRate / 100);
+        let rates = getEffectiveMonthRates(mName);
+        let mult = 1 + ((rates.volBump || 0) / 100);
+        let appToPs = (rates.appToPsRate || 90) / 100;
+        let psComp = (rates.psCompRate || 76) / 100;
+        let scrIn = (rates.screenInRate || 88) / 100;
+        let evSched = (rates.evSchedRate || 83) / 100;
+        let evComp = (rates.evCompRate || 85) / 100;
+        let enroll = (rates.enrollRate || 80) / 100;
+        let pfaRoute = isHistorical ? 0.25 : ((FUNNEL.pfaRouteRate !== undefined ? FUNNEL.pfaRouteRate : 25) / 100);
         let globalAppToEvRate = appToPs * psComp * scrIn * evSched;
 
         let apps = 0, psDem = 0, evDem = 0;
@@ -1093,249 +1176,250 @@
             }
         });
 
-        let pfaAllocated = Math.min(psDem * pfaRoute, pfaPsCap);
-        let ceRemPs = psDem - pfaAllocated;
-        let ceFluidEvCap = Math.max(0, ceTotalH - (ceRemPs * PS_HANDLE)) / EV_HANDLE;
-        let maxPsSched = Math.min(psDem, pfaPsCap + ceStrictPsCap);
-        let maxScrIn = maxPsSched * psComp * scrIn;
-        let maxEvDemFromPs = maxScrIn * evSched;
-        let maxEvSched = Math.min(maxEvDemFromPs, ceFluidEvCap);
-
-        let yieldEnroll = evDem * evComp * enroll;
-        let maxYieldEnroll = maxEvSched * evComp * enroll;
+        let actualPfaYield = Math.min(psDem * pfaRoute, pfaPsCap);
+        let remCePsDem = Math.max(0, psDem - actualPfaYield);
+        let ceFluidEvCap = Math.max(0, ceTotalH - (remCePsDem * PS_HANDLE)) / EV_HANDLE;
+        let maxEvSched = Math.min(evDem, ceStrictEvCap > 0 ? ceStrictEvCap : ceFluidEvCap);
 
         return {
-            apps, psDem, dem: evDem, maxEvSched,
-            pfaPsCap, ceStrictPsCap, ceStrictEvCap, ceFluidEvCap,
-            yield: yieldEnroll, maxYield: maxYieldEnroll
+            apps,
+            psDem,
+            dem: evDem,
+            ceStrictEvCap,
+            ceFluidEvCap,
+            maxEvSched,
+            yield: evDem * evComp * enroll,
+            maxYield: maxEvSched * evComp * enroll
         };
     }
 
     let ceStrictEvCap = 0;
 
     function recalculateDashboardMetrics() {
-    let activeMonth = ACTIVE_TIMELINE[activeMonthIdx]; if (!activeMonth) return;
-    document.getElementById('mod-global-bump').value = FUNNEL.volBump || 0;
-    document.getElementById('mod-global-ps-rate').value = FUNNEL.appToPsRate || 0;
-    document.getElementById('mod-global-ps-comp').value = FUNNEL.psCompRate || 0;
-    document.getElementById('mod-global-scr-in').value = FUNNEL.screenInRate || 0;
-    document.getElementById('mod-global-ev-sched').value = FUNNEL.evSchedRate || 0;
-    document.getElementById('mod-global-ev-comp').value = FUNNEL.evCompRate || 0;
-    document.getElementById('mod-global-enroll').value = FUNNEL.enrollRate || 0;
-    let benchInp = document.getElementById('pfa-bench-rate-inp');
-    if (benchInp) benchInp.value = FUNNEL.pfaRouteRate !== undefined ? FUNNEL.pfaRouteRate : 25;
+        let activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+        if (!activeMonth || !LEDGER[activeMonth]) return;
 
-    let wd = LEDGER[activeMonth].wd || 21;
-    let mult = 1 + (FUNNEL.volBump / 100);
-    let globalAppToEvRate = (FUNNEL.appToPsRate/100) * (FUNNEL.psCompRate/100) * (FUNNEL.screenInRate/100) * (FUNNEL.evSchedRate/100);
+        let ldg = LEDGER[activeMonth];
+        let wd = ldg.wd || 21;
+        let activeRates = getEffectiveMonthRates(activeMonth);
 
-    let evW0 = (FUNNEL.evSplitM0 !== undefined ? FUNNEL.evSplitM0 : 50) / 100;
-    let evW1 = (FUNNEL.evSplitM1 !== undefined ? FUNNEL.evSplitM1 : 50) / 100;
+        // Sync top funnel parameter strip inputs with active month rates
+        const setInp = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        setInp('mod-global-bump', activeRates.volBump);
+        setInp('mod-global-ps-rate', activeRates.appToPsRate);
+        setInp('mod-global-ps-comp', activeRates.psCompRate);
+        setInp('mod-global-scr-in', activeRates.screenInRate);
+        setInp('mod-global-ev-sched', activeRates.evSchedRate);
+        setInp('mod-global-ev-comp', activeRates.evCompRate);
+        setInp('mod-global-enroll', activeRates.enrollRate);
 
-    let lagR0 = FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 5.0;
-    let lagR1 = FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 22.0;
-    let lagR2 = FUNNEL.enSplitM2 !== undefined ? FUNNEL.enSplitM2 : 5.5;
-    let lagR3 = FUNNEL.enSplitM3 !== undefined ? FUNNEL.enSplitM3 : 1.3;
-    let lagTotalCurve = (lagR0 + lagR1 + lagR2 + lagR3) || 33.8;
-    let enW0 = lagR0 / lagTotalCurve;
-    let enW1 = lagR1 / lagTotalCurve;
-    let enW2 = lagR2 / lagTotalCurve;
-    let enW3 = lagR3 / lagTotalCurve;
-    let m0_metrics = getMonthEvMetrics(activeMonth, false);
-    let m1_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -1), true) : m0_metrics;
-    let m2_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -2), true) : m1_metrics;
-    let m3_metrics = activeDemandMode === 'cohort' ? getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -3), true) : m2_metrics;
+        const stampBadge = document.getElementById('month-conv-stamp-badge');
+        const resetStampBtn = document.getElementById('btn-reset-month-conv');
+        if (stampBadge) stampBadge.style.display = activeRates.isStamped ? 'inline-block' : 'none';
+        if (resetStampBtn) resetStampBtn.style.display = activeRates.isStamped ? 'inline-block' : 'none';
 
-    let calWeeks = getCalendarWeeks(activeMonth); let wdArray = [0,0,0,0,0]; let weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
-    if (calWeeks && calWeeks.length > 0) {
-        for(let i=0; i<5; i++) { if(calWeeks[i]) { wdArray[i] = calWeeks[i].wd; weekLabels[i] = calWeeks[i].label; } }
-    } else {
-        let manWks = LEDGER[activeMonth].manualWeeks || [0,0,0,0,0];
-        let sumMan = manWks.reduce((a,b)=>a+b, 0);
-        if (sumMan > 0) { wdArray = [...manWks]; } else { let perWk = wd / 4.33; wdArray = [perWk, perWk, perWk, perWk, wd - (perWk*4)]; }
-    }
-
-    let totalBaseApps = 0, totalBumpedApps = 0, totalPsDemFull = 0, totalEvDemInMonth = 0;
-    let stateMetrics = {};
-    const histBaseAppToEvRate = 0.90 * 0.76 * 0.88 * 0.83;
-    MASTER_STATES.forEach(s => {
-        let baseA = LEDGER[activeMonth].apps[s] || 0;
-        let a = baseA * mult;
-        let psD = a * (FUNNEL.appToPsRate / 100);
-        let conv = LEDGER[activeMonth].conv[s] || 0;
-        let evD = a * (conv > 0 ? conv / 100 : globalAppToEvRate);
-
-        if (activeDemandMode === 'cohort') {
-            let prevM = getHistoricalLedgerName(activeMonthIdx, -1);
-            let pLdg = LEDGER[prevM] || ARCHIVED_LEDGER[prevM];
-            let pApps = pLdg && pLdg.apps ? (pLdg.apps[s] || 0) : baseA;
-            let pConv = pLdg && pLdg.conv ? (pLdg.conv[s] || 0) : 0;
-            let pEvD = pApps * (pConv > 0 ? pConv / 100 : histBaseAppToEvRate);
-            evD = (evW0 * evD) + (evW1 * pEvD);
+        // Calendar & manual weeks setup
+        let calWeeks = getCalendarWeeks(activeMonth);
+        let manWeeks = ldg.manualWeeks || [0, 0, 0, 0, 0];
+        let wdArray = [0, 0, 0, 0, 0];
+        let weekLabels = [];
+        for (let w = 0; w < 5; w++) {
+            wdArray[w] = (calWeeks && calWeeks[w]) ? calWeeks[w].wd : (manWeeks[w] || 0);
+            weekLabels[w] = (calWeeks && calWeeks[w]) ? calWeeks[w].label : WEEK_LABELS[w];
         }
 
-        totalBaseApps += baseA;
-        totalBumpedApps += a;
-        totalPsDemFull += psD;
-        totalEvDemInMonth += evD;
+        // Cohort lag weights
+        let evW0 = (FUNNEL.evSplitM0 !== undefined ? FUNNEL.evSplitM0 : 50) / 100;
+        let evW1 = (FUNNEL.evSplitM1 !== undefined ? FUNNEL.evSplitM1 : 50) / 100;
+        let lagR0 = FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 5.0;
+        let lagR1 = FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 22.0;
+        let lagR2 = FUNNEL.enSplitM2 !== undefined ? FUNNEL.enSplitM2 : 5.5;
+        let lagR3 = FUNNEL.enSplitM3 !== undefined ? FUNNEL.enSplitM3 : 1.3;
+        let lagTotalCurve = (lagR0 + lagR1 + lagR2 + lagR3) || 33.8;
+        let enW0 = lagR0 / lagTotalCurve;
+        let enW1 = lagR1 / lagTotalCurve;
+        let enW2 = lagR2 / lagTotalCurve;
+        let enW3 = lagR3 / lagTotalCurve;
 
-        stateMetrics[s] = {
-            apps: a, psDemandFull: psD, pfaTargetPs: 0, psDemandCE: psD,
-            evDemand: evD, psCapCe: 0, evCapCe: 0, assigned: [], weekly: []
-        };
-    });
+        let m0_metrics = getMonthEvMetrics(activeMonth, false);
+        let m1_metrics = getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -1) || activeMonth, true);
+        let m2_metrics = getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -2) || activeMonth, true);
+        let m3_metrics = getMonthEvMetrics(getHistoricalLedgerName(activeMonthIdx, -3) || activeMonth, true);
 
-    // PFA Pool & Routing
-    let totalPfaPsCap = 0, totalCeStrictPsCap = 0, totalCeTotalHours = 0, totalPtoCe = 0, totalPtoPfa = 0;
-    ceStrictEvCap = 0;
+        let mult = 1 + ((activeRates.volBump || 0) / 100);
+        let globalAppToEvRate = ((activeRates.appToPsRate || 90) / 100) * ((activeRates.psCompRate || 76) / 100) * ((activeRates.screenInRate || 88) / 100) * ((activeRates.evSchedRate || 83) / 100);
 
-    Object.keys(ROSTER).forEach(n => {
-        let r = ROSTER[n];
-        let pto = parseFloat(r.pto[activeMonth]) || 0;
-        let netDays = Math.max(0, wd - pto);
-        let qPs = parseFloat(r.qPs[activeMonth]) || 0;
-        let qEv = parseFloat(r.qEv[activeMonth]) || 0;
-        if (r.role === 'PFA') {
-            totalPfaPsCap += netDays * qPs;
-            totalPtoPfa += pto;
-        } else {
-            totalCeStrictPsCap += netDays * qPs;
-            ceStrictEvCap += netDays * qEv;
-            totalCeTotalHours += netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE);
-            totalPtoCe += pto;
-        }
-    });
+        let totalBaseApps = 0, totalBumpedApps = 0, totalPsDemFull = 0, totalEvDemInMonth = 0;
+        let stateMetrics = {};
 
-    // Calculate global PFA capacity pool
-    let availablePfaPool = totalPfaPsCap;
+        MASTER_STATES.forEach(s => {
+            let baseA = ldg.apps[s] || 0;
+            let a = baseA * mult;
+            let psD = a * ((activeRates.appToPsRate || 90) / 100);
+            let conv = ldg.conv ? (ldg.conv[s] || 0) : 0;
+            let evDInMonth = a * (conv > 0 ? conv / 100 : globalAppToEvRate);
 
-    // Bottom-up CE State Allocations
-    let ceAllocations = [];
-    Object.keys(ROSTER).sort((a,b) => (ROSTER[a].order||0) - (ROSTER[b].order||0)).forEach(n => {
-        let r = ROSTER[n];
-        if (r.role === 'PFA') return;
-        let pto = parseFloat(r.pto[activeMonth]) || 0;
-        let netDays = Math.max(0, wd - pto);
-        let qPs = parseFloat(r.qPs[activeMonth]) || 0;
-        let qEv = parseFloat(r.qEv[activeMonth]) || 0;
-        let activeStates = (r.mix && r.mix[activeMonth]) ? r.mix[activeMonth].filter(st => MASTER_STATES.includes(st)) : [];
-        let denom = activeStates.reduce((sum, st) => sum + (stateMetrics[st] ? stateMetrics[st].apps : 0), 0);
+            // Scale state Eval demand if in Lagged Cohort mode
+            let stateEvShare = m0_metrics.dem > 0 ? (evDInMonth / m0_metrics.dem) : (1 / (MASTER_STATES.length || 1));
+            let cohortTotalEvDem = (evW0 * m0_metrics.dem) + (evW1 * m1_metrics.dem);
+            let evD = activeDemandMode === 'cohort' ? (cohortTotalEvDem * stateEvShare) : evDInMonth;
 
-        let cePsTotal = netDays * qPs;
-        let ceEvTotal = netDays * qEv;
+            totalBaseApps += baseA;
+            totalBumpedApps += a;
+            totalPsDemFull += psD;
+            totalEvDemInMonth += evD;
 
-        activeStates.forEach(st => {
-            let w = denom > 0 ? (stateMetrics[st].apps / denom) : (1 / activeStates.length);
-            stateMetrics[st].psCapCe += cePsTotal * w;
-            stateMetrics[st].evCapCe += ceEvTotal * w;
-            stateMetrics[st].assigned.push(n);
+            stateMetrics[s] = {
+                apps: a, psDemandFull: psD, pfaTargetPs: 0, psDemandCE: psD,
+                evDemand: evD, psCapCe: 0, evCapCe: 0, assigned: [], weekly: []
+            };
         });
 
-        ceAllocations.push({ name: n, activeStates, denom, cePsTotal, ceEvTotal });
-    });
+        // Roster capacity & proportional state allocation
+        let totalPfaPsCap = 0;
+        let totalCeStrictPsCap = 0;
+        ceStrictEvCap = 0;
+        let totalCeTotalHours = 0;
+        let totalPtoCe = 0;
+        let totalPtoPfa = 0;
+        let ceAllocations = [];
 
-    // NEED-BASED PFA ARBITRAGE ROUTING
-    // Step 1: Zero out PFA targets on surplus states; let CEs absorb what they naturally can first
-    MASTER_STATES.forEach(s => {
-        stateMetrics[s].pfaTargetPs = 0;
-        stateMetrics[s].psDemandCE = stateMetrics[s].psDemandFull;
-        stateMetrics[s].pfaTierReason = 'NONE';
-    });
+        Object.keys(ROSTER).sort((a, b) => (ROSTER[a].order || 0) - (ROSTER[b].order || 0)).forEach(name => {
+            let r = ROSTER[name];
+            let pto = (r.pto && r.pto[activeMonth] !== undefined) ? (parseFloat(r.pto[activeMonth]) || 0) : 0;
+            let netDays = Math.max(0, wd - pto);
+            let qPs = (r.qPs && r.qPs[activeMonth] !== undefined) ? (parseFloat(r.qPs[activeMonth]) || 0) : 0;
+            let qEv = (r.qEv && r.qEv[activeMonth] !== undefined) ? (parseFloat(r.qEv[activeMonth]) || 0) : 0;
 
-    let totalPfaAllocated = 0;
+            if (r.role === 'PFA') {
+                totalPtoPfa += pto;
+                totalPfaPsCap += netDays * qPs;
+            } else {
+                totalPtoCe += pto;
+                let psCap = netDays * qPs;
+                let evCap = netDays * qEv;
+                totalCeStrictPsCap += psCap;
+                ceStrictEvCap += evCap;
+                totalCeTotalHours += netDays * (qPs * PS_HANDLE + qEv * EV_HANDLE);
 
-    // Step 2 (Tier 1 - PS Overflow Rescue): Prioritize states where Gross PS Demand exceeds CE PS Supply
-    let psDeficitStates = MASTER_STATES
-        .map(s => ({ state: s, deficit: Math.max(0, stateMetrics[s].psDemandFull - stateMetrics[s].psCapCe) }))
-        .filter(d => d.deficit > 0)
-        .sort((a, b) => b.deficit - a.deficit);
+                let activeStates = ((r.mix && r.mix[activeMonth]) ? r.mix[activeMonth] : []).filter(st => stateMetrics[st]);
+                let denom = activeStates.reduce((sum, st) => sum + (stateMetrics[st].apps || 0), 0);
+                ceAllocations.push({ name, activeStates, denom });
 
-    for (let item of psDeficitStates) {
-        if (availablePfaPool <= 0) break;
-        let alloc = Math.min(item.deficit, availablePfaPool);
-        stateMetrics[item.state].pfaTargetPs += alloc;
-        stateMetrics[item.state].psDemandCE = Math.max(0, stateMetrics[item.state].psDemandFull - stateMetrics[item.state].pfaTargetPs);
-        stateMetrics[item.state].pfaTierReason = 'OVERFLOW';
-        availablePfaPool -= alloc;
-        totalPfaAllocated += alloc;
-    }
-
-    // Step 3 (Tier 2 - Eval Bottleneck Shielding): Sweep remaining PFA pool to states with Evaluation deficits (<90% cov)
-    // Taking Phone Screens off Eval-starved CEs frees up 30-min blocks they can reinvest into Evaluations
-    if (availablePfaPool > 0) {
-        let evDeficitStates = MASTER_STATES
-            .filter(s => stateMetrics[s].psDemandCE > 0 && stateMetrics[s].evDemand > 0 && (stateMetrics[s].evCapCe / stateMetrics[s].evDemand) < 0.90)
-            .map(s => ({
-                state: s,
-                isScarce: stateMetrics[s].assigned.length > 0 && stateMetrics[s].assigned.length <= 2 ? 1 : 0,
-                evShortfall: Math.max(0, (stateMetrics[s].evDemand * 0.90) - stateMetrics[s].evCapCe),
-                remPs: stateMetrics[s].psDemandCE
-            }))
-            .sort((a, b) => b.isScarce - a.isScarce || b.evShortfall - a.evShortfall);
-
-        for (let item of evDeficitStates) {
-            if (availablePfaPool <= 0) break;
-            let shieldAlloc = Math.min(item.remPs, availablePfaPool);
-            stateMetrics[item.state].pfaTargetPs += shieldAlloc;
-            stateMetrics[item.state].psDemandCE = Math.max(0, stateMetrics[item.state].psDemandFull - stateMetrics[item.state].pfaTargetPs);
-            if (stateMetrics[item.state].pfaTierReason === 'NONE') {
-                stateMetrics[item.state].pfaTierReason = 'SHIELD';
+                activeStates.forEach(st => {
+                    let weight = denom > 0 ? (stateMetrics[st].apps / denom) : (1 / activeStates.length);
+                    stateMetrics[st].psCapCe += psCap * weight;
+                    stateMetrics[st].evCapCe += evCap * weight;
+                    stateMetrics[st].assigned.push(name);
+                });
             }
-            availablePfaPool -= shieldAlloc;
-            totalPfaAllocated += shieldAlloc;
-        }
-    }
+        });
 
-    let actualPfaPsYield = Math.min(totalPfaAllocated, totalPfaPsCap);
-    let effectivePfaSharePct = totalPsDemFull > 0 ? Math.round((actualPfaPsYield / totalPsDemFull) * 100) : 0;
-    let effPfaEl = document.getElementById('disp-eff-pfa-share');
-    if (effPfaEl) effPfaEl.innerText = effectivePfaSharePct;
-
-    // Populate weekly breakdown per state
+    // Weekly breakdown per state for volatility view
     MASTER_STATES.forEach(s => {
+        let sm = stateMetrics[s];
         for (let w = 0; w < 5; w++) {
             let ratio = wd > 0 ? (wdArray[w] / wd) : 0;
-            stateMetrics[s].weekly[w] = {
-                evDemand: stateMetrics[s].evDemand * ratio,
-                evCapCe: stateMetrics[s].evCapCe * ratio
+            sm.weekly[w] = {
+                evDemand: sm.evDemand * ratio,
+                evCapCe: sm.evCapCe * ratio
             };
         }
     });
+
+    // Need-Based PFA Arbitrage Sweep & Cap (Tier 1: PS Overflow -> Tier 2: Shield Evals)
+    let remainingPfaPool = totalPfaPsCap;
+    let actualPfaPsYield = 0;
+
+    // Tier 1: Rescue states where Gross PS Demand exceeds CE PS Supply
+    let tier1States = MASTER_STATES.filter(s => stateMetrics[s].psDemandFull > stateMetrics[s].psCapCe)
+        .sort((a, b) => (stateMetrics[b].psDemandFull - stateMetrics[b].psCapCe) - (stateMetrics[a].psDemandFull - stateMetrics[a].psCapCe));
+    tier1States.forEach(s => {
+        let sm = stateMetrics[s];
+        let overflow = Math.max(0, sm.psDemandFull - sm.psCapCe);
+        let alloc = Math.min(remainingPfaPool, overflow);
+        if (alloc > 0) {
+            sm.pfaTargetPs += alloc;
+            sm.psDemandCE = Math.max(0, sm.psDemandFull - sm.pfaTargetPs);
+            sm.pfaTierReason = 'OVERFLOW';
+            remainingPfaPool -= alloc;
+            actualPfaPsYield += alloc;
+        }
+    });
+
+    // Tier 2: Reinvest remaining PFA capacity into states below 90% Eval coverage (refunding 30m PS -> 0.5 Eval)
+    if (remainingPfaPool > 0) {
+        let tier2States = MASTER_STATES.filter(s => stateMetrics[s].evDemand > 0 && stateMetrics[s].psDemandCE > 0 && (stateMetrics[s].evCapCe / stateMetrics[s].evDemand) < 0.90)
+            .sort((a, b) => (stateMetrics[a].evCapCe / stateMetrics[a].evDemand) - (stateMetrics[b].evCapCe / stateMetrics[b].evDemand));
+        tier2States.forEach(s => {
+            if (remainingPfaPool <= 0) return;
+            let sm = stateMetrics[s];
+            let evDeficit = Math.max(0, (sm.evDemand * 0.90) - sm.evCapCe);
+            let psNeededToShield = evDeficit * (EV_HANDLE / PS_HANDLE);
+            let alloc = Math.min(remainingPfaPool, sm.psDemandCE, psNeededToShield);
+            if (alloc > 0) {
+                sm.pfaTargetPs += alloc;
+                sm.psDemandCE = Math.max(0, sm.psDemandCE - alloc);
+                sm.evCapCe += alloc * (PS_HANDLE / EV_HANDLE);
+                if (!sm.pfaTierReason) sm.pfaTierReason = 'SHIELD';
+                remainingPfaPool -= alloc;
+                actualPfaPsYield += alloc;
+            }
+        });
+    }
+
+    let effPfaSharePct = totalPsDemFull > 0 ? Math.round((actualPfaPsYield / totalPsDemFull) * 100) : 0;
+    let dispEffPfaEl = document.getElementById('disp-eff-pfa-share');
+    if (dispEffPfaEl) dispEffPfaEl.innerText = effPfaSharePct;
+
     window.stateMetricsCache = { metrics: stateMetrics, wdArray, weekLabels };
 
-    // Funnel Calculations
-    let d_bumped = totalBumpedApps;
-    let p_bumped = totalBumpedApps;
-
-    let d_psSched = totalPsDemFull;
+    // Funnel Calculations (Demand vs. True Physical Roster Capacity Ceiling)
     let totalSystemPsCap = totalPfaPsCap + totalCeStrictPsCap;
-    let p_psSched = Math.min(d_psSched, totalSystemPsCap);
+    let d_evStrictCap = ceStrictEvCap > 0 ? ceStrictEvCap : Math.max(0, totalCeTotalHours - (Math.max(0, totalPsDemFull - actualPfaPsYield) * PS_HANDLE)) / EV_HANDLE;
 
-    let d_psComp = d_psSched * (FUNNEL.psCompRate / 100);
-    let p_psComp = p_psSched * (FUNNEL.psCompRate / 100);
+    let appToPsRatio = (activeRates.appToPsRate || 90) / 100;
+    let psCompRatio = (activeRates.psCompRate || 76) / 100;
+    let scrInRatio = (activeRates.screenInRate || 88) / 100;
+    let evSchedRatio = (activeRates.evSchedRate || 83) / 100;
+    let evCompRatio = (activeRates.evCompRate || 85) / 100;
+    let enrollRatio = (activeRates.enrollRate || 80) / 100;
 
-    let d_scrIn = d_psComp * (FUNNEL.screenInRate / 100);
-    let p_scrIn = p_psComp * (FUNNEL.screenInRate / 100);
+    // Physical Roster Ceilings (assuming unlimited top-of-funnel marketing apps)
+    let p_psSched = totalSystemPsCap;
+    let p_psComp = p_psSched * psCompRatio;
+    let p_scrIn = p_psComp * scrInRatio;
+    let p_evFromPsCeiling = p_scrIn * evSchedRatio;
 
+    let d_bumped = totalBumpedApps;
+    let d_psSched = totalPsDemFull;
+    let d_psComp = d_psSched * psCompRatio;
+    let d_scrIn = d_psComp * scrInRatio;
     let d_evDem = totalEvDemInMonth;
     let d_ev_m0 = evW0 * m0_metrics.dem;
     let d_ev_m1 = evW1 * m1_metrics.dem;
 
     let remCePsDem = Math.max(0, d_psSched - actualPfaPsYield);
-    let fluidEvCap = Math.max(0, totalCeTotalHours - (remCePsDem * PS_HANDLE)) / EV_HANDLE;
-    let p_ev_m0 = evW0 * m0_metrics.maxEvSched;
-    let p_ev_m1 = evW1 * m1_metrics.maxEvSched;
-    let p_evDem = activeDemandMode === 'cohort' ? (p_ev_m0 + p_ev_m1) : Math.min(p_scrIn * (FUNNEL.evSchedRate / 100), fluidEvCap);
+    let p_ev_m0 = evW0 * d_evStrictCap;
+    let p_ev_m1 = evW1 * Math.min(m1_metrics.dem, m1_metrics.ceStrictEvCap > 0 ? m1_metrics.ceStrictEvCap : m1_metrics.ceFluidEvCap);
+    let p_evDem = activeDemandMode === 'cohort' ? (p_ev_m0 + p_ev_m1) : Math.min(p_evFromPsCeiling, d_evStrictCap);
 
     let d_evSched = d_evDem;
-    let p_evSched = Math.min(p_evDem, ceStrictEvCap > 0 ? ceStrictEvCap : fluidEvCap);
+    let p_evSched = Math.min(p_evFromPsCeiling, d_evStrictCap);
 
-    let d_evComp = d_evSched * (FUNNEL.evCompRate / 100);
-    let p_evComp = p_evSched * (FUNNEL.evCompRate / 100);
-    let d_evStrictCap = ceStrictEvCap > 0 ? ceStrictEvCap : fluidEvCap;
+    let d_evComp = d_evSched * evCompRatio;
+    let p_evComp = p_evSched * evCompRatio;
+
+    // Max Accepted Apps Ceiling & Marketing Spend Headroom
+    let maxAppsPsCeiling = appToPsRatio > 0 ? (totalSystemPsCap / appToPsRatio) : totalBumpedApps;
+    let cumAppToEv = globalAppToEvRate > 0 ? globalAppToEvRate : (appToPsRatio * psCompRatio * scrInRatio * evSchedRatio);
+    let maxAppsEvCeiling = cumAppToEv > 0 ? (d_evStrictCap / cumAppToEv) : totalBumpedApps;
+    let p_bumped = Math.min(maxAppsPsCeiling, maxAppsEvCeiling);
+    let mktBottleneckStage = maxAppsEvCeiling < maxAppsPsCeiling ? 'Clinical Evals' : 'Phone Screens';
 
     let d_enroll = 0, p_enroll = 0, d_en_m0 = 0, d_en_m1 = 0, d_en_m2 = 0, d_en_m3 = 0, p_en_m0 = 0, p_en_m1 = 0, p_en_m2 = 0, p_en_m3 = 0;
     let hasLockedActuals = false;
+    let useEmpiricalYield = !!FUNNEL.useEmpiricalYield;
 
     if (activeDemandMode === 'cohort') {
         let lockedAct = (LEDGER[activeMonth] && Array.isArray(LEDGER[activeMonth].actuals) && LEDGER[activeMonth].actuals.length === 4) ? LEDGER[activeMonth].actuals : null;
@@ -1345,6 +1429,11 @@
             d_en_m1 = lockedAct[1];
             d_en_m2 = lockedAct[2];
             d_en_m3 = lockedAct[3];
+        } else if (useEmpiricalYield) {
+            d_en_m0 = m0_metrics.apps * (lagR0 / 100);
+            d_en_m1 = m1_metrics.apps * (lagR1 / 100);
+            d_en_m2 = m2_metrics.apps * (lagR2 / 100);
+            d_en_m3 = m3_metrics.apps * (lagR3 / 100);
         } else {
             d_en_m0 = m0_metrics.yield * enW0;
             d_en_m1 = m1_metrics.yield * enW1;
@@ -1353,14 +1442,18 @@
         }
         d_enroll = d_en_m0 + d_en_m1 + d_en_m2 + d_en_m3;
 
-        p_en_m0 = m0_metrics.maxYield * enW0;
-        p_en_m1 = m1_metrics.maxYield * enW1;
-        p_en_m2 = m2_metrics.maxYield * enW2;
-        p_en_m3 = m3_metrics.maxYield * enW3;
+        let m1Lock = (LEDGER[getHistoricalLedgerName(activeMonthIdx, -1)] || {}).actuals;
+        let m2Lock = (LEDGER[getHistoricalLedgerName(activeMonthIdx, -2)] || {}).actuals;
+        let m3Lock = (LEDGER[getHistoricalLedgerName(activeMonthIdx, -3)] || {}).actuals;
+
+        p_en_m0 = useEmpiricalYield ? (p_bumped * (lagR0 / 100)) : (p_evComp * enrollRatio * enW0);
+        p_en_m1 = m1Lock ? d_en_m1 : (useEmpiricalYield ? (m1_metrics.apps * (lagR1 / 100)) : (m1_metrics.maxYield * enW1));
+        p_en_m2 = m2Lock ? d_en_m2 : (useEmpiricalYield ? (m2_metrics.apps * (lagR2 / 100)) : (m2_metrics.maxYield * enW2));
+        p_en_m3 = m3Lock ? d_en_m3 : (useEmpiricalYield ? (m3_metrics.apps * (lagR3 / 100)) : (m3_metrics.maxYield * enW3));
         p_enroll = p_en_m0 + p_en_m1 + p_en_m2 + p_en_m3;
     } else {
-        d_enroll = d_evComp * (FUNNEL.enrollRate / 100);
-        p_enroll = p_evComp * (FUNNEL.enrollRate / 100);
+        d_enroll = d_evComp * enrollRatio;
+        p_enroll = p_evComp * enrollRatio;
     }
 
     const lockBadge = document.getElementById('final-enroll-lock-badge');
@@ -1373,27 +1466,30 @@
         let wStats = getQuickWeekStats(activeMonth, activeWeekFilter);
         if (wStats) {
             d_bumped = wStats.apps;
-            p_bumped = wStats.apps;
             d_psSched = wStats.cePsDem + wStats.pfaPsDem;
             totalSystemPsCap = wStats.pfaPsCap + wStats.cePsCap;
             totalPfaPsCap = wStats.pfaPsCap;
             totalCeStrictPsCap = wStats.cePsCap;
             actualPfaPsYield = wStats.pfaPsDem;
             remCePsDem = wStats.cePsDem;
-            p_psSched = Math.min(d_psSched, totalSystemPsCap);
-            d_psComp = d_psSched * (FUNNEL.psCompRate / 100);
-            p_psComp = p_psSched * (FUNNEL.psCompRate / 100);
-            d_scrIn = d_psComp * (FUNNEL.screenInRate / 100);
-            p_scrIn = p_psComp * (FUNNEL.screenInRate / 100);
+            p_psSched = totalSystemPsCap;
+            d_psComp = d_psSched * psCompRatio;
+            p_psComp = p_psSched * psCompRatio;
+            d_scrIn = d_psComp * scrInRatio;
+            p_scrIn = p_psComp * scrInRatio;
             d_evDem = wStats.evDem;
-            p_evDem = Math.min(p_scrIn * (FUNNEL.evSchedRate / 100), wStats.evFluidCap);
+            d_evStrictCap = wStats.evFluidCap;
+            p_evDem = Math.min(p_scrIn * evSchedRatio, d_evStrictCap);
             d_evSched = d_evDem;
             p_evSched = p_evDem;
-            d_evComp = d_evSched * (FUNNEL.evCompRate / 100);
-            p_evComp = p_evSched * (FUNNEL.evCompRate / 100);
-            d_enroll = d_evComp * (FUNNEL.enrollRate / 100);
-            p_enroll = p_evComp * (FUNNEL.enrollRate / 100);
-            d_evStrictCap = wStats.evFluidCap;
+            d_evComp = d_evSched * evCompRatio;
+            p_evComp = p_evSched * evCompRatio;
+            d_enroll = d_evComp * enrollRatio;
+            p_enroll = p_evComp * enrollRatio;
+            maxAppsPsCeiling = appToPsRatio > 0 ? (totalSystemPsCap / appToPsRatio) : d_bumped;
+            maxAppsEvCeiling = cumAppToEv > 0 ? (d_evStrictCap / cumAppToEv) : d_bumped;
+            p_bumped = Math.min(maxAppsPsCeiling, maxAppsEvCeiling);
+            mktBottleneckStage = maxAppsEvCeiling < maxAppsPsCeiling ? 'Clinical Evals' : 'Phone Screens';
             totalPtoCe = wStats.ptoCe;
             totalPtoPfa = wStats.ptoPfa;
             dateRangeStr = `${wStats.bizStart.getMonth()+1}/${wStats.bizStart.getDate()} - ${wStats.bizEnd.getMonth()+1}/${wStats.bizEnd.getDate()}`;
@@ -1413,6 +1509,22 @@
     document.getElementById('tbl-dem-enroll').innerText = fmt(d_enroll); document.getElementById('tbl-pot-enroll').innerText = fmt(p_enroll); document.getElementById('tbl-var-enroll').innerHTML = formatVar(p_enroll - d_enroll);
     document.getElementById('tbl-dem-pace').innerText = fmt(d_enroll / 4.33); document.getElementById('tbl-pot-pace').innerText = fmt(p_enroll / 4.33);
 
+    // Update Marketing Spend Headroom Row
+    let mktHeadroom = p_bumped - d_bumped;
+    let mktTagEl = document.getElementById('mkt-bottleneck-tag');
+    if (mktTagEl) mktTagEl.innerText = `(Bottleneck: ${mktBottleneckStage})`;
+    let mktCurrEl = document.getElementById('tbl-mkt-curr');
+    if (mktCurrEl) mktCurrEl.innerText = fmt(d_bumped) + ' apps';
+    let mktCeilEl = document.getElementById('tbl-mkt-ceil');
+    if (mktCeilEl) mktCeilEl.innerText = fmt(p_bumped) + ' apps';
+    let mktHeadEl = document.getElementById('tbl-mkt-headroom');
+    if (mktHeadEl) {
+        let pctRoom = d_bumped > 0 ? Math.round((mktHeadroom / d_bumped) * 100) : 0;
+        mktHeadEl.innerHTML = mktHeadroom >= 0
+            ? `<span style="color:#86efac;">+${fmt(mktHeadroom)} (+${pctRoom}%)</span>`
+            : `<span style="color:#fca5a5;">${fmt(mktHeadroom)} (${pctRoom}%)</span>`;
+    }
+
     // Update Top 4 KPI Telemetry Cards
     let d_psUtilPct = totalSystemPsCap > 0 ? (d_psSched / totalSystemPsCap) * 100 : 0;
     let cePsUtilPct = totalCeStrictPsCap > 0 ? (remCePsDem / totalCeStrictPsCap) * 100 : 0;
@@ -1429,7 +1541,7 @@
             <div class="telemetry-card theme-app">
                 <div class="telemetry-hdr"><span>Accepted Application Volume</span><span style="color:#a5b4fc;">TOP OF FUNNEL</span></div>
                 <div class="telemetry-main"><span class="telemetry-val">${fmt(d_bumped)}</span><span class="telemetry-sub">applications gross</span></div>
-                <div style="display:flex; justify-content:space-between; font-size:8.5px; color:#64748b;"><span>Bump: ${FUNNEL.volBump || 0}%</span><span>Base: ${fmt(totalBaseApps)}</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:8.5px; color:#64748b;"><span>Bump: ${activeRates.volBump || 0}%</span><span>Base: ${fmt(totalBaseApps)}</span></div>
             </div>
             <div class="telemetry-card theme-pto">
                 <div class="telemetry-hdr"><span>Total Roster PTO</span><span style="color:#fda4af;">DAYS OUT</span></div>
