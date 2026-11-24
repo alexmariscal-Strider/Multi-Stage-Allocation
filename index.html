@@ -439,7 +439,7 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
         <h2 id="mix-title" style="align-items: center; display: flex; flex-wrap: wrap; gap: 4px;">
             <span>CE Profile Manager</span>
             <div style="display: inline-flex; gap: 4px; align-items: center; margin-left: auto;">
-                <button class="btn-action" id="btn-sync-licensure" style="padding: 2px 6px; font-size: 8px; background: #059669;" onclick="promptConfirm('Sync all clinicians\' licensed states into the active month matrix?', syncLicensureToActiveMonth)">🔄 SYNC LICENSURE</button>
+                <button class="btn-action" id="btn-sync-licensure" style="padding: 2px 6px; font-size: 8px; background: #059669;" onclick="syncLicensureFromSheet()" title="Pull clinician state licenses directly from Google Sheets">🔄 SYNC LICENSURE</button>
                 <button class="btn-action" id="btn-sync-all-states" style="padding: 2px 6px; font-size: 8px; background: #6366f1;" onclick="promptConfirm('Provision all active states to all licensed CEs?', addAllStatesToAllProviders)">+ ALL TO ALL</button>
             </div>
         </h2>
@@ -448,7 +448,10 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
 
     <!-- ROLLING CAPACITY & ROLE LEDGER -->
     <div class="panel full-width">
-        <h2>Rolling Capacity & Role Ledger</h2>
+        <h2 style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+            <span>Rolling Capacity & Role Ledger</span>
+            <button class="btn-action" id="btn-sync-pto" style="background: #0284c7; padding: 4px 10px; font-size: 9px;" onclick="syncPtoFromSheet()" title="Pull scheduled PTO directly from Google Sheets">🔄 SYNC PTO</button>
+        </h2>
         <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px 14px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <span style="font-weight: 700; color: #c4b5fd; font-size: 10px;">+ ONBOARD:</span>
@@ -718,6 +721,105 @@ const DEFAULT_STATE_LIST = ["MA","NJ","NH","CT","NY","PA","RI","ME","VA","OH","T
 const PS_HANDLE = 0.5;
 const EV_HANDLE = 1.0;
 
+/* GOOGLE SHEETS LIVE SYNC ENDPOINTS */
+const GSHEET_ID = "1R9gyVy1FXbSQz5P0YugdHW58YckNx-o7847w4SCXbdQ";
+const PTO_SHEET_GID = "1443603617";
+const LICENSURE_SHEET_GID = "748848576";
+
+const STATE_NAME_TO_CODE = {
+    "ALABAMA":"AL","ALASKA":"AK","ARIZONA":"AZ","ARKANSAS":"AR","CALIFORNIA":"CA","COLORADO":"CO","CONNECTICUT":"CT",
+    "DELAWARE":"DE","DISTRICT OF COLUMBIA":"DC","WASHINGTON DC":"DC","FLORIDA":"FL","GEORGIA":"GA","HAWAII":"HI",
+    "IDAHO":"ID","ILLINOIS":"IL","INDIANA":"IN","IOWA":"IA","KANSAS":"KS","KENTUCKY":"KY","LOUISIANA":"LA",
+    "MAINE":"ME","MARYLAND":"MD","MASSACHUSETTS":"MA","MICHIGAN":"MI","MINNESOTA":"MN","MISSISSIPPI":"MS",
+    "MISSOURI":"MO","MONTANA":"MT","NEBRASKA":"NE","NEVADA":"NV","NEW HAMPSHIRE":"NH","NEW JERSEY":"NJ",
+    "NEW MEXICO":"NM","NEW YORK":"NY","NORTH CAROLINA":"NC","NORTH DAKOTA":"ND","OHIO":"OH","OKLAHOMA":"OK",
+    "OREGON":"OR","PENNSYLVANIA":"PA","RHODE ISLAND":"RI","SOUTH CAROLINA":"SC","SOUTH DAKOTA":"SD",
+    "TENNESSEE":"TN","TEXAS":"TX","UTAH":"UT","VERMONT":"VT","VIRGINIA":"VA","WASHINGTON":"WA",
+    "WEST VIRGINIA":"WV","WISCONSIN":"WI","WYOMING":"WY"
+};
+const VALID_STATE_CODES = new Set(Object.values(STATE_NAME_TO_CODE));
+
+function normalizeStateCode(raw) {
+    if (raw === null || raw === undefined) return null;
+    const cleaned = String(raw).trim().toUpperCase().replace(/[^A-Z\s]/g, '').trim();
+    if (!cleaned) return null;
+    if (cleaned.length === 2 && VALID_STATE_CODES.has(cleaned)) return cleaned;
+    if (STATE_NAME_TO_CODE[cleaned]) return STATE_NAME_TO_CODE[cleaned];
+    return null;
+}
+
+function normalizeClinicianKey(str) {
+    return String(str || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function findRosterMatch(rawName) {
+    const target = normalizeClinicianKey(rawName);
+    if (!target) return null;
+    const keys = Object.keys(ROSTER);
+    // 1. Exact normalized match
+    let hit = keys.find(k => normalizeClinicianKey(k) === target);
+    if (hit) return hit;
+    // 2. First + Last token match (handles middle initials or suffixes)
+    const tParts = target.split(' ');
+    if (tParts.length >= 2) {
+        const tFirst = tParts[0], tLast = tParts[tParts.length - 1];
+        hit = keys.find(k => {
+            const kParts = normalizeClinicianKey(k).split(' ');
+            return kParts.length >= 2 && kParts[0] === tFirst && kParts[kParts.length - 1] === tLast;
+        });
+        if (hit) return hit;
+    }
+    // 3. Substring containment fallback
+    return keys.find(k => {
+        const nk = normalizeClinicianKey(k);
+        return nk.length > 3 && (nk.includes(target) || target.includes(nk));
+    }) || null;
+}
+
+function parseCsvText(csvText) {
+    const rows = [];
+    let row = [], cell = '', inQuotes = false;
+    for (let i = 0; i < csvText.length; i++) {
+        const ch = csvText[i];
+        const next = csvText[i + 1];
+        if (inQuotes) {
+            if (ch === '"' && next === '"') { cell += '"'; i++; }
+            else if (ch === '"') { inQuotes = false; }
+            else { cell += ch; }
+        } else {
+            if (ch === '"') { inQuotes = true; }
+            else if (ch === ',') { row.push(cell); cell = ''; }
+            else if (ch === '\r' && next === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; i++; }
+            else if (ch === '\n' || ch === '\r') { row.push(cell); rows.push(row); row = []; cell = ''; }
+            else { cell += ch; }
+        }
+    }
+    if (cell.length > 0 || row.length > 0) { row.push(cell); rows.push(row); }
+    return rows;
+}
+
+async function fetchGoogleSheetCsv(gid) {
+    const urls = [
+        `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`,
+        `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/export?format=csv&gid=${gid}`
+    ];
+    let lastErr = null;
+    for (const url of urls) {
+        try {
+            const resp = await fetch(url, { mode: 'cors', cache: 'no-store' });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const text = await resp.text();
+            if (text && !text.trim().startsWith('<!DOCTYPE html')) {
+                return parseCsvText(text);
+            }
+            throw new Error('Sheet returned HTML instead of CSV (check sharing permissions)');
+        } catch (err) {
+            lastErr = err;
+        }
+    }
+    throw lastErr || new Error('Unable to fetch Google Sheet');
+}
+
 /* ============================================================================
    GLOBAL APPLICATION STATE
    ============================================================================ */
@@ -926,15 +1028,40 @@ function normalizeStateIntegrity() {
         if (!r.pto_weekly) r.pto_weekly = {};
         if (!r.mix) r.mix = {};
 
-        // Merge any legacy `states`, `licensedStates`, or active `mix` keys so existing roster data is never lost
+        // Cleanly merge legacy `states`, `licensedStates`, and `mix` (supporting both Array and Object formats)
         const stSet = new Set();
-        if (Array.isArray(r.licensedStates)) r.licensedStates.forEach(s => { if (s) stSet.add(s); });
-        if (Array.isArray(r.states)) r.states.forEach(s => { if (s) stSet.add(s); });
-        Object.values(r.mix).forEach(mObj => {
-            if (mObj && typeof mObj === 'object') {
-                Object.keys(mObj).forEach(s => { if (mObj[s]) stSet.add(s); });
+        if (Array.isArray(r.licensedStates)) {
+            r.licensedStates.forEach(s => { const c = normalizeStateCode(s); if (c) stSet.add(c); });
+        }
+        if (Array.isArray(r.states)) {
+            r.states.forEach(s => { const c = normalizeStateCode(s); if (c) stSet.add(c); });
+        }
+        Object.keys(r.mix).forEach(mKey => {
+            const mObj = r.mix[mKey];
+            if (Array.isArray(mObj)) {
+                const converted = {};
+                mObj.forEach(s => {
+                    const c = normalizeStateCode(s);
+                    if (c) { converted[c] = true; stSet.add(c); }
+                });
+                r.mix[mKey] = converted;
+            } else if (mObj && typeof mObj === 'object') {
+                const cleaned = {};
+                Object.keys(mObj).forEach(k => {
+                    const val = mObj[k];
+                    const codeFromKey = normalizeStateCode(k);
+                    const codeFromVal = typeof val === 'string' ? normalizeStateCode(val) : null;
+                    if (codeFromKey) {
+                        if (val) { cleaned[codeFromKey] = true; stSet.add(codeFromKey); }
+                    } else if (codeFromVal) {
+                        cleaned[codeFromVal] = true;
+                        stSet.add(codeFromVal);
+                    }
+                });
+                r.mix[mKey] = cleaned;
             }
         });
+
         r.licensedStates = Array.from(stSet);
         r.states = [...r.licensedStates];
 
@@ -946,8 +1073,10 @@ function normalizeStateIntegrity() {
                 r.pto_weekly[m] = [totP, 0, 0, 0, 0];
             }
             r.pto[m] = r.pto_weekly[m].reduce((a, b) => a + (parseFloat(b) || 0), 0);
-            if (!r.mix[m]) {
+            if (!r.mix[m] || typeof r.mix[m] !== 'object' || Array.isArray(r.mix[m])) {
                 r.mix[m] = {};
+                r.licensedStates.forEach(s => { r.mix[m][s] = true; });
+            } else if (Object.keys(r.mix[m]).length === 0 && r.licensedStates.length > 0) {
                 r.licensedStates.forEach(s => { r.mix[m][s] = true; });
             }
         });
@@ -1992,21 +2121,286 @@ function syncLicensureToActiveMonth() {
     promptAlert(`Synced all licensed states into ${activeMonth.split('_')[0]}'s matrix.`);
 }
 
-function addAllStatesToAllProviders() {
-    Object.keys(ROSTER).forEach(n => {
-        const p = ROSTER[n];
-        if (p.role === 'PFA') return;
-        p.licensedStates = [...MASTER_STATES];
-        p.states = [...MASTER_STATES];
-        ACTIVE_TIMELINE.forEach(m => {
-            if (!p.mix[m]) p.mix[m] = {};
-            MASTER_STATES.forEach(s => { p.mix[m][s] = true; });
+async function syncLicensureFromSheet() {
+    const btn = document.getElementById('btn-sync-licensure');
+    const origTxt = btn ? btn.innerText : '';
+    if (btn) { btn.disabled = true; btn.innerText = '⏳ SYNCING...'; }
+
+    try {
+        const rows = await fetchGoogleSheetCsv(LICENSURE_SHEET_GID);
+        if (!rows || rows.length < 2) throw new Error('Licensure tab appears empty.');
+
+        // Detect header row (first row with >= 3 state codes OR clinician/name header)
+        let headerIdx = 0;
+        let stateColMap = {};
+        for (let r = 0; r < Math.min(5, rows.length); r++) {
+            const candidate = {};
+            rows[r].forEach((cell, cIdx) => {
+                const code = normalizeStateCode(cell);
+                if (code) candidate[cIdx] = code;
+            });
+            if (Object.keys(candidate).length >= 3) {
+                headerIdx = r;
+                stateColMap = candidate;
+                break;
+            }
+        }
+
+        const isMatrixLayout = Object.keys(stateColMap).length >= 3;
+        const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
+        let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('evaluator') || h.includes('provider') || h === 'ce');
+        if (nameCol === -1) nameCol = 0;
+
+        const syncedByRoster = {};
+        const positiveTokens = new Set(['x','yes','y','true','1','active','licensed','on','✓','✔','approved']);
+
+        if (isMatrixLayout) {
+            for (let r = headerIdx + 1; r < rows.length; r++) {
+                const rawName = rows[r][nameCol];
+                const match = findRosterMatch(rawName);
+                if (!match) continue;
+                if (!syncedByRoster[match]) syncedByRoster[match] = new Set();
+                Object.keys(stateColMap).forEach(cIdx => {
+                    const val = String(rows[r][cIdx] || '').trim().toLowerCase();
+                    if (!val || val === '0' || val === 'no' || val === 'false' || val === 'n' || val === '-' || val === 'off' || val === 'pending' || val === 'expired') return;
+                    if (positiveTokens.has(val) || val.includes('active') || val.includes('licen') || val.includes('yes') || val === 'x' || !isNaN(parseFloat(val))) {
+                        syncedByRoster[match].add(stateColMap[cIdx]);
+                    }
+                });
+            }
+        } else {
+            // List or row-per-license layout (e.g., Clinician | State(s) | Status)
+            let stateCol = headers.findIndex(h => h.includes('state') || h.includes('licens') || h.includes('jurisdiction') || h.includes('territory'));
+            if (stateCol === -1) stateCol = 1;
+            const statusCol = headers.findIndex(h => h.includes('status'));
+
+            for (let r = headerIdx + 1; r < rows.length; r++) {
+                const rawName = rows[r][nameCol];
+                const match = findRosterMatch(rawName);
+                if (!match) continue;
+                if (statusCol > -1) {
+                    const stVal = String(rows[r][statusCol] || '').trim().toLowerCase();
+                    if (stVal && (stVal.includes('inactive') || stVal.includes('expired') || stVal.includes('pending') || stVal.includes('denied') || stVal === 'no')) continue;
+                }
+                if (!syncedByRoster[match]) syncedByRoster[match] = new Set();
+                const rawStates = String(rows[r][stateCol] || '');
+                rawStates.split(/[,;/|\n]+/).forEach(tok => {
+                    const code = normalizeStateCode(tok);
+                    if (code) syncedByRoster[match].add(code);
+                });
+            }
+        }
+
+        const matchedNames = Object.keys(syncedByRoster);
+        if (matchedNames.length === 0) {
+            throw new Error('Connected to Google Sheet, but no clinician names matched your active roster.');
+        }
+
+        const activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+        let totalLicenses = 0;
+        let newStatesAdded = 0;
+
+        matchedNames.forEach(name => {
+            const p = ROSTER[name];
+            if (!p || p.role === 'PFA') return;
+            const stateList = Array.from(syncedByRoster[name]);
+            p.licensedStates = stateList;
+            p.states = [...stateList];
+            totalLicenses += stateList.length;
+
+            stateList.forEach(st => {
+                if (!MASTER_STATES.includes(st)) {
+                    MASTER_STATES.push(st);
+                    ACTIVE_TIMELINE.forEach(m => {
+                        if (LEDGER[m]) {
+                            if (LEDGER[m].apps[st] === undefined) LEDGER[m].apps[st] = 0;
+                            if (LEDGER[m].conv[st] === undefined) LEDGER[m].conv[st] = 0;
+                        }
+                    });
+                    newStatesAdded++;
+                }
+            });
+
+            // Activate synced licenses in the active month (and remove unlicensed states)
+            if (!p.mix[activeMonth]) p.mix[activeMonth] = {};
+            const nextMix = {};
+            stateList.forEach(st => { nextMix[st] = true; });
+            p.mix[activeMonth] = nextMix;
         });
-    });
-    saveState();
-    recalculateDashboardMetrics();
-    renderLicensureMatrix();
-    renderCeProfileManager();
+
+        saveState();
+        recalculateDashboardMetrics();
+        renderLicensureMatrix();
+        renderCeProfileManager();
+        promptAlert(`Licensure Sync Complete: Updated ${matchedNames.length} clinicians (${totalLicenses} total state licenses activated for ${activeMonth.split('_')[0]}${newStatesAdded > 0 ? `, +${newStatesAdded} new territories added` : ''}).`);
+    } catch (err) {
+        console.error('Licensure Sync Error:', err);
+        promptAlert(`Licensure Sync failed (${err.message}). Verify the Google Sheet is shared as "Anyone with the link can view".`);
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = origTxt || '🔄 SYNC LICENSURE'; }
+    }
+}
+
+function matchTimelineMonthFromHeader(headerText) {
+    const clean = String(headerText || '').trim().toLowerCase();
+    if (!clean) return null;
+    const shortMonths = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+    let mIdx = ALL_KNOWN_MONTHS.findIndex(mon => clean.includes(mon.toLowerCase()));
+    if (mIdx === -1) mIdx = shortMonths.findIndex(sm => new RegExp(`\\b${sm}\\b`).test(clean));
+    if (mIdx === -1) return null;
+    const yrMatch = clean.match(/(?:20)?(\d{2})\b/);
+    const targetYr = yrMatch ? (yrMatch[0].length === 4 ? yrMatch[0] : '20' + yrMatch[1]) : null;
+    return ACTIVE_TIMELINE.find(tm => {
+        const tLow = tm.toLowerCase();
+        const hasMonth = tLow.startsWith(ALL_KNOWN_MONTHS[mIdx].toLowerCase());
+        if (!hasMonth) return false;
+        if (targetYr && /\d{4}/.test(tLow)) return tLow.includes(targetYr);
+        return true;
+    }) || null;
+}
+
+async function syncPtoFromSheet() {
+    const btn = document.getElementById('btn-sync-pto');
+    const origTxt = btn ? btn.innerText : '';
+    if (btn) { btn.disabled = true; btn.innerText = '⏳ SYNCING PTO...'; }
+
+    try {
+        const rows = await fetchGoogleSheetCsv(PTO_SHEET_GID);
+        if (!rows || rows.length < 2) throw new Error('PTO tab appears empty.');
+
+        // Find header row
+        let headerIdx = 0;
+        for (let r = 0; r < Math.min(5, rows.length); r++) {
+            const joined = rows[r].join(' ').toLowerCase();
+            if (joined.includes('name') || joined.includes('clinician') || joined.includes('employee') || joined.includes('start') || joined.includes('date')) {
+                headerIdx = r;
+                break;
+            }
+        }
+
+        const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
+        let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('employee') || h.includes('provider') || h.includes('staff'));
+        if (nameCol === -1) nameCol = 0;
+
+        // Check if this is a Monthly Grid layout vs Date-Range Log layout
+        const monthColMap = {};
+        headers.forEach((h, idx) => {
+            const tm = matchTimelineMonthFromHeader(h);
+            if (tm) monthColMap[idx] = tm;
+        });
+
+        const startCol = headers.findIndex(h => h.includes('start') || h === 'date' || h.includes('from') || h.includes('pto date'));
+        const endCol = headers.findIndex(h => h.includes('end') || h.includes('to') || h.includes('return'));
+        const daysCol = headers.findIndex(h => h.includes('day') || h.includes('hrs') || h.includes('hour') || h.includes('duration') || h.includes('pto'));
+        const statusCol = headers.findIndex(h => h.includes('status') || h.includes('approval'));
+
+        let updatedSeats = new Set();
+        let entriesApplied = 0;
+
+        if (Object.keys(monthColMap).length >= 2) {
+            // Monthly Grid Layout
+            for (let r = headerIdx + 1; r < rows.length; r++) {
+                const match = findRosterMatch(rows[r][nameCol]);
+                if (!match) continue;
+                Object.keys(monthColMap).forEach(cIdx => {
+                    const m = monthColMap[cIdx];
+                    const val = parseFloat(rows[r][cIdx]);
+                    if (!isNaN(val) && val >= 0) {
+                        ROSTER[match].pto[m] = val;
+                        ROSTER[match].pto_weekly[m] = [val, 0, 0, 0, 0];
+                        updatedSeats.add(match);
+                        entriesApplied++;
+                    }
+                });
+            }
+        } else if (startCol > -1) {
+            // Date-Range / Individual PTO Log Layout -> maps exact business days into calendar weeks
+            const holidaySet = new Set();
+            if (FUNNEL && FUNNEL.holidays) {
+                FUNNEL.holidays.split(',').forEach(h => {
+                    const d = new Date(h.trim());
+                    if (!isNaN(d.getTime())) holidaySet.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+                });
+            }
+
+            // Build week lookup across ACTIVE_TIMELINE
+            const timelineWeeks = {};
+            ACTIVE_TIMELINE.forEach(m => { timelineWeeks[m] = getCalendarWeeks(m) || []; });
+
+            // Reset PTO for matched clinicians before accumulating log entries
+            const matchedInLog = new Set();
+            const parsedEntries = [];
+
+            for (let r = headerIdx + 1; r < rows.length; r++) {
+                const match = findRosterMatch(rows[r][nameCol]);
+                if (!match) continue;
+                if (statusCol > -1) {
+                    const st = String(rows[r][statusCol] || '').trim().toLowerCase();
+                    if (st && (st.includes('cancel') || st.includes('deny') || st.includes('denied') || st.includes('reject') || st.includes('withdraw'))) continue;
+                }
+                const sDate = new Date(rows[r][startCol]);
+                if (isNaN(sDate.getTime())) continue;
+                const eDate = (endCol > -1 && rows[r][endCol]) ? new Date(rows[r][endCol]) : new Date(sDate);
+                const validEnd = isNaN(eDate.getTime()) ? new Date(sDate) : eDate;
+                let explicitDays = (daysCol > -1 && daysCol !== startCol && daysCol !== endCol) ? parseFloat(rows[r][daysCol]) : NaN;
+                if (!isNaN(explicitDays) && headers[daysCol].includes('hour')) explicitDays = explicitDays / 8;
+
+                matchedInLog.add(match);
+                parsedEntries.push({ match, sDate, eDate: validEnd, explicitDays });
+            }
+
+            matchedInLog.forEach(match => {
+                ACTIVE_TIMELINE.forEach(m => {
+                    ROSTER[match].pto_weekly[m] = [0, 0, 0, 0, 0];
+                    ROSTER[match].pto[m] = 0;
+                });
+            });
+
+            parsedEntries.forEach(entry => {
+                const { match, sDate, eDate, explicitDays } = entry;
+                const cur = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());
+                const end = new Date(eDate.getFullYear(), eDate.getMonth(), eDate.getDate());
+                let isSingleDay = cur.getTime() === end.getTime();
+                const dayWeight = (isSingleDay && !isNaN(explicitDays) && explicitDays > 0 && explicitDays <= 1) ? explicitDays : 1;
+
+                while (cur <= end) {
+                    const dow = cur.getDay();
+                    const isHol = holidaySet.has(`${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}`);
+                    if (dow !== 0 && dow !== 6 && !isHol) {
+                        ACTIVE_TIMELINE.forEach(m => {
+                            const wks = timelineWeeks[m];
+                            wks.forEach((w, wIdx) => {
+                                if (cur >= w.bizStart && cur <= w.bizEnd && wIdx < 5) {
+                                    ROSTER[match].pto_weekly[m][wIdx] = +(ROSTER[match].pto_weekly[m][wIdx] + dayWeight).toFixed(2);
+                                    ROSTER[match].pto[m] = +(ROSTER[match].pto_weekly[m].reduce((a, b) => a + b, 0)).toFixed(2);
+                                    updatedSeats.add(match);
+                                    entriesApplied++;
+                                }
+                            });
+                        });
+                    }
+                    cur.setDate(cur.getDate() + 1);
+                }
+            });
+        } else {
+            throw new Error('Could not detect monthly PTO columns or Start/End date columns in the sheet.');
+        }
+
+        if (updatedSeats.size === 0) {
+            throw new Error('Connected to PTO sheet, but no entries matched your active roster & timeline.');
+        }
+
+        saveState();
+        recalculateDashboardMetrics();
+        renderPtoLedger();
+        renderWeeklyCapacitySection();
+        promptAlert(`PTO Sync Complete: Updated ${updatedSeats.size} clinicians across ${entriesApplied} PTO day/month records from Google Sheets.`);
+    } catch (err) {
+        console.error('PTO Sync Error:', err);
+        promptAlert(`PTO Sync failed (${err.message}). Verify the Google Sheet is shared as "Anyone with the link can view".`);
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = origTxt || '🔄 SYNC PTO'; }
+    }
 }
 
 function exportMatrixToClipboard() {
