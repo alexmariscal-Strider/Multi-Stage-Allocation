@@ -742,10 +742,13 @@ const VALID_STATE_CODES = new Set(Object.values(STATE_NAME_TO_CODE));
 
 function normalizeStateCode(raw) {
     if (raw === null || raw === undefined) return null;
-    const cleaned = String(raw).trim().toUpperCase().replace(/[^A-Z\s]/g, '').trim();
+    const cleaned = String(raw).trim().toUpperCase().replace(/[^A-Z\s]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!cleaned) return null;
     if (cleaned.length === 2 && VALID_STATE_CODES.has(cleaned)) return cleaned;
     if (STATE_NAME_TO_CODE[cleaned]) return STATE_NAME_TO_CODE[cleaned];
+    // Handle headers like "NY (Active)" or "CA - 2027" where the 2-letter code leads the cell
+    const firstToken = cleaned.split(' ')[0];
+    if (firstToken.length === 2 && VALID_STATE_CODES.has(firstToken)) return firstToken;
     return null;
 }
 
@@ -1021,13 +1024,33 @@ function normalizeStateIntegrity() {
         });
     });
 
-    Object.keys(ROSTER).forEach(n => {
+    const rosterKeys = Object.keys(ROSTER);
+    let maxOrder = rosterKeys.reduce((mx, n) => {
+        const ord = ROSTER[n] && typeof ROSTER[n].order === 'number' ? ROSTER[n].order : -1;
+        return Math.max(mx, ord);
+    }, -1);
+
+    rosterKeys.forEach(n => {
         const r = ROSTER[n];
-        if (!r.qPs) r.qPs = {};
-        if (!r.qEv) r.qEv = {};
-        if (!r.pto) r.pto = {};
-        if (!r.pto_weekly) r.pto_weekly = {};
-        if (!r.mix) r.mix = {};
+        if (typeof r.order !== 'number' || isNaN(r.order)) {
+            maxOrder += 1;
+            r.order = maxOrder;
+        }
+
+        // Safely migrate any legacy scalar qPs / qEv / pto values into independent per-month objects
+        if (!r.qPs || typeof r.qPs !== 'object' || Array.isArray(r.qPs)) {
+            const legacyPs = (typeof r.qPs === 'number' || typeof r.qPs === 'string') ? parseFloat(r.qPs) : NaN;
+            r.qPs = {};
+            if (!isNaN(legacyPs)) ACTIVE_TIMELINE.forEach(m => { r.qPs[m] = legacyPs; });
+        }
+        if (!r.qEv || typeof r.qEv !== 'object' || Array.isArray(r.qEv)) {
+            const legacyEv = (typeof r.qEv === 'number' || typeof r.qEv === 'string') ? parseFloat(r.qEv) : NaN;
+            r.qEv = {};
+            if (!isNaN(legacyEv)) ACTIVE_TIMELINE.forEach(m => { r.qEv[m] = legacyEv; });
+        }
+        if (!r.pto || typeof r.pto !== 'object' || Array.isArray(r.pto)) r.pto = {};
+        if (!r.pto_weekly || typeof r.pto_weekly !== 'object' || Array.isArray(r.pto_weekly)) r.pto_weekly = {};
+        if (!r.mix || typeof r.mix !== 'object' || Array.isArray(r.mix)) r.mix = {};
 
         // Cleanly merge legacy `states`, `licensedStates`, and `mix` (supporting both Array and Object formats)
         const stSet = new Set();
@@ -1080,6 +1103,45 @@ function normalizeStateIntegrity() {
             }
         });
     });
+}
+
+function getOrderedRosterNames(filterFn) {
+    const keys = Object.keys(ROSTER);
+    const filtered = typeof filterFn === 'function' ? keys.filter(k => filterFn(ROSTER[k], k)) : keys;
+    return filtered.sort((a, b) => {
+        const oa = typeof ROSTER[a].order === 'number' ? ROSTER[a].order : 9999;
+        const ob = typeof ROSTER[b].order === 'number' ? ROSTER[b].order : 9999;
+        if (oa !== ob) return oa - ob;
+        return a.localeCompare(b);
+    });
+}
+
+function moveClinicianOrder(name, dir, sameRoleOnly) {
+    const target = ROSTER[name];
+    if (!target) return;
+    const list = sameRoleOnly
+        ? getOrderedRosterNames(p => p.role === target.role)
+        : getOrderedRosterNames(p => p.role !== 'PFA');
+    const idx = list.indexOf(name);
+    const swapIdx = idx + dir;
+    if (idx === -1 || swapIdx < 0 || swapIdx >= list.length) return;
+
+    const neighborName = list[swapIdx];
+    const tmpOrder = ROSTER[name].order;
+    ROSTER[name].order = ROSTER[neighborName].order;
+    ROSTER[neighborName].order = tmpOrder;
+
+    // Resolve any identical order tie cleanly
+    if (ROSTER[name].order === ROSTER[neighborName].order) {
+        ROSTER[name].order = swapIdx;
+        ROSTER[neighborName].order = idx;
+    }
+
+    saveState();
+    renderLicensureMatrix();
+    renderCeProfileManager();
+    renderPtoLedger();
+    renderWeeklyCapacitySection();
 }
 
 function saveState() {
@@ -2025,7 +2087,7 @@ function renderHeatmap() {
    ============================================================================ */
 function renderLicensureMatrix() {
     const activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
-    const ces = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA');
+    const ces = getOrderedRosterNames(p => p.role !== 'PFA');
 
     document.getElementById('matrix-head-row').innerHTML = `
         <th style="position:sticky; left:0; z-index:12; background:#1f2937;">Clinician</th>
@@ -2073,17 +2135,24 @@ function toggleMatrixState(name, state) {
 
 function renderCeProfileManager() {
     const activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
-    const ces = Object.keys(ROSTER).filter(n => ROSTER[n].role !== 'PFA');
-    document.getElementById('ce-controls').innerHTML = ces.map(n => {
+    const ces = getOrderedRosterNames(p => p.role !== 'PFA');
+    document.getElementById('ce-controls').innerHTML = ces.map((n, idx) => {
         const p = ROSTER[n];
+        const escN = n.replace(/'/g, "\\'");
         const activeSts = MASTER_STATES.filter(s => p.mix[activeMonth] && p.mix[activeMonth][s]);
         const pills = activeSts.length > 0
-            ? activeSts.map(s => `<span class="state-pill-toggle state-on" title="Click to unassign ${s} for ${formatShortMonthTab(activeMonth)}" onclick="toggleMatrixState('${n.replace(/'/g, "\\'")}', '${s}')">${s}</span>`).join('')
+            ? activeSts.map(s => `<span class="state-pill-toggle state-on" title="Click to unassign ${s} for ${formatShortMonthTab(activeMonth)}" onclick="toggleMatrixState('${escN}', '${s}')">${s}</span>`).join('')
             : `<span style="font-size:8.5px; color:#64748b; font-style:italic;">No active states assigned</span>`;
         return `<div class="ce-row">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <strong style="color:#f8fafc;">${n} <span style="font-size:8.5px; color:#94a3b8; font-weight:normal;">(${p.role})</span></strong>
-                <span style="font-size:8.5px; color:#93c5fd;" title="${p.licensedStates.length} legally licensed states">${activeSts.length} Assigned <span style="color:#64748b;">· ${p.licensedStates.length} Lic</span></span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:4px;">
+                <div style="display:flex; align-items:center; gap:4px; min-width:0;">
+                    <span style="display:inline-flex; gap:2px; flex-shrink:0;">
+                        <button class="btn-action" style="padding:0px 4px; font-size:8px; background:#1e293b; border:1px solid #334155;" ${idx === 0 ? 'disabled' : ''} onclick="moveClinicianOrder('${escN}', -1, false)" title="Move Up">▲</button>
+                        <button class="btn-action" style="padding:0px 4px; font-size:8px; background:#1e293b; border:1px solid #334155;" ${idx === ces.length - 1 ? 'disabled' : ''} onclick="moveClinicianOrder('${escN}', 1, false)" title="Move Down">▼</button>
+                    </span>
+                    <strong style="color:#f8fafc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${n} <span style="font-size:8.5px; color:#94a3b8; font-weight:normal;">(${p.role})</span></strong>
+                </div>
+                <span style="font-size:8.5px; color:#93c5fd; white-space:nowrap;" title="${p.licensedStates.length} legally licensed states">${activeSts.length} Assigned <span style="color:#64748b;">· ${p.licensedStates.length} Lic</span></span>
             </div>
             <div style="display:flex; flex-wrap:wrap;">${pills}</div>
         </div>`;
@@ -2130,10 +2199,19 @@ function parseStateSheetRows(rows) {
     const result = { byRoster: {}, discoveredStates: new Set() };
     if (!rows || rows.length < 2) return result;
 
-    // Detect header row (first row with >= 3 state codes)
+    const isNegativeCell = (rawVal) => {
+        const val = String(rawVal || '').trim().toLowerCase();
+        if (!val) return true;
+        const negExact = new Set(['0','no','false','n','-','—','–','n/a','na','none','off','pending','expired','inactive','denied','not licensed','unlicensed']);
+        if (negExact.has(val)) return true;
+        if (val.startsWith('pending') || val.startsWith('expired') || val.startsWith('inactive') || val.startsWith('in progress') || val.startsWith('applied') || val.startsWith('denied') || val.startsWith('not ')) return true;
+        return false;
+    };
+
+    // Detect header row (first row within top 15 rows with >= 3 state codes)
     let headerIdx = 0;
     let stateColMap = {};
-    for (let r = 0; r < Math.min(5, rows.length); r++) {
+    for (let r = 0; r < Math.min(15, rows.length); r++) {
         const candidate = {};
         rows[r].forEach((cell, cIdx) => {
             const code = normalizeStateCode(cell);
@@ -2151,8 +2229,6 @@ function parseStateSheetRows(rows) {
     let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('evaluator') || h.includes('provider') || h === 'ce');
     if (nameCol === -1) nameCol = 0;
 
-    const positiveTokens = new Set(['x','yes','y','true','1','active','licensed','on','✓','✔','approved','assigned']);
-
     if (isMatrixLayout) {
         Object.values(stateColMap).forEach(code => result.discoveredStates.add(code));
         for (let r = headerIdx + 1; r < rows.length; r++) {
@@ -2160,34 +2236,62 @@ function parseStateSheetRows(rows) {
             if (!match) continue;
             if (!result.byRoster[match]) result.byRoster[match] = new Set();
             Object.keys(stateColMap).forEach(cIdx => {
-                const val = String(rows[r][cIdx] || '').trim().toLowerCase();
-                if (!val || val === '0' || val === 'no' || val === 'false' || val === 'n' || val === '-' || val === 'off' || val === 'pending' || val === 'expired') return;
-                if (positiveTokens.has(val) || val.includes('active') || val.includes('licen') || val.includes('yes') || val.includes('assign') || val === 'x' || !isNaN(parseFloat(val))) {
+                // Any non-empty, non-negative cell (X, Yes, TRUE, checkmarks, license numbers, credential codes, dates) counts as licensed/assigned
+                if (!isNegativeCell(rows[r][cIdx])) {
                     result.byRoster[match].add(stateColMap[cIdx]);
                 }
             });
         }
     } else {
-        let stateCol = headers.findIndex(h => h.includes('state') || h.includes('licens') || h.includes('assign') || h.includes('jurisdiction') || h.includes('territory'));
-        if (stateCol === -1) stateCol = 1;
-        const statusCol = headers.findIndex(h => h.includes('status'));
-
-        for (let r = headerIdx + 1; r < rows.length; r++) {
-            const match = findRosterMatch(rows[r][nameCol]);
-            if (!match) continue;
-            if (statusCol > -1) {
-                const stVal = String(rows[r][statusCol] || '').trim().toLowerCase();
-                if (stVal && (stVal.includes('inactive') || stVal.includes('expired') || stVal.includes('pending') || stVal.includes('denied') || stVal === 'no')) continue;
-            }
-            if (!result.byRoster[match]) result.byRoster[match] = new Set();
-            const rawStates = String(rows[r][stateCol] || '');
-            rawStates.split(/[,;/|\n]+/).forEach(tok => {
-                const code = normalizeStateCode(tok);
-                if (code) {
-                    result.byRoster[match].add(code);
-                    result.discoveredStates.add(code);
-                }
+        // Check transposed matrix layout (clinicians across header row, states down column 0 or 1)
+        let transposedHeaderIdx = -1;
+        let clinicianColMap = {};
+        for (let r = 0; r < Math.min(10, rows.length); r++) {
+            const candCols = {};
+            rows[r].forEach((cell, cIdx) => {
+                const m = findRosterMatch(cell);
+                if (m) candCols[cIdx] = m;
             });
+            if (Object.keys(candCols).length >= 2) {
+                transposedHeaderIdx = r;
+                clinicianColMap = candCols;
+                break;
+            }
+        }
+
+        if (transposedHeaderIdx > -1) {
+            for (let r = transposedHeaderIdx + 1; r < rows.length; r++) {
+                const stCode = normalizeStateCode(rows[r][0]) || normalizeStateCode(rows[r][1]);
+                if (!stCode) continue;
+                result.discoveredStates.add(stCode);
+                Object.keys(clinicianColMap).forEach(cIdx => {
+                    if (!isNegativeCell(rows[r][cIdx])) {
+                        const match = clinicianColMap[cIdx];
+                        if (!result.byRoster[match]) result.byRoster[match] = new Set();
+                        result.byRoster[match].add(stCode);
+                    }
+                });
+            }
+        } else {
+            // Standard row-per-license or comma-separated list layout
+            let stateCol = headers.findIndex(h => h.includes('state') || h.includes('licens') || h.includes('assign') || h.includes('jurisdiction') || h.includes('territory'));
+            if (stateCol === -1) stateCol = 1;
+            const statusCol = headers.findIndex(h => h.includes('status'));
+
+            for (let r = headerIdx + 1; r < rows.length; r++) {
+                const match = findRosterMatch(rows[r][nameCol]);
+                if (!match) continue;
+                if (statusCol > -1 && isNegativeCell(rows[r][statusCol])) continue;
+                if (!result.byRoster[match]) result.byRoster[match] = new Set();
+                const rawStates = String(rows[r][stateCol] || '');
+                rawStates.split(/[,;/|\n]+/).forEach(tok => {
+                    const code = normalizeStateCode(tok);
+                    if (code) {
+                        result.byRoster[match].add(code);
+                        result.discoveredStates.add(code);
+                    }
+                });
+            }
         }
     }
     return result;
@@ -2557,16 +2661,14 @@ function undoOptimization() {
    ============================================================================ */
 function renderPtoLedger() {
     document.getElementById('pto-ledger-head').innerHTML = `<tr>
-        <th style="position:sticky; left:0; z-index:12; background:#1f2937;">Clinician</th>
+        <th style="position:sticky; left:0; z-index:12; background:#1f2937; min-width:190px;">Clinician (Order / Remove)</th>
         <th>Role</th>
         ${ACTIVE_TIMELINE.map(m => `<th style="text-align:center;" colspan="3">${formatShortMonthTab(m)}</th>`).join('')}
-        <th style="text-align:center;">Del</th>
     </tr>
     <tr>
         <th style="position:sticky; left:0; z-index:12; background:#161b22;"></th>
         <th style="background:#161b22;"></th>
         ${ACTIVE_TIMELINE.map(() => `<th style="text-align:center; font-size:8px; color:#93c5fd; background:#161b22;">PS/d</th><th style="text-align:center; font-size:8px; color:#c4b5fd; background:#161b22;">EV/d</th><th style="text-align:center; font-size:8px; color:#fb7185; background:#161b22;">PTO</th>`).join('')}
-        <th style="background:#161b22;"></th>
     </tr>`;
 
     const groups = [
@@ -2577,26 +2679,38 @@ function renderPtoLedger() {
 
     let bodyHtml = '';
     groups.forEach(g => {
-        const members = Object.keys(ROSTER).filter(n => ROSTER[n].role === g.key);
+        const members = getOrderedRosterNames(p => p.role === g.key);
         const isCol = !!collapsedGroups[g.key];
         bodyHtml += `<tr class="group-header" onclick="collapsedGroups['${g.key}']=!collapsedGroups['${g.key}']; renderPtoLedger();">
-            <td colspan="${3 + ACTIVE_TIMELINE.length * 3}">${isCol ? '▶' : '▼'} ${g.label} (${members.length})</td>
+            <td colspan="${2 + ACTIVE_TIMELINE.length * 3}">${isCol ? '▶' : '▼'} ${g.label} (${members.length})</td>
         </tr>`;
         if (!isCol) {
-            members.forEach(n => {
+            members.forEach((n, idx) => {
                 const p = ROSTER[n];
                 const escN = n.replace(/'/g, "\\'");
+                const qPsObj = (p.qPs && typeof p.qPs === 'object') ? p.qPs : {};
+                const qEvObj = (p.qEv && typeof p.qEv === 'object') ? p.qEv : {};
                 bodyHtml += `<tr>
-                    <td style="position:sticky; left:0; background:#161b22; font-weight:700; white-space:nowrap;">${n}</td>
+                    <td style="position:sticky; left:0; z-index:5; background:#161b22; font-weight:700; white-space:nowrap;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <button class="btn-action" style="padding:1px 4px; font-size:8px; background:#1e293b; border:1px solid #334155;" ${idx === 0 ? 'disabled' : ''} onclick="moveClinicianOrder('${escN}', -1, true)" title="Move Up">▲</button>
+                                <button class="btn-action" style="padding:1px 4px; font-size:8px; background:#1e293b; border:1px solid #334155;" ${idx === members.length - 1 ? 'disabled' : ''} onclick="moveClinicianOrder('${escN}', 1, true)" title="Move Down">▼</button>
+                                <span>${n}</span>
+                            </div>
+                            <button class="btn-remove" title="Remove ${n} from roster" onclick="promptConfirm('Remove ${escN} from roster?', () => removeClinician('${escN}'))">×</button>
+                        </div>
+                    </td>
                     <td style="color:#94a3b8; font-size:9px;">${p.role}</td>
                     ${ACTIVE_TIMELINE.map(m => {
                         const escM = m.replace(/'/g, "\\'");
+                        const psVal = qPsObj[m] !== undefined ? qPsObj[m] : 0;
+                        const evVal = qEvObj[m] !== undefined ? qEvObj[m] : 0;
                         return `
-                        <td style="text-align:center;"><input type="number" step="0.5" min="0" class="ledger-input" value="${p.qPs[m] || 0}" onchange="updateRosterCell('${escN}','${escM}','qPs',this.value)"></td>
-                        <td style="text-align:center;">${p.role === 'PFA' ? '<span style="color:#334155;">-</span>' : `<input type="number" step="0.5" min="0" class="ledger-input" value="${p.qEv[m] || 0}" onchange="updateRosterCell('${escN}','${escM}','qEv',this.value)">`}</td>
+                        <td style="text-align:center;"><input type="number" step="0.5" min="0" class="ledger-input" value="${psVal}" onchange="updateRosterCell('${escN}','${escM}','qPs',this.value)"></td>
+                        <td style="text-align:center;">${p.role === 'PFA' ? '<span style="color:#334155;">-</span>' : `<input type="number" step="0.5" min="0" class="ledger-input" value="${evVal}" onchange="updateRosterCell('${escN}','${escM}','qEv',this.value)">`}</td>
                         <td style="text-align:center;"><button class="btn-action" style="background:#1e293b; border:1px solid #475569; color:${(p.pto[m]||0)>0?'#fb7185':'#94a3b8'}; padding:2px 6px; font-size:9.5px; min-width:34px;" onclick="openPtoWeeklyModal('${escN}','${escM}')">${(p.pto[m]||0).toFixed(1)}</button></td>`;
                     }).join('')}
-                    <td style="text-align:center;"><button class="btn-remove" onclick="promptConfirm('Remove ${escN} from roster?', () => removeClinician('${escN}'))">×</button></td>
                 </tr>`;
             });
         }
@@ -2613,11 +2727,18 @@ function renderPtoLedger() {
         });
         footCells += `<td style="text-align:center; color:#93c5fd;">${sumPs.toFixed(0)}</td><td style="text-align:center; color:#c4b5fd;">${sumEv.toFixed(0)}</td><td style="text-align:center; color:#fb7185;">${sumPto.toFixed(1)}</td>`;
     });
-    document.getElementById('pto-ledger-foot').innerHTML = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a;">DAILY QUOTA / PTO TOTALS</td><td></td>${footCells}<td></td></tr>`;
+    document.getElementById('pto-ledger-foot').innerHTML = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a;">DAILY QUOTA / PTO TOTALS</td><td></td>${footCells}</tr>`;
 }
 
 function updateRosterCell(name, month, field, val) {
-    ROSTER[name][field][month] = Math.max(0, parseFloat(val) || 0);
+    if (!ROSTER[name]) return;
+    if (!ROSTER[name][field] || typeof ROSTER[name][field] !== 'object' || Array.isArray(ROSTER[name][field])) {
+        const legacyVal = parseFloat(ROSTER[name][field]);
+        ROSTER[name][field] = {};
+        ACTIVE_TIMELINE.forEach(m => { ROSTER[name][field][m] = !isNaN(legacyVal) ? legacyVal : 0; });
+    }
+    const parsed = parseFloat(val);
+    ROSTER[name][field][month] = isNaN(parsed) ? 0 : Math.max(0, parsed);
     saveState();
     recalculateDashboardMetrics();
     renderPtoLedger();
@@ -2642,7 +2763,8 @@ function addNewClinicianToRoster() {
         mix[m] = {};
         defaultStates.forEach(s => { mix[m][s] = true; });
     });
-    ROSTER[name] = { role, licensedStates: [...defaultStates], states: [...defaultStates], qPs, qEv, pto, pto_weekly, mix };
+    const nextOrder = Object.values(ROSTER).reduce((mx, p) => Math.max(mx, typeof p.order === 'number' ? p.order : -1), -1) + 1;
+    ROSTER[name] = { role, order: nextOrder, licensedStates: [...defaultStates], states: [...defaultStates], qPs, qEv, pto, pto_weekly, mix };
     nameInp.value = '';
     saveState();
     renderAll();
@@ -2714,7 +2836,7 @@ function renderWeeklyCapacitySection() {
     const colTotals = weeks.map(() => 0);
     let grandTotal = 0;
 
-    document.getElementById('weekly-cap-body').innerHTML = Object.keys(ROSTER).map(n => {
+    document.getElementById('weekly-cap-body').innerHTML = getOrderedRosterNames().map(n => {
         const p = ROSTER[n];
         if (weeklyCapacityViewMode === 'EV' && p.role === 'PFA') return '';
         const q = parseFloat(weeklyCapacityViewMode === 'PS' ? p.qPs[activeMonth] : p.qEv[activeMonth]) || 0;
