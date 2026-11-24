@@ -724,6 +724,7 @@ const EV_HANDLE = 1.0;
 /* GOOGLE SHEETS LIVE SYNC ENDPOINTS */
 const GSHEET_ID = "1R9gyVy1FXbSQz5P0YugdHW58YckNx-o7847w4SCXbdQ";
 const PTO_SHEET_GID = "1443603617";
+const PTO_PUBLISHED_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQd7J8oMveRBfBtVb2OxbyVXJg-bW7_DUQdN8fryo-56EmFqxhhICP24tUG7EL3UsxHMCsCil5WJqYz/pub?output=csv";
 const LICENSURE_SHEET_GID = "748848576";
 const ASSIGNMENTS_SHEET_GID = "529230803";
 
@@ -825,47 +826,83 @@ async function fetchGoogleSheetCsv(gid) {
     throw lastErr || new Error('Unable to fetch Google Sheet');
 }
 
+async function fetchDirectCsvUrl(url) {
+    const resp = await fetch(url, { mode: 'cors', cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    if (text && !text.trim().startsWith('<!DOCTYPE html')) {
+        return parseCsvText(text);
+    }
+    throw new Error('Published URL returned HTML instead of CSV');
+}
+
+function parseLocalSheetDate(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return null;
+    const mdy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (mdy) {
+        let yr = parseInt(mdy[3], 10);
+        if (yr < 100) yr += 2000;
+        return new Date(yr, parseInt(mdy[1], 10) - 1, parseInt(mdy[2], 10));
+    }
+    const ymd = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (ymd) {
+        return new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10));
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function formatDateMDY(d) {
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${mm}/${dd}/${d.getFullYear()}`;
+}
+
 /* ============================================================================
-   GLOBAL APPLICATION STATE
+   GLOBAL APPLICATION STATE & FORMATTING HELPERS
    ============================================================================ */
+let MASTER_STATES = [];
 let ACTIVE_TIMELINE = [];
 let LEDGER = {};
 let ROSTER = {};
 let FUNNEL = {};
-let MASTER_STATES = [];
 let ARCHIVED_TIMELINE = [];
 let ARCHIVED_LEDGER = {};
 let ARCHIVED_ROSTER = {};
 
 let activeMonthIdx = 0;
-let activeDemandMode = 'cohort';
-let heatmapViewMode = 'mo';
-let weeklyCapacityViewMode = 'PS';
+let activeDemandMode = 'intake';
 let activeWeekFilter = null;
+let heatmapViewMode = 'mo';
 let heatmapTierFilter = 'ALL';
-let heatmapSort = { col: 'evCov', dir: 'asc' };
-let lastMatrixBackup = null;
-let pendingOptMix = null;
-let stateMetricsCache = {};
-let editingPtoTarget = null;
+let heatmapSort = { col: 'apps', dir: 'desc' };
+let weeklyCapacityViewMode = 'PS';
 let collapsedGroups = {};
+let editingPtoTarget = null;
+let stateMetricsCache = {};
+let pendingOptMix = null;
+let lastMatrixBackup = null;
 
-let currentCalApps = [0, 0, 0, 0];
-let currentCalExp = [0, 0, 0, 0];
-let currentCalEffPct = [0, 0, 0, 0];
-let currentCalNames = ["", "", "", ""];
+let currentCalNames = [];
+let currentCalApps = [];
+let currentCalExp = [];
+let currentCalEffPct = [];
 let calInputsDirty = false;
 
-/* ============================================================================
-   FORMATTING & DIALOG HELPERS
-   ============================================================================ */
-const fmt = (num) => Math.round(num || 0).toLocaleString();
-function formatVar(delta) {
-    const r = Math.round(delta || 0);
-    if (r === 0) return `<span style="color:#64748b;">0</span>`;
-    if (r > 0) return `<span style="color:#86efac;">+${fmt(r)}</span>`;
-    return `<span style="color:#fca5a5;">${fmt(r)}</span>`;
+function fmt(n) {
+    const num = Number(n);
+    if (!isFinite(num)) return '0';
+    return Math.round(num).toLocaleString();
 }
+
+function formatVar(v) {
+    const num = Math.round(Number(v) || 0);
+    if (num > 0) return `<span style="color:#86efac;">+${num.toLocaleString()}</span>`;
+    if (num < 0) return `<span style="color:#fca5a5;">${num.toLocaleString()}</span>`;
+    return `<span style="color:#94a3b8;">0</span>`;
+}
+
 function promptAlert(message) {
     document.getElementById('dialog-message').innerText = message;
     document.getElementById('dialog-cancel-btn').style.display = 'none';
@@ -2446,139 +2483,257 @@ async function syncPtoFromSheet() {
     if (btn) { btn.disabled = true; btn.innerText = '⏳ SYNCING PTO...'; }
 
     try {
-        const rows = await fetchGoogleSheetCsv(PTO_SHEET_GID);
+        let rows = null;
+        try {
+            rows = await fetchDirectCsvUrl(PTO_PUBLISHED_CSV_URL);
+        } catch (pubErr) {
+            console.warn('Published PTO CSV fallback to GID export:', pubErr);
+            rows = await fetchGoogleSheetCsv(PTO_SHEET_GID);
+        }
         if (!rows || rows.length < 2) throw new Error('PTO tab appears empty.');
 
-        // Find header row
-        let headerIdx = 0;
-        for (let r = 0; r < Math.min(5, rows.length); r++) {
-            const joined = rows[r].join(' ').toLowerCase();
-            if (joined.includes('name') || joined.includes('clinician') || joined.includes('employee') || joined.includes('start') || joined.includes('date')) {
-                headerIdx = r;
+        // 1. Detect Daily PTO Matrix layout: [PTO | Month/Year | Days | Clinician1 | Clinician2 ...]
+        let matrixHeaderIdx = -1;
+        let clinicianColMap = {};
+        for (let r = 0; r < Math.min(8, rows.length); r++) {
+            const candCols = {};
+            rows[r].forEach((cell, cIdx) => {
+                const match = findRosterMatch(cell);
+                if (match) candCols[cIdx] = match;
+            });
+            if (Object.keys(candCols).length >= 2) {
+                matrixHeaderIdx = r;
+                clinicianColMap = candCols;
                 break;
             }
         }
 
-        const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
-        let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('employee') || h.includes('provider') || h.includes('staff'));
-        if (nameCol === -1) nameCol = 0;
-
-        // Check if this is a Monthly Grid layout vs Date-Range Log layout
-        const monthColMap = {};
-        headers.forEach((h, idx) => {
-            const tm = matchTimelineMonthFromHeader(h);
-            if (tm) monthColMap[idx] = tm;
-        });
-
-        const startCol = headers.findIndex(h => h.includes('start') || h === 'date' || h.includes('from') || h.includes('pto date'));
-        const endCol = headers.findIndex(h => h.includes('end') || h.includes('to') || h.includes('return'));
-        const daysCol = headers.findIndex(h => h.includes('day') || h.includes('hrs') || h.includes('hour') || h.includes('duration') || h.includes('pto'));
-        const statusCol = headers.findIndex(h => h.includes('status') || h.includes('approval'));
-
         let updatedSeats = new Set();
         let entriesApplied = 0;
+        let newHolidaysAdded = 0;
 
-        if (Object.keys(monthColMap).length >= 2) {
-            // Monthly Grid Layout
-            for (let r = headerIdx + 1; r < rows.length; r++) {
-                const match = findRosterMatch(rows[r][nameCol]);
-                if (!match) continue;
-                Object.keys(monthColMap).forEach(cIdx => {
-                    const m = monthColMap[cIdx];
-                    const val = parseFloat(rows[r][cIdx]);
-                    if (!isNaN(val) && val >= 0) {
-                        ROSTER[match].pto[m] = val;
-                        ROSTER[match].pto_weekly[m] = [val, 0, 0, 0, 0];
-                        updatedSeats.add(match);
-                        entriesApplied++;
+        if (matrixHeaderIdx > -1) {
+            const mHeaders = rows[matrixHeaderIdx].map(h => String(h || '').trim().toLowerCase());
+            let dateCol = mHeaders.findIndex(h => h === 'days' || h === 'day' || h === 'date' || h.includes('date'));
+            if (dateCol === -1) {
+                // Fallback: scan first 5 columns for valid date strings
+                for (let c = 0; c < Math.min(5, (rows[matrixHeaderIdx] || []).length); c++) {
+                    if (clinicianColMap[c]) continue;
+                    let validDates = 0;
+                    for (let r = matrixHeaderIdx + 1; r < Math.min(matrixHeaderIdx + 15, rows.length); r++) {
+                        if (parseLocalSheetDate(rows[r][c])) validDates++;
                     }
-                });
+                    if (validDates >= 3) { dateCol = c; break; }
+                }
             }
-        } else if (startCol > -1) {
-            // Date-Range / Individual PTO Log Layout -> maps exact business days into calendar weeks
-            const holidaySet = new Set();
+            if (dateCol === -1) dateCol = 2;
+
+            // Pass 1: Capture "Holiday" rows and merge them into FUNNEL.holidays before computing calendar weeks
+            const existingHolidayMap = new Map();
             if (FUNNEL && FUNNEL.holidays) {
                 FUNNEL.holidays.split(',').forEach(h => {
-                    const d = new Date(h.trim());
-                    if (!isNaN(d.getTime())) holidaySet.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+                    const d = parseLocalSheetDate(h);
+                    if (d) existingHolidayMap.set(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, d);
                 });
             }
 
-            // Build week lookup across ACTIVE_TIMELINE
+            const rowHolidayFlags = new Set();
+            for (let r = matrixHeaderIdx + 1; r < rows.length; r++) {
+                const d = parseLocalSheetDate(rows[r][dateCol]);
+                if (!d) continue;
+                const isHolidayRow = rows[r].some((cell, cIdx) => cIdx > dateCol && String(cell || '').trim().toLowerCase().includes('holiday'));
+                if (isHolidayRow) {
+                    rowHolidayFlags.add(r);
+                    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                    if (!existingHolidayMap.has(key)) {
+                        existingHolidayMap.set(key, d);
+                        newHolidaysAdded++;
+                    }
+                }
+            }
+
+            if (newHolidaysAdded > 0) {
+                const sortedHolidays = Array.from(existingHolidayMap.values()).sort((a, b) => a - b);
+                FUNNEL.holidays = sortedHolidays.map(formatDateMDY).join(', ');
+            }
+
+            // Build holiday lookup & operational calendar weeks across ACTIVE_TIMELINE
+            const holidaySet = new Set(existingHolidayMap.keys());
             const timelineWeeks = {};
             ACTIVE_TIMELINE.forEach(m => { timelineWeeks[m] = getCalendarWeeks(m) || []; });
 
-            // Reset PTO for matched clinicians before accumulating log entries
-            const matchedInLog = new Set();
-            const parsedEntries = [];
-
-            for (let r = headerIdx + 1; r < rows.length; r++) {
-                const match = findRosterMatch(rows[r][nameCol]);
-                if (!match) continue;
-                if (statusCol > -1) {
-                    const st = String(rows[r][statusCol] || '').trim().toLowerCase();
-                    if (st && (st.includes('cancel') || st.includes('deny') || st.includes('denied') || st.includes('reject') || st.includes('withdraw'))) continue;
-                }
-                const sDate = new Date(rows[r][startCol]);
-                if (isNaN(sDate.getTime())) continue;
-                const eDate = (endCol > -1 && rows[r][endCol]) ? new Date(rows[r][endCol]) : new Date(sDate);
-                const validEnd = isNaN(eDate.getTime()) ? new Date(sDate) : eDate;
-                let explicitDays = (daysCol > -1 && daysCol !== startCol && daysCol !== endCol) ? parseFloat(rows[r][daysCol]) : NaN;
-                if (!isNaN(explicitDays) && headers[daysCol].includes('hour')) explicitDays = explicitDays / 8;
-
-                matchedInLog.add(match);
-                parsedEntries.push({ match, sDate, eDate: validEnd, explicitDays });
-            }
-
-            matchedInLog.forEach(match => {
+            // Reset PTO for all matched clinicians across the active timeline before aggregating
+            const matchedClinicians = new Set(Object.values(clinicianColMap));
+            matchedClinicians.forEach(match => {
                 ACTIVE_TIMELINE.forEach(m => {
                     ROSTER[match].pto_weekly[m] = [0, 0, 0, 0, 0];
                     ROSTER[match].pto[m] = 0;
                 });
             });
 
-            parsedEntries.forEach(entry => {
-                const { match, sDate, eDate, explicitDays } = entry;
-                const cur = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());
-                const end = new Date(eDate.getFullYear(), eDate.getMonth(), eDate.getDate());
-                let isSingleDay = cur.getTime() === end.getTime();
-                const dayWeight = (isSingleDay && !isNaN(explicitDays) && explicitDays > 0 && explicitDays <= 1) ? explicitDays : 1;
+            // Pass 2: Aggregate every numeric PTO day (e.g. "1" or "0.5") into exact operational weeks & monthly totals
+            for (let r = matrixHeaderIdx + 1; r < rows.length; r++) {
+                if (rowHolidayFlags.has(r)) continue;
+                const d = parseLocalSheetDate(rows[r][dateCol]);
+                if (!d) continue;
+                const dow = d.getDay();
+                const dKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                if (dow === 0 || dow === 6 || holidaySet.has(dKey)) continue;
 
-                while (cur <= end) {
-                    const dow = cur.getDay();
-                    const isHol = holidaySet.has(`${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}`);
-                    if (dow !== 0 && dow !== 6 && !isHol) {
-                        ACTIVE_TIMELINE.forEach(m => {
-                            const wks = timelineWeeks[m];
-                            wks.forEach((w, wIdx) => {
-                                if (cur >= w.bizStart && cur <= w.bizEnd && wIdx < 5) {
-                                    ROSTER[match].pto_weekly[m][wIdx] = +(ROSTER[match].pto_weekly[m][wIdx] + dayWeight).toFixed(2);
-                                    ROSTER[match].pto[m] = +(ROSTER[match].pto_weekly[m].reduce((a, b) => a + b, 0)).toFixed(2);
-                                    updatedSeats.add(match);
-                                    entriesApplied++;
-                                }
-                            });
-                        });
+                // Match exact timeline month & operational week
+                let targetMonth = null;
+                let targetWeekIdx = -1;
+                for (const m of ACTIVE_TIMELINE) {
+                    const wks = timelineWeeks[m];
+                    for (let wIdx = 0; wIdx < wks.length && wIdx < 5; wIdx++) {
+                        if (d >= wks[wIdx].bizStart && d <= wks[wIdx].bizEnd) {
+                            targetMonth = m;
+                            targetWeekIdx = wIdx;
+                            break;
+                        }
                     }
-                    cur.setDate(cur.getDate() + 1);
+                    if (targetMonth) break;
                 }
-            });
-        } else {
-            throw new Error('Could not detect monthly PTO columns or Start/End date columns in the sheet.');
-        }
+                if (!targetMonth || targetWeekIdx === -1) continue;
 
-        if (updatedSeats.size === 0) {
-            throw new Error('Connected to PTO sheet, but no entries matched your active roster & timeline.');
+                Object.keys(clinicianColMap).forEach(cIdx => {
+                    const rawCell = String(rows[r][cIdx] || '').trim();
+                    if (!rawCell || rawCell.toLowerCase().includes('holiday')) return;
+                    const val = parseFloat(rawCell);
+                    if (!isNaN(val) && val > 0) {
+                        const match = clinicianColMap[cIdx];
+                        ROSTER[match].pto_weekly[targetMonth][targetWeekIdx] = +(ROSTER[match].pto_weekly[targetMonth][targetWeekIdx] + val).toFixed(2);
+                        ROSTER[match].pto[targetMonth] = +(ROSTER[match].pto_weekly[targetMonth].reduce((a, b) => a + b, 0)).toFixed(2);
+                        updatedSeats.add(match);
+                        entriesApplied += val;
+                    }
+                });
+            }
+
+            if (matchedClinicians.size === 0) {
+                throw new Error('Connected to Daily PTO sheet, but no clinician columns matched your active roster.');
+            }
+        } else {
+            // Fallback: Monthly Grid or Start/End Date Log layouts
+            let headerIdx = 0;
+            for (let r = 0; r < Math.min(5, rows.length); r++) {
+                const joined = rows[r].join(' ').toLowerCase();
+                if (joined.includes('name') || joined.includes('clinician') || joined.includes('employee') || joined.includes('start') || joined.includes('date')) {
+                    headerIdx = r;
+                    break;
+                }
+            }
+
+            const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
+            let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('employee') || h.includes('provider') || h.includes('staff'));
+            if (nameCol === -1) nameCol = 0;
+
+            const monthColMap = {};
+            headers.forEach((h, idx) => {
+                const tm = matchTimelineMonthFromHeader(h);
+                if (tm) monthColMap[idx] = tm;
+            });
+
+            const startCol = headers.findIndex(h => h.includes('start') || h === 'date' || h.includes('from') || h.includes('pto date'));
+            const endCol = headers.findIndex(h => h.includes('end') || h.includes('to') || h.includes('return'));
+            const daysCol = headers.findIndex(h => h.includes('day') || h.includes('hrs') || h.includes('hour') || h.includes('duration') || h.includes('pto'));
+            const statusCol = headers.findIndex(h => h.includes('status') || h.includes('approval'));
+
+            if (Object.keys(monthColMap).length >= 2) {
+                for (let r = headerIdx + 1; r < rows.length; r++) {
+                    const match = findRosterMatch(rows[r][nameCol]);
+                    if (!match) continue;
+                    Object.keys(monthColMap).forEach(cIdx => {
+                        const m = monthColMap[cIdx];
+                        const val = parseFloat(rows[r][cIdx]);
+                        if (!isNaN(val) && val >= 0) {
+                            ROSTER[match].pto[m] = val;
+                            ROSTER[match].pto_weekly[m] = [val, 0, 0, 0, 0];
+                            updatedSeats.add(match);
+                            entriesApplied++;
+                        }
+                    });
+                }
+            } else if (startCol > -1) {
+                const holidaySet = new Set();
+                if (FUNNEL && FUNNEL.holidays) {
+                    FUNNEL.holidays.split(',').forEach(h => {
+                        const d = parseLocalSheetDate(h);
+                        if (d) holidaySet.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+                    });
+                }
+                const timelineWeeks = {};
+                ACTIVE_TIMELINE.forEach(m => { timelineWeeks[m] = getCalendarWeeks(m) || []; });
+                const matchedInLog = new Set();
+                const parsedEntries = [];
+
+                for (let r = headerIdx + 1; r < rows.length; r++) {
+                    const match = findRosterMatch(rows[r][nameCol]);
+                    if (!match) continue;
+                    if (statusCol > -1) {
+                        const st = String(rows[r][statusCol] || '').trim().toLowerCase();
+                        if (st && (st.includes('cancel') || st.includes('deny') || st.includes('denied') || st.includes('reject') || st.includes('withdraw'))) continue;
+                    }
+                    const sDate = parseLocalSheetDate(rows[r][startCol]);
+                    if (!sDate) continue;
+                    const eDate = (endCol > -1 && rows[r][endCol]) ? (parseLocalSheetDate(rows[r][endCol]) || new Date(sDate)) : new Date(sDate);
+                    let explicitDays = (daysCol > -1 && daysCol !== startCol && daysCol !== endCol) ? parseFloat(rows[r][daysCol]) : NaN;
+                    if (!isNaN(explicitDays) && headers[daysCol].includes('hour')) explicitDays = explicitDays / 8;
+
+                    matchedInLog.add(match);
+                    parsedEntries.push({ match, sDate, eDate, explicitDays });
+                }
+
+                matchedInLog.forEach(match => {
+                    ACTIVE_TIMELINE.forEach(m => {
+                        ROSTER[match].pto_weekly[m] = [0, 0, 0, 0, 0];
+                        ROSTER[match].pto[m] = 0;
+                    });
+                });
+
+                parsedEntries.forEach(entry => {
+                    const { match, sDate, eDate, explicitDays } = entry;
+                    const cur = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());
+                    const end = new Date(eDate.getFullYear(), eDate.getMonth(), eDate.getDate());
+                    const isSingleDay = cur.getTime() === end.getTime();
+                    const dayWeight = (isSingleDay && !isNaN(explicitDays) && explicitDays > 0 && explicitDays <= 1) ? explicitDays : 1;
+
+                    while (cur <= end) {
+                        const dow = cur.getDay();
+                        const isHol = holidaySet.has(`${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}`);
+                        if (dow !== 0 && dow !== 6 && !isHol) {
+                            ACTIVE_TIMELINE.forEach(m => {
+                                const wks = timelineWeeks[m];
+                                wks.forEach((w, wIdx) => {
+                                    if (cur >= w.bizStart && cur <= w.bizEnd && wIdx < 5) {
+                                        ROSTER[match].pto_weekly[m][wIdx] = +(ROSTER[match].pto_weekly[m][wIdx] + dayWeight).toFixed(2);
+                                        ROSTER[match].pto[m] = +(ROSTER[match].pto_weekly[m].reduce((a, b) => a + b, 0)).toFixed(2);
+                                        updatedSeats.add(match);
+                                        entriesApplied += dayWeight;
+                                    }
+                                });
+                            });
+                        }
+                        cur.setDate(cur.getDate() + 1);
+                    }
+                });
+            } else {
+                throw new Error('Could not detect Daily PTO clinician columns, monthly PTO columns, or Start/End date columns.');
+            }
         }
 
         saveState();
         recalculateDashboardMetrics();
         renderPtoLedger();
         renderWeeklyCapacitySection();
-        promptAlert(`PTO Sync Complete: Updated ${updatedSeats.size} clinicians across ${entriesApplied} PTO day/month records from Google Sheets.`);
+        promptAlert(
+            `Daily PTO Sync Complete:\n` +
+            `• Updated ${updatedSeats.size} clinician(s) across ${Math.round(entriesApplied * 10) / 10} total PTO day(s) in your active timeline.` +
+            (newHolidaysAdded > 0 ? `\n• Added ${newHolidaysAdded} new company holiday date(s) to Global Company Holidays.` : '')
+        );
     } catch (err) {
         console.error('PTO Sync Error:', err);
-        promptAlert(`PTO Sync failed (${err.message}). Verify the Google Sheet is shared as "Anyone with the link can view".`);
+        promptAlert(`PTO Sync failed (${err.message}). Verify the Published CSV link is active.`);
     } finally {
         if (btn) { btn.disabled = false; btn.innerText = origTxt || '🔄 SYNC PTO'; }
     }
