@@ -547,9 +547,9 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
         <div style="border-top: 1px solid #374151; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
             <button class="btn-action" style="background:transparent; border: 1px solid #475569; color: #94a3b8; padding: 6px 12px; font-size: 10px;" onclick="resetCalibratedActuals()">↺ RESET TO MODEL</button>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                <select id="cal-sync-mode" style="background:#0f172a; border:1px solid #475569; color:#cbd5e1; padding:6px 8px; border-radius:4px; font-size:10px; text-align:left;">
-                    <option value="yield_and_shape">Sync Empirical Yield + Shape</option>
-                    <option value="shape_only">Sync Timing Shape Only</option>
+                <select id="cal-sync-mode" onchange="onCalSyncModeChange()" style="background:#0f172a; border:1px solid #475569; color:#cbd5e1; padding:6px 8px; border-radius:4px; font-size:10px; text-align:left;">
+                    <option value="yield_and_shape">Lock to Historical Actuals Rate (Empirical Mode)</option>
+                    <option value="shape_only">Scale to Funnel Sliders (Forecast Mode)</option>
                 </select>
                 <button class="btn-action" style="background:#10b981; padding: 8px 16px; font-size: 11px;" onclick="applyCalibratedCurve()">APPLY TO LAG CURVE (SYNC)</button>
             </div>
@@ -803,9 +803,10 @@ function parseCsvText(csvText) {
 }
 
 async function fetchGoogleSheetCsv(gid) {
+    // Prefer direct raw CSV export so wide sheets (40+ state columns) are never truncated by gviz
     const urls = [
-        `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`,
-        `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/export?format=csv&gid=${gid}`
+        `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/export?format=csv&gid=${gid}`,
+        `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&headers=0&gid=${gid}`
     ];
     let lastErr = null;
     for (const url of urls) {
@@ -853,6 +854,7 @@ let currentCalApps = [0, 0, 0, 0];
 let currentCalExp = [0, 0, 0, 0];
 let currentCalEffPct = [0, 0, 0, 0];
 let currentCalNames = ["", "", "", ""];
+let calInputsDirty = false;
 
 /* ============================================================================
    FORMATTING & DIALOG HELPERS
@@ -1042,11 +1044,15 @@ function normalizeStateIntegrity() {
             const legacyPs = (typeof r.qPs === 'number' || typeof r.qPs === 'string') ? parseFloat(r.qPs) : NaN;
             r.qPs = {};
             if (!isNaN(legacyPs)) ACTIVE_TIMELINE.forEach(m => { r.qPs[m] = legacyPs; });
+        } else {
+            r.qPs = Object.assign({}, r.qPs);
         }
         if (!r.qEv || typeof r.qEv !== 'object' || Array.isArray(r.qEv)) {
             const legacyEv = (typeof r.qEv === 'number' || typeof r.qEv === 'string') ? parseFloat(r.qEv) : NaN;
             r.qEv = {};
             if (!isNaN(legacyEv)) ACTIVE_TIMELINE.forEach(m => { r.qEv[m] = legacyEv; });
+        } else {
+            r.qEv = Object.assign({}, r.qEv);
         }
         if (!r.pto || typeof r.pto !== 'object' || Array.isArray(r.pto)) r.pto = {};
         if (!r.pto_weekly || typeof r.pto_weekly !== 'object' || Array.isArray(r.pto_weekly)) r.pto_weekly = {};
@@ -1090,8 +1096,16 @@ function normalizeStateIntegrity() {
         r.states = [...r.licensedStates];
 
         ACTIVE_TIMELINE.forEach(m => {
-            if (r.qPs[m] === undefined) r.qPs[m] = r.role === 'PFA' ? 12 : (r.role === 'LEAD' ? 1 : 3);
-            if (r.qEv[m] === undefined) r.qEv[m] = r.role === 'PFA' ? 0 : (r.role === 'LEAD' ? 3 : 4);
+            if (r.qPs[m] === undefined || r.qPs[m] === null || isNaN(parseFloat(r.qPs[m]))) {
+                r.qPs[m] = r.role === 'PFA' ? 12 : (r.role === 'LEAD' ? 1 : 3);
+            } else {
+                r.qPs[m] = parseFloat(r.qPs[m]);
+            }
+            if (r.qEv[m] === undefined || r.qEv[m] === null || isNaN(parseFloat(r.qEv[m]))) {
+                r.qEv[m] = r.role === 'PFA' ? 0 : (r.role === 'LEAD' ? 3 : 4);
+            } else {
+                r.qEv[m] = parseFloat(r.qEv[m]);
+            }
             if (!Array.isArray(r.pto_weekly[m])) {
                 const totP = parseFloat(r.pto[m]) || 0;
                 r.pto_weekly[m] = [totP, 0, 0, 0, 0];
@@ -2227,7 +2241,25 @@ function parseStateSheetRows(rows) {
     const isMatrixLayout = Object.keys(stateColMap).length >= 3;
     const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
     let nameCol = headers.findIndex(h => h.includes('name') || h.includes('clinician') || h.includes('evaluator') || h.includes('provider') || h === 'ce');
-    if (nameCol === -1) nameCol = 0;
+
+    // Auto-verify nameCol by counting actual roster matches (handles leading index columns like 1, 2, 3 in Col A)
+    const countMatchesInCol = (colIdx) => {
+        let hits = 0;
+        for (let r = headerIdx + 1; r < rows.length; r++) {
+            if (findRosterMatch(rows[r][colIdx])) hits++;
+        }
+        return hits;
+    };
+    if (nameCol === -1 || countMatchesInCol(nameCol) === 0) {
+        let bestCol = 0, bestHits = -1;
+        const maxScan = Math.min(6, (rows[headerIdx] || []).length);
+        for (let c = 0; c < maxScan; c++) {
+            if (stateColMap[c]) continue;
+            const hits = countMatchesInCol(c);
+            if (hits > bestHits) { bestHits = hits; bestCol = c; }
+        }
+        nameCol = bestCol;
+    }
 
     if (isMatrixLayout) {
         Object.values(stateColMap).forEach(code => result.discoveredStates.add(code));
@@ -2704,11 +2736,13 @@ function renderPtoLedger() {
                     <td style="color:#94a3b8; font-size:9px;">${p.role}</td>
                     ${ACTIVE_TIMELINE.map(m => {
                         const escM = m.replace(/'/g, "\\'");
-                        const psVal = qPsObj[m] !== undefined ? qPsObj[m] : 0;
-                        const evVal = qEvObj[m] !== undefined ? qEvObj[m] : 0;
+                        const psVal = (qPsObj[m] !== undefined && qPsObj[m] !== null) ? qPsObj[m] : 0;
+                        const evVal = (qEvObj[m] !== undefined && qEvObj[m] !== null) ? qEvObj[m] : 0;
+                        const safeAttrN = n.replace(/"/g, '&quot;');
+                        const safeAttrM = m.replace(/"/g, '&quot;');
                         return `
-                        <td style="text-align:center;"><input type="number" step="0.5" min="0" class="ledger-input" value="${psVal}" onchange="updateRosterCell('${escN}','${escM}','qPs',this.value)"></td>
-                        <td style="text-align:center;">${p.role === 'PFA' ? '<span style="color:#334155;">-</span>' : `<input type="number" step="0.5" min="0" class="ledger-input" value="${evVal}" onchange="updateRosterCell('${escN}','${escM}','qEv',this.value)">`}</td>
+                        <td style="text-align:center;"><input type="number" step="0.5" min="0" class="ledger-input" data-name="${safeAttrN}" data-month="${safeAttrM}" data-field="qPs" value="${psVal}" onchange="updateRosterCellEl(this)"></td>
+                        <td style="text-align:center;">${p.role === 'PFA' ? '<span style="color:#334155;">-</span>' : `<input type="number" step="0.5" min="0" class="ledger-input" data-name="${safeAttrN}" data-month="${safeAttrM}" data-field="qEv" value="${evVal}" onchange="updateRosterCellEl(this)">`}</td>
                         <td style="text-align:center;"><button class="btn-action" style="background:#1e293b; border:1px solid #475569; color:${(p.pto[m]||0)>0?'#fb7185':'#94a3b8'}; padding:2px 6px; font-size:9.5px; min-width:34px;" onclick="openPtoWeeklyModal('${escN}','${escM}')">${(p.pto[m]||0).toFixed(1)}</button></td>`;
                     }).join('')}
                 </tr>`;
@@ -2730,12 +2764,26 @@ function renderPtoLedger() {
     document.getElementById('pto-ledger-foot').innerHTML = `<tr class="totals-row"><td style="position:sticky; left:0; background:#0f172a;">DAILY QUOTA / PTO TOTALS</td><td></td>${footCells}</tr>`;
 }
 
+function updateRosterCellEl(el) {
+    if (!el || !el.dataset) return;
+    updateRosterCell(el.dataset.name, el.dataset.month, el.dataset.field, el.value);
+}
+
 function updateRosterCell(name, month, field, val) {
-    if (!ROSTER[name]) return;
+    if (!ROSTER[name] || !month) return;
     if (!ROSTER[name][field] || typeof ROSTER[name][field] !== 'object' || Array.isArray(ROSTER[name][field])) {
         const legacyVal = parseFloat(ROSTER[name][field]);
         ROSTER[name][field] = {};
         ACTIVE_TIMELINE.forEach(m => { ROSTER[name][field][m] = !isNaN(legacyVal) ? legacyVal : 0; });
+    } else {
+        // Ensure every month key exists independently before mutating the target month
+        ACTIVE_TIMELINE.forEach(m => {
+            if (ROSTER[name][field][m] === undefined || ROSTER[name][field][m] === null) {
+                ROSTER[name][field][m] = field === 'qPs'
+                    ? (ROSTER[name].role === 'PFA' ? 12 : (ROSTER[name].role === 'LEAD' ? 1 : 3))
+                    : (ROSTER[name].role === 'PFA' ? 0 : (ROSTER[name].role === 'LEAD' ? 3 : 4));
+            }
+        });
     }
     const parsed = parseFloat(val);
     ROSTER[name][field][month] = isNaN(parsed) ? 0 : Math.max(0, parsed);
@@ -2871,6 +2919,7 @@ function openCalibrateModal() {
     document.getElementById('cal-month-title').innerText = activeMonth.split('_')[0].toUpperCase();
     const syncSel = document.getElementById('cal-sync-mode');
     if (syncSel) syncSel.value = FUNNEL.useEmpiricalYield ? 'yield_and_shape' : 'shape_only';
+    calInputsDirty = false;
 
     currentCalNames = [0, 1, 2, 3].map(i => (getHistoricalLedgerName(activeMonthIdx, -i) || activeMonth).split('_')[0]);
     const modelBase = getModelExpectedEnrollmentsForMonth(activeMonth, activeMonthIdx);
@@ -2888,12 +2937,52 @@ function openCalibrateModal() {
             <td style="color:${colors[i]}; font-weight:bold;">${labels[i]}</td>
             <td style="text-align:center; color:#94a3b8;">${fmt(currentCalApps[i])}</td>
             <td style="text-align:center; color:#cbd5e1;">${currentCalEffPct[i].toFixed(1)}% <span style="font-size:8.5px; color:#64748b;">(${fmt(currentCalExp[i])})</span></td>
-            <td style="text-align:center;"><input type="number" id="cal-inp-${i}" value="${initVals[i]}" style="width:65px; text-align:center; color:#f8fafc;" oninput="updateCalibrationSummary(false)" onchange="updateCalibrationSummary(true)"></td>
+            <td style="text-align:center;"><input type="number" id="cal-inp-${i}" value="${initVals[i]}" style="width:65px; text-align:center; color:#f8fafc;" oninput="calInputsDirty=true; updateCalibrationSummary(false)" onchange="calInputsDirty=true; updateCalibrationSummary(true)"></td>
             <td style="text-align:center; font-weight:bold; color:#10b981;" id="cal-act-pct-${i}">-</td>
         </tr>`).join('');
 
     updateCalibrationSummary(false);
     document.getElementById('calibrate-modal').style.display = 'flex';
+}
+
+function recomputeLagCurveFromCalibratedMonths(useEmp) {
+    const sumRates = [0, 0, 0, 0];
+    const calMonths = [];
+    ACTIVE_TIMELINE.forEach((m, idx) => {
+        if (LEDGER[m] && Array.isArray(LEDGER[m].actuals) && LEDGER[m].actuals.length === 4) {
+            calMonths.push(formatShortMonthTab(m));
+            for (let i = 0; i < 4; i++) {
+                const cName = getHistoricalLedgerName(idx, -i) || m;
+                const cApps = getMonthEvMetrics(cName).apps;
+                sumRates[i] += cApps > 0 ? (LEDGER[m].actuals[i] / cApps) * 100 : 0;
+            }
+        }
+    });
+
+    FUNNEL.useEmpiricalYield = useEmp;
+    if (calMonths.length > 0) {
+        const avgRates = sumRates.map(r => r / calMonths.length);
+        const avgSum = avgRates.reduce((a, b) => a + b, 0);
+        const baselineSum = 32.8;
+        const scaleBack = (!useEmp && avgSum > 0) ? (baselineSum / avgSum) : 1;
+        FUNNEL.enSplitM0 = parseFloat((avgRates[0] * scaleBack).toFixed(2));
+        FUNNEL.enSplitM1 = parseFloat((avgRates[1] * scaleBack).toFixed(2));
+        FUNNEL.enSplitM2 = parseFloat((avgRates[2] * scaleBack).toFixed(2));
+        FUNNEL.enSplitM3 = parseFloat((avgRates[3] * scaleBack).toFixed(2));
+        return { calMonths, avgSum };
+    }
+    return { calMonths: [], avgSum: (FUNNEL.enSplitM0 || 5) + (FUNNEL.enSplitM1 || 22) + (FUNNEL.enSplitM2 || 4.8) + (FUNNEL.enSplitM3 || 1) };
+}
+
+function onCalSyncModeChange() {
+    const syncSel = document.getElementById('cal-sync-mode');
+    if (!syncSel) return;
+    const useEmp = syncSel.value === 'yield_and_shape';
+    recomputeLagCurveFromCalibratedMonths(useEmp);
+    saveState();
+    recalculateDashboardMetrics();
+    // Refresh modal preview immediately without locking uncalibrated future months
+    openCalibrateModal();
 }
 
 function updateCalibrationSummary(persist) {
@@ -2955,38 +3044,24 @@ function applyCalibratedCurve() {
     const syncMode = (document.getElementById('cal-sync-mode') || {}).value || 'yield_and_shape';
     const useEmp = syncMode === 'yield_and_shape';
 
-    const actVals = [0,1,2,3].map(i => parseInt(document.getElementById(`cal-inp-${i}`).value, 10) || 0);
-    if (LEDGER[activeMonth]) LEDGER[activeMonth].actuals = [...actVals];
+    const alreadyLocked = !!(LEDGER[activeMonth] && Array.isArray(LEDGER[activeMonth].actuals) && LEDGER[activeMonth].actuals.length === 4);
+    if (calInputsDirty || alreadyLocked) {
+        const actVals = [0,1,2,3].map(i => parseInt(document.getElementById(`cal-inp-${i}`).value, 10) || 0);
+        if (LEDGER[activeMonth]) LEDGER[activeMonth].actuals = [...actVals];
+    }
 
-    const sumRates = [0, 0, 0, 0];
-    const calMonths = [];
-    ACTIVE_TIMELINE.forEach((m, idx) => {
-        if (LEDGER[m] && Array.isArray(LEDGER[m].actuals) && LEDGER[m].actuals.length === 4) {
-            calMonths.push(formatShortMonthTab(m));
-            for (let i = 0; i < 4; i++) {
-                const cName = getHistoricalLedgerName(idx, -i) || m;
-                const cApps = getMonthEvMetrics(cName).apps;
-                sumRates[i] += cApps > 0 ? (LEDGER[m].actuals[i] / cApps) * 100 : 0;
-            }
-        }
-    });
-
-    const cnt = calMonths.length || 1;
-    const avgRates = sumRates.map(r => r / cnt);
-    const avgSum = avgRates.reduce((a, b) => a + b, 0);
-    const currSum = ((FUNNEL.enSplitM0 || 5) + (FUNNEL.enSplitM1 || 22) + (FUNNEL.enSplitM2 || 4.8) + (FUNNEL.enSplitM3 || 1)) || 32.8;
-    const scaleBack = (!useEmp && avgSum > 0) ? (currSum / avgSum) : 1;
-
-    FUNNEL.useEmpiricalYield = useEmp;
-    FUNNEL.enSplitM0 = parseFloat((avgRates[0] * scaleBack).toFixed(2));
-    FUNNEL.enSplitM1 = parseFloat((avgRates[1] * scaleBack).toFixed(2));
-    FUNNEL.enSplitM2 = parseFloat((avgRates[2] * scaleBack).toFixed(2));
-    FUNNEL.enSplitM3 = parseFloat((avgRates[3] * scaleBack).toFixed(2));
-
+    const { calMonths, avgSum } = recomputeLagCurveFromCalibratedMonths(useEmp);
     saveState();
     closeCalibrateModal();
     recalculateDashboardMetrics();
-    promptAlert(`Locked ${activeMonth.split('_')[0]} actuals & synced [${useEmp ? 'Empirical Yield (' + avgSum.toFixed(1) + '%) + Shape' : 'Timing Shape Only'}] across ${cnt} calibrated month(s): ${calMonths.join(', ')}.`);
+
+    const modeLabel = useEmp
+        ? `Empirical Mode — Locked to ${avgSum.toFixed(1)}% Historical Actuals Rate`
+        : `Forecast Mode — Scaled to Funnel Sliders`;
+    const calSummary = calMonths.length > 0
+        ? `across ${calMonths.length} calibrated month(s): ${calMonths.join(', ')}`
+        : `using current lag curve`;
+    promptAlert(`Synced [${modeLabel}] ${calSummary}.`);
 }
 function closeCalibrateModal() { document.getElementById('calibrate-modal').style.display = 'none'; }
 
