@@ -287,11 +287,50 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
         <!-- 1. EXECUTIVE INSIGHT BANNER -->
         <div class="insight-banner" id="executive-insight-banner"></div>
 
-        <!-- 2. COHORT PIPELINE ORIGIN & WATERFALL LEDGER -->
+        <!-- 2. HISTORICAL & STAMPED FUNNEL CONVERSION TREND -->
+        <div class="conv-trend-panel" id="conv-trend-container"></div>
+
+        <!-- 3. COHORT PIPELINE ORIGIN & WATERFALL LEDGER -->
         <div class="cohort-waterfall-panel" id="cohort-waterfall-container"></div>
 
-        <!-- 3. HISTORICAL & STAMPED FUNNEL CONVERSION TREND -->
-        <div class="conv-trend-panel" id="conv-trend-container"></div>
+        <!-- 4. ACTIVE MONTH STAFFING REQUIREMENTS -->
+        <div class="top-staff-grid">
+            <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
+                <div class="staff-kpi-title" style="color:#c4b5fd;">📋 Licensed CE Requirements (<span id="staff-lbl-month-ce">-</span>)</div>
+                <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
+                    <div>• Eval Pipeline Demand: <strong id="staff-ce-demand" style="color:#f8fafc;">-</strong></div>
+                    <div>• Avg Known Capacity / CE: <strong id="staff-ce-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+                    <div>• Required Headcount: <strong id="staff-ce-req" style="color:#93c5fd;">-</strong> FTEs</div>
+                    <div>• Active Staff On-Seat: <strong id="staff-ce-act" style="color:#f8fafc;">-</strong> CEs</div>
+                </div>
+                <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-ce-delta-callout">-</div>
+            </div>
+
+            <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
+                <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+                    <span>🤖 PFA Intake Requirements</span>
+                    <div style="display:inline-flex; align-items:center; gap:6px; font-size:8.5px; color:#94a3b8;">
+                        <div style="display:inline-flex; align-items:center; gap:2px;" title="Strategic hiring benchmark % of total PS demand">
+                            <span>Target:</span>
+                            <input type="number" id="pfa-bench-rate-inp" value="25" min="0" max="100" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaBenchmarkRate()">
+                            <span style="font-size:7.5px;">%</span>
+                        </div>
+                        <div style="display:inline-flex; align-items:center; gap:2px;">
+                            <span>Quota:</span>
+                            <input type="number" id="pfa-daily-quota-inp" value="12" min="1" max="25" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
+                            <span style="font-size:7.5px;">PS/d</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
+                    <div>• Strategic Benchmark Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(hiring baseline)</span></div>
+                    <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+                    <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
+                    <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
+                </div>
+                <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-pfa-delta-callout">-</div>
+            </div>
+        </div>
     </div>
 
     <div class="top-right panel">
@@ -350,45 +389,6 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
                 </tbody>
             </table>
         </div>
-    </div>
-</div>
-
-<!-- ACTIVE MONTH STAFFING REQUIREMENTS (STANDALONE ROW DIRECTLY ABOVE STRATEGIC STAFFING) -->
-<div class="top-staff-grid" style="margin-bottom: 14px;">
-    <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
-        <div class="staff-kpi-title" style="color:#c4b5fd;">📋 Licensed CE Requirements (<span id="staff-lbl-month-ce">-</span>)</div>
-        <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
-            <div>• Eval Pipeline Demand: <strong id="staff-ce-demand" style="color:#f8fafc;">-</strong></div>
-            <div>• Avg Known Capacity / CE: <strong id="staff-ce-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
-            <div>• Required Headcount: <strong id="staff-ce-req" style="color:#93c5fd;">-</strong> FTEs</div>
-            <div>• Active Staff On-Seat: <strong id="staff-ce-act" style="color:#f8fafc;">-</strong> CEs</div>
-        </div>
-        <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-ce-delta-callout">-</div>
-    </div>
-
-    <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
-        <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
-            <span>🤖 PFA Intake Requirements</span>
-            <div style="display:inline-flex; align-items:center; gap:6px; font-size:8.5px; color:#94a3b8;">
-                <div style="display:inline-flex; align-items:center; gap:2px;" title="Strategic hiring benchmark % of total PS demand">
-                    <span>Target:</span>
-                    <input type="number" id="pfa-bench-rate-inp" value="25" min="0" max="100" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaBenchmarkRate()">
-                    <span style="font-size:7.5px;">%</span>
-                </div>
-                <div style="display:inline-flex; align-items:center; gap:2px;">
-                    <span>Quota:</span>
-                    <input type="number" id="pfa-daily-quota-inp" value="12" min="1" max="25" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
-                    <span style="font-size:7.5px;">PS/d</span>
-                </div>
-            </div>
-        </div>
-        <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
-            <div>• Strategic Benchmark Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(hiring baseline)</span></div>
-            <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
-            <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
-            <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
-        </div>
-        <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-pfa-delta-callout">-</div>
     </div>
 </div>
 
@@ -1904,6 +1904,12 @@ function renderConversionTrendCard() {
     }
     displayIndices = Array.from(new Set(displayIndices)).sort((a, b) => a - b);
 
+    // Cap display to at most 6 months (active month + up to 5 most recent stamped months)
+    if (displayIndices.length > 6) {
+        const recentOther = displayIndices.filter(i => i !== activeMonthIdx).slice(-5);
+        displayIndices = [...recentOther, activeMonthIdx].sort((a, b) => a - b);
+    }
+
     const fmtStage = (val, ref, isStamped) => {
         const v = Number(val) || 0;
         let col = '#cbd5e1';
@@ -1967,7 +1973,7 @@ function renderConversionTrendCard() {
     container.innerHTML = `
         <div class="conv-trend-title">
             <span>📊 Historical & Stamped Funnel Conversion Trend</span>
-            <span style="font-size:8px; color:#94a3b8; font-weight:600;">${stampedIndices.length > 0 ? `${stampedIndices.length} Month(s) Stamped · Click row to jump` : 'Edit top funnel sliders to stamp monthly actuals'}</span>
+            <span style="font-size:8px; color:#94a3b8; font-weight:600;">${stampedIndices.length > 0 ? `Showing ${displayIndices.length} of ${stampedIndices.length} Stamped (Max 6) · Click row to jump` : 'Edit top funnel sliders to stamp monthly actuals'}</span>
         </div>
         <div style="overflow-x:auto;">
             <table class="conv-trend-table">
@@ -2010,8 +2016,16 @@ function renderExecutiveInsight(month, apps, psDem, psCap, evDem, evCap, sysPsUt
 
 function renderCohortWaterfall(show, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, enrolls, evM0Split, evM1Split) {
     const panel = document.getElementById('cohort-waterfall-container');
-    panel.style.display = show ? 'flex' : 'none';
-    if (!show) return;
+    if (!panel) return;
+    panel.style.display = 'flex';
+    if (!show) {
+        panel.innerHTML = `
+            <div class="cohort-waterfall-title" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+                <span>🌊 Row-Based Cohort Origin & Lag Curve Flow (${activeMonth.split('_')[0]})</span>
+                <button class="btn-action" style="background:#3730a3; border:1px solid #6366f1; padding:2px 8px; font-size:8.5px;" onclick="setDemandMode('cohort')">Switch to Lagged Cohort</button>
+            </div>`;
+        return;
+    }
 
     const lag0 = (FUNNEL.enSplitM0 !== undefined ? FUNNEL.enSplitM0 : 5.0);
     const lag1 = (FUNNEL.enSplitM1 !== undefined ? FUNNEL.enSplitM1 : 22.0);
