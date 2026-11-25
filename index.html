@@ -68,6 +68,41 @@ body { background: #0b0f19; color: #e2e8f0; padding: 12px; font-size: 11px; line
 .waterfall-badge { padding: 1px 5px; border-radius: 3px; font-size: 8px; font-weight: 800; text-transform: uppercase; }
 .waterfall-outputs { display: flex; gap: 10px; font-size: 9.5px; }
 
+/* HISTORICAL & STAMPED FUNNEL CONVERSION TREND */
+.conv-trend-panel {
+    background: #111827;
+    border-radius: 6px;
+    border: 1px solid #374151;
+    border-left: 3px solid #10b981;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.conv-trend-title {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #86efac;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1f2937;
+    padding-bottom: 4px;
+    margin-bottom: 2px;
+    gap: 8px;
+}
+.conv-trend-table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+.conv-trend-table th { background: transparent; color: #64748b; font-size: 8px; padding: 3px 4px; border-bottom: 1px solid #1f2937; text-align: center; }
+.conv-trend-table th:first-child { text-align: left; }
+.conv-trend-table td { padding: 4px; border-bottom: 1px solid #1e293b; text-align: center; color: #cbd5e1; white-space: nowrap; }
+.conv-trend-table td:first-child { text-align: left; }
+.conv-trend-table tr.conv-row-clickable { cursor: pointer; transition: background 0.15s; }
+.conv-trend-table tr.conv-row-clickable:hover td { background: #1e293b; }
+.conv-trend-table tr.conv-row-active td { background: rgba(59,130,246,0.12); }
+
 .params-strip-funnel { display: flex; gap: 6px; flex-wrap: wrap; background: #0f172a; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; margin: 0 auto 12px auto; align-items: center; justify-content: center; width: 100%; max-width: 680px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
 .param-group { display: inline-flex; align-items: center; gap: 5px; background: rgba(30, 41, 59, 0.6); padding: 3px 6px; border-radius: 4px; border: 1px solid #1e293b; }
 .params-strip-funnel .param-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -255,44 +290,8 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
         <!-- 2. COHORT PIPELINE ORIGIN & WATERFALL LEDGER -->
         <div class="cohort-waterfall-panel" id="cohort-waterfall-container"></div>
 
-        <!-- 3. INLINE ACTIVE MONTH STAFFING REQUIREMENTS (CE + PFA) -->
-        <div class="top-staff-grid">
-            <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
-                <div class="staff-kpi-title" style="color:#c4b5fd;">📋 Licensed CE Requirements (<span id="staff-lbl-month-ce">-</span>)</div>
-                <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
-                    <div>• Eval Pipeline Demand: <strong id="staff-ce-demand" style="color:#f8fafc;">-</strong></div>
-                    <div>• Avg Known Capacity / CE: <strong id="staff-ce-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
-                    <div>• Required Headcount: <strong id="staff-ce-req" style="color:#93c5fd;">-</strong> FTEs</div>
-                    <div>• Active Staff On-Seat: <strong id="staff-ce-act" style="color:#f8fafc;">-</strong> CEs</div>
-                </div>
-                <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-ce-delta-callout">-</div>
-            </div>
-
-            <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
-                <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
-                    <span>🤖 PFA Intake Requirements</span>
-                    <div style="display:inline-flex; align-items:center; gap:6px; font-size:8.5px; color:#94a3b8;">
-                        <div style="display:inline-flex; align-items:center; gap:2px;" title="Strategic hiring benchmark % of total PS demand">
-                            <span>Target:</span>
-                            <input type="number" id="pfa-bench-rate-inp" value="25" min="0" max="100" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaBenchmarkRate()">
-                            <span style="font-size:7.5px;">%</span>
-                        </div>
-                        <div style="display:inline-flex; align-items:center; gap:2px;">
-                            <span>Quota:</span>
-                            <input type="number" id="pfa-daily-quota-inp" value="12" min="1" max="25" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
-                            <span style="font-size:7.5px;">PS/d</span>
-                        </div>
-                    </div>
-                </div>
-                <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
-                    <div>• Strategic Benchmark Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(hiring baseline)</span></div>
-                    <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
-                    <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
-                    <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
-                </div>
-                <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-pfa-delta-callout">-</div>
-            </div>
-        </div>
+        <!-- 3. HISTORICAL & STAMPED FUNNEL CONVERSION TREND -->
+        <div class="conv-trend-panel" id="conv-trend-container"></div>
     </div>
 
     <div class="top-right panel">
@@ -351,6 +350,45 @@ input[type="text"] { text-align: left; padding: 4px 8px; }
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<!-- ACTIVE MONTH STAFFING REQUIREMENTS (STANDALONE ROW DIRECTLY ABOVE STRATEGIC STAFFING) -->
+<div class="top-staff-grid" style="margin-bottom: 14px;">
+    <div class="staff-kpi-card" style="border-left: 3px solid #8b5cf6;">
+        <div class="staff-kpi-title" style="color:#c4b5fd;">📋 Licensed CE Requirements (<span id="staff-lbl-month-ce">-</span>)</div>
+        <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
+            <div>• Eval Pipeline Demand: <strong id="staff-ce-demand" style="color:#f8fafc;">-</strong></div>
+            <div>• Avg Known Capacity / CE: <strong id="staff-ce-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+            <div>• Required Headcount: <strong id="staff-ce-req" style="color:#93c5fd;">-</strong> FTEs</div>
+            <div>• Active Staff On-Seat: <strong id="staff-ce-act" style="color:#f8fafc;">-</strong> CEs</div>
+        </div>
+        <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-ce-delta-callout">-</div>
+    </div>
+
+    <div class="staff-kpi-card" style="border-left: 3px solid #3b82f6;">
+        <div class="staff-kpi-title" style="color:#93c5fd; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+            <span>🤖 PFA Intake Requirements</span>
+            <div style="display:inline-flex; align-items:center; gap:6px; font-size:8.5px; color:#94a3b8;">
+                <div style="display:inline-flex; align-items:center; gap:2px;" title="Strategic hiring benchmark % of total PS demand">
+                    <span>Target:</span>
+                    <input type="number" id="pfa-bench-rate-inp" value="25" min="0" max="100" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaBenchmarkRate()">
+                    <span style="font-size:7.5px;">%</span>
+                </div>
+                <div style="display:inline-flex; align-items:center; gap:2px;">
+                    <span>Quota:</span>
+                    <input type="number" id="pfa-daily-quota-inp" value="12" min="1" max="25" style="width:36px; padding:1px 2px; font-size:9.5px; font-weight:bold; color:#93c5fd;" onchange="savePfaStaffingQuota()">
+                    <span style="font-size:7.5px;">PS/d</span>
+                </div>
+            </div>
+        </div>
+        <div style="font-size:10.5px; color:#cbd5e1; line-height:1.65;">
+            <div>• Strategic Benchmark Demand: <strong id="staff-pfa-demand" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(hiring baseline)</span></div>
+            <div>• Avg Known Capacity / PFA: <strong id="staff-pfa-avg-cap" style="color:#f8fafc;">-</strong> <span style="font-size:8px; color:#64748b;">(net PTO & days)</span></div>
+            <div>• Required Headcount: <strong id="staff-pfa-req" style="color:#93c5fd;">-</strong> FTEs</div>
+            <div>• Active Staff On-Seat: <strong id="staff-pfa-act" style="color:#f8fafc;">-</strong> PFAs</div>
+        </div>
+        <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #334155; font-size:11px; font-weight:bold;" id="staff-pfa-delta-callout">-</div>
     </div>
 </div>
 
@@ -1663,39 +1701,16 @@ function recalculateDashboardMetrics() {
     setHtml('tbl-var-ev-dem', formatVar(cap_evSched - d_evDem));
 
     if (showCohort) {
-        const prevEvDem = m1.evDem * evM1Split;
-        const currEvDem = m0.evDem * evM0Split;
-        const prevEvCap = m1.fluidEvCap * evM1Split;
-        const currEvCap = fluidEvCap * evM0Split;
-        setHtml('lbl-ev-title-m1', `↳ Carryover (${Math.round(evM1Split * 100)}% of Prev Mo) <span style="color:#64748b; font-size:9px;">[${m1Name.split('_')[0]} Demand ${fmt(m1.evDem)} × ${Math.round(evM1Split * 100)}% = ${fmt(prevEvDem)}]</span>`);
-        setTxt('tbl-dem-ev-m1', fmt(prevEvDem));
-        setTxt('tbl-pot-ev-m1', fmt(prevEvCap));
-
-        setHtml('lbl-ev-title-m0', `↳ Immediate (${Math.round(evM0Split * 100)}% of Curr Mo) <span style="color:#64748b; font-size:9px;">[${activeMonth.split('_')[0]} Demand ${fmt(m0.evDem)} × ${Math.round(evM0Split * 100)}% = ${fmt(currEvDem)}]</span>`);
-        setTxt('tbl-dem-ev-m0', fmt(currEvDem));
-        setTxt('tbl-pot-ev-m0', fmt(currEvCap));
-
-        const p3 = m3.apps > 0 ? ((enM3 / m3.apps) * 100).toFixed(1) : '0.0';
-        const p2 = m2.apps > 0 ? ((enM2 / m2.apps) * 100).toFixed(1) : '0.0';
-        const p1 = m1.apps > 0 ? ((enM1 / m1.apps) * 100).toFixed(1) : '0.0';
-        const p0 = m0.apps > 0 ? ((enM0 / m0.apps) * 100).toFixed(1) : '0.0';
-
-        setHtml('lbl-en-title-m3', `↳ Deep Tail (3-Mo Prior) <span style="color:#64748b; font-size:9px;">[${m3Name.split('_')[0]} ${fmt(m3.apps)} Apps × ${p3}% = ${fmt(enM3)}]</span>`);
-        setTxt('tbl-dem-en-m3', fmt(enM3));
-        setTxt('tbl-pot-en-m3', fmt(enM3));
-
-        setHtml('lbl-en-title-m2', `↳ Tail Pipeline (2-Mo Prior) <span style="color:#64748b; font-size:9px;">[${m2Name.split('_')[0]} ${fmt(m2.apps)} Apps × ${p2}% = ${fmt(enM2)}]</span>`);
-        setTxt('tbl-dem-en-m2', fmt(enM2));
-        setTxt('tbl-pot-en-m2', fmt(enM2));
-
-        setHtml('lbl-en-title-m1', `↳ Core Pipeline (Prev Mo) <span style="color:#64748b; font-size:9px;">[${m1Name.split('_')[0]} ${fmt(m1.apps)} Apps × ${p1}% = ${fmt(enM1)}]</span>`);
-        setTxt('tbl-dem-en-m1', fmt(enM1));
-        setTxt('tbl-pot-en-m1', fmt(enM1));
-
-        const capEnM0 = Math.max(enM0, cap_enroll - (enM3 + enM2 + enM1));
-        setHtml('lbl-en-title-m0', `↳ Immediate Yield (Curr Mo) <span style="color:#64748b; font-size:9px;">[${activeMonth.split('_')[0]} ${fmt(m0.apps)} Apps × ${p0}% = ${fmt(enM0)}]</span>`);
-        setTxt('tbl-dem-en-m0', fmt(enM0));
-        setTxt('tbl-pot-en-m0', fmt(capEnM0));
+        const m1EvPart = m1.evDem * evM1Split;
+        const m0EvPart = m0.evDem * evM0Split;
+        const m1CapPart = m1.fluidEvCap * evM1Split;
+        const m0CapPart = fluidEvCap * evM0Split;
+        setTxt('lbl-ev-title-m1', `↳ Carryover (${Math.round(evM1Split * 100)}% of ${m1Name.split('_')[0]})`);
+        setTxt('tbl-dem-ev-m1', fmt(m1EvPart));
+        setTxt('tbl-pot-ev-m1', fmt(m1CapPart));
+        setTxt('lbl-ev-title-m0', `↳ Immediate (${Math.round(evM0Split * 100)}% of ${activeMonth.split('_')[0]})`);
+        setTxt('tbl-dem-ev-m0', fmt(m0EvPart));
+        setTxt('tbl-pot-ev-m0', fmt(m0CapPart));
     }
 
     setTxt('tbl-dem-ev-sched', fmt(d_evDem));
@@ -1710,83 +1725,118 @@ function recalculateDashboardMetrics() {
     setTxt('tbl-pot-enroll', fmt(cap_enroll));
     setHtml('tbl-var-enroll', formatVar(cap_enroll - d_enroll));
 
+    if (showCohort) {
+        const pct3 = m3.apps > 0 ? ((enM3 / m3.apps) * 100).toFixed(1) : '0.0';
+        const pct2 = m2.apps > 0 ? ((enM2 / m2.apps) * 100).toFixed(1) : '0.0';
+        const pct1 = m1.apps > 0 ? ((enM1 / m1.apps) * 100).toFixed(1) : '0.0';
+        const pct0 = m0.apps > 0 ? ((enM0 / m0.apps) * 100).toFixed(1) : '0.0';
+        setTxt('lbl-en-title-m3', `↳ Deep Tail (3-Mo Prior) [${m3Name.split('_')[0]} ${fmt(m3.apps)} Apps × ${pct3}% = ${fmt(enM3)}]`);
+        setTxt('lbl-en-title-m2', `↳ Tail Pipeline (2-Mo Prior) [${m2Name.split('_')[0]} ${fmt(m2.apps)} Apps × ${pct2}% = ${fmt(enM2)}]`);
+        setTxt('lbl-en-title-m1', `↳ Core Pipeline (Prev Mo) [${m1Name.split('_')[0]} ${fmt(m1.apps)} Apps × ${pct1}% = ${fmt(enM1)}]`);
+        setTxt('lbl-en-title-m0', `↳ Immediate Yield (Curr Mo) [${activeMonth.split('_')[0]} ${fmt(m0.apps)} Apps × ${pct0}% = ${fmt(enM0)}]`);
+
+        const capEnM0 = Math.max(enM0, cap_enroll - (enM3 + enM2 + enM1));
+        setTxt('tbl-dem-en-m3', fmt(enM3)); setTxt('tbl-pot-en-m3', fmt(enM3));
+        setTxt('tbl-dem-en-m2', fmt(enM2)); setTxt('tbl-pot-en-m2', fmt(enM2));
+        setTxt('tbl-dem-en-m1', fmt(enM1)); setTxt('tbl-pot-en-m1', fmt(enM1));
+        setTxt('tbl-dem-en-m0', fmt(enM0)); setTxt('tbl-pot-en-m0', fmt(capEnM0));
+    }
+
     setTxt('tbl-dem-pace', fmt(d_enroll / 4.33));
     setTxt('tbl-pot-pace', fmt(cap_enroll / 4.33));
 
     setTxt('mkt-bottleneck-tag', `(Bottleneck: ${mktBottleneck})`);
     setTxt('tbl-mkt-curr', `${fmt(d_apps)} apps`);
     setTxt('tbl-mkt-ceil', `${fmt(mktCeiling)} apps`);
-    setHtml('tbl-mkt-headroom', mktHeadroom >= 0
-        ? `<span style="color:#86efac;">+${fmt(mktHeadroom)} (+${Math.round(mktHeadroomPct)}%)</span>`
-        : `<span style="color:#fca5a5;">${fmt(mktHeadroom)} (${Math.round(mktHeadroomPct)}%)</span>`);
+    setHtml('tbl-mkt-headroom', `<span style="color:${mktHeadroom >= 0 ? '#86efac' : '#fca5a5'};">${mktHeadroom >= 0 ? '+' : ''}${fmt(mktHeadroom)} (${mktHeadroomPct >= 0 ? '+' : ''}${Math.round(mktHeadroomPct)}%)</span>`);
 
     // 5. State Cascading Distribution & Need-Based PFA Overflow Routing
-    stateMetricsCache = {};
-    let totalOverflowNeed = 0;
-    const rawStates = {};
+    const ldg = LEDGER[activeMonth];
+    const mult = 1 + ((r.volBump || 0) / 100);
+    const prevLdg = LEDGER[m1Name] || ARCHIVED_LEDGER[m1Name] || { apps: {}, conv: {} };
+    const prevRates = m1.rates || r;
+    const prevMult = 1 + ((prevRates.volBump || 0) / 100);
+    const prevGlobalAppToEv = (prevRates.appToPsRate / 100) * (prevRates.psCompRate / 100) * (prevRates.screenInRate / 100) * (prevRates.evSchedRate / 100);
 
-    MASTER_STATES.forEach(s => {
-        const sApps = (LEDGER[activeMonth].apps[s] || 0) * (1 + (r.volBump / 100));
-        const sPsDem = sApps * (r.appToPsRate / 100);
-        const ov = parseFloat(LEDGER[activeMonth].conv[s]) || 0;
-        const sEvDemInMo = sApps * (ov > 0 ? ov / 100 : globalAppToEv);
+    const rawStateData = MASTER_STATES.map(s => {
+        const stApps = (ldg.apps[s] || 0) * mult;
+        const stPsDem = stApps * (r.appToPsRate / 100);
+        const ovRate = parseFloat(ldg.conv[s]) || 0;
+        const m0StEv = stApps * (ovRate > 0 ? ovRate / 100 : globalAppToEv);
 
-        let sEvDem = sEvDemInMo;
-        if (activeDemandMode === 'cohort') {
-            const prevLdg = LEDGER[m1Name] || { apps: {}, conv: {} };
-            const prevR = getEffectiveMonthRates(m1Name);
-            const prevGlobal = (prevR.appToPsRate/100)*(prevR.psCompRate/100)*(prevR.screenInRate/100)*(prevR.evSchedRate/100);
-            const prevApps = (prevLdg.apps[s] || 0) * (1 + (prevR.volBump / 100));
-            const prevOv = parseFloat(prevLdg.conv[s]) || 0;
-            const prevEv = prevApps * (prevOv > 0 ? prevOv / 100 : prevGlobal);
-            sEvDem = (prevEv * evM1Split) + (sEvDemInMo * evM0Split);
+        let stEvDem = m0StEv;
+        if (showCohort) {
+            const pApps = (prevLdg.apps[s] || 0) * prevMult;
+            const pOv = parseFloat(prevLdg.conv[s]) || 0;
+            const m1StEv = pApps * (pOv > 0 ? pOv / 100 : prevGlobalAppToEv);
+            stEvDem = (m1StEv * evM1Split) + (m0StEv * evM0Split);
         }
 
-        const alloc = stateAlloc[s];
-        const psOverflowNeed = Math.max(0, sPsDem - alloc.strictPs);
-        totalOverflowNeed += psOverflowNeed;
-        rawStates[s] = { sApps, sPsDem, sEvDem, alloc, psOverflowNeed, ov };
+        const alloc = stateAlloc[s] || { ceHours: 0, strictPs: 0, strictEv: 0, providers: 0 };
+        const psOverflow = Math.max(0, stPsDem - alloc.strictPs);
+        return { state: s, apps: stApps, ovRate, psDem: stPsDem, evDem: stEvDem, alloc, psOverflow };
     });
 
+    const totalOverflowNeed = rawStateData.reduce((sum, d) => sum + d.psOverflow, 0);
     const pfaPoolDeployed = Math.min(totalPfaPsCap, totalOverflowNeed);
+    const overflowFillRatio = totalOverflowNeed > 0 ? (pfaPoolDeployed / totalOverflowNeed) : 0;
+
+    stateMetricsCache = {};
     const pfaDirectivesList = [];
 
-    MASTER_STATES.forEach(s => {
-        const rs = rawStates[s];
-        const sPfaTarget = totalOverflowNeed > 0 ? (pfaPoolDeployed * (rs.psOverflowNeed / totalOverflowNeed)) : 0;
-        const sRemCePs = Math.max(0, rs.sPsDem - sPfaTarget);
-        const sFluidEvCap = Math.max(0, rs.alloc.ceHours - (sRemCePs * PS_HANDLE)) / EV_HANDLE;
-        const sEvCov = rs.sEvDem > 0 ? (sFluidEvCap / rs.sEvDem) * 100 : 100;
-        const sPsCov = sRemCePs > 0 ? (rs.alloc.strictPs / sRemCePs) * 100 : 100;
-        const isOverflow = rs.psOverflowNeed > 0.5;
+    rawStateData.forEach(d => {
+        const pfaRelief = d.psOverflow * overflowFillRatio;
+        const remCePs = Math.max(0, d.psDem - pfaRelief);
+        const cePsCap = d.alloc.strictPs;
+        const psCov = remCePs > 0 ? (cePsCap / remCePs) * 100 : (cePsCap > 0 ? 100 : 100);
+        const psBal = cePsCap - remCePs;
 
-        if (sPfaTarget >= 1) pfaDirectivesList.push({ state: s, ps: Math.round(sPfaTarget) });
+        // Fluid time evaluation capacity for this state after residual CE PS hours
+        const evCap = Math.max(0, d.alloc.ceHours - (remCePs * PS_HANDLE)) / EV_HANDLE;
+        const evCov = d.evDem > 0 ? (evCap / d.evDem) * 100 : (evCap > 0 ? 100 : 100);
+        const evBal = evCap - d.evDem;
+        const isOverflow = d.psOverflow > 0.5;
 
-        stateMetricsCache[s] = {
-            state: s, apps: rs.sApps, psDem: rs.sPsDem, pfaRelief: sPfaTarget, remCePs: sRemCePs,
-            cePsCap: rs.alloc.strictPs, psBal: rs.alloc.strictPs - sRemCePs, psCov: sPsCov,
-            evDem: rs.sEvDem, evCap: sFluidEvCap, evBal: sFluidEvCap - rs.sEvDem,
-            evCov: sEvCov, providers: rs.alloc.providers, ovRate: rs.ov, isOverflow
+        if (Math.round(pfaRelief) > 0) {
+            pfaDirectivesList.push({ state: d.state, ps: Math.round(pfaRelief) });
+        }
+
+        stateMetricsCache[d.state] = {
+            state: d.state,
+            apps: d.apps,
+            ovRate: d.ovRate,
+            psDem: d.psDem,
+            pfaRelief,
+            remCePs,
+            cePsCap,
+            psCov,
+            psBal,
+            evDem: d.evDem,
+            evCap,
+            evCov,
+            evBal,
+            providers: d.alloc.providers,
+            isOverflow
         };
     });
-
     pfaDirectivesList.sort((a, b) => b.ps - a.ps);
 
-    // 6. Render Telemetry Strip, Insight Banner & Cohort Waterfall
+    // 6. Render Telemetry Strip, Insight Banner, Cohort Waterfall & Conversion Trend
     const sysPsUtil = totalSysPsCap > 0 ? (d_psSched / totalSysPsCap) * 100 : 0;
     const ceEvUtil = fluidEvCap > 0 ? (d_evDem / fluidEvCap) * 100 : 0;
     const pfaUtil = totalPfaPsCap > 0 ? (pfaPsAbsorbed / totalPfaPsCap) * 100 : 0;
     const cePsUtil = totalCeStrictPsCap > 0 ? (remCePsDem / totalCeStrictPsCap) * 100 : 0;
 
-    renderTopTelemetry(activeMonth, wd, d_apps, totalPtoCe, totalPtoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, d_psSched, totalSysPsCap, d_evDem, fluidEvCap);
+    renderTopTelemetry(activeMonth, wd, d_apps, totalPtoCe, totalPtoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, d_psSched, totalSysPsCap, totalPfaPsCap, totalCeStrictPsCap, d_evDem, fluidEvCap);
     renderExecutiveInsight(activeMonth, d_apps, d_psSched, totalSysPsCap, d_evDem, fluidEvCap, sysPsUtil, ceEvUtil, effPfaSharePct, mktHeadroom, mktBottleneck, pfaPoolDeployed, pfaDirectivesList);
     renderCohortWaterfall(showCohort, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, [enM0, enM1, enM2, enM3], evM0Split, evM1Split);
+    renderConversionTrendCard();
 
     renderHeatmap();
     renderStaffingModeler();
 }
 
-function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, psDem, psCap, evDem, evCap) {
+function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, psDem, psCap, pfaPsCap, cePsCap, evDem, evCap) {
     const psColor = sysPsUtil > 100 ? '#f87171' : (sysPsUtil >= 90 ? '#86efac' : '#93c5fd');
     const evColor = ceEvUtil > 90 ? '#f87171' : (ceEvUtil >= 80 ? '#86efac' : '#fde047');
 
@@ -1807,11 +1857,11 @@ function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, 
             </div>
         </div>
         <div class="telemetry-card theme-ps">
-            <div class="telemetry-hdr"><span>System PS Utilization</span><span>${fmt(psDem)} / ${fmt(psCap)}</span></div>
-            <div class="telemetry-main"><span class="telemetry-val" style="color:${psColor};">${sysPsUtil.toFixed(1)}%</span><span class="telemetry-sub">Target 95–100%</span></div>
+            <div class="telemetry-hdr"><span>System PS Utilization</span><span>${fmt(psDem)} / ${fmt(psCap)} PS</span></div>
+            <div class="telemetry-main"><span class="telemetry-val" style="color:${psColor};">${sysPsUtil.toFixed(1)}%</span><span class="telemetry-sub">Avail: ${fmt(psCap)} (PFA ${fmt(pfaPsCap)} · CE ${fmt(cePsCap)})</span></div>
             <div class="telemetry-bars-wrap">
-                <div class="telemetry-bar-row"><span style="width:42px;">PFAs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, pfaUtil)}%; background:#3b82f6;"></div></div><span>${pfaUtil.toFixed(0)}%</span></div>
-                <div class="telemetry-bar-row"><span style="width:42px;">CEs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, cePsUtil)}%; background:#60a5fa;"></div></div><span>${cePsUtil.toFixed(0)}%</span></div>
+                <div class="telemetry-bar-row"><span style="width:34px;">PFAs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, pfaUtil)}%; background:#3b82f6;"></div></div><span style="min-width:74px; text-align:right;">${fmt(pfaPsCap)} PS (${pfaUtil.toFixed(0)}%)</span></div>
+                <div class="telemetry-bar-row"><span style="width:34px;">CEs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, cePsUtil)}%; background:#60a5fa;"></div></div><span style="min-width:74px; text-align:right;">${fmt(cePsCap)} PS (${cePsUtil.toFixed(0)}%)</span></div>
             </div>
         </div>
         <div class="telemetry-card theme-ev">
@@ -1820,6 +1870,121 @@ function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, 
             <div class="telemetry-bars-wrap">
                 <div class="telemetry-bar-row"><span style="width:42px;">Load</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, ceEvUtil)}%; background:${evColor};"></div></div><span>${evCap - evDem >= 0 ? '+' + fmt(evCap - evDem) : fmt(evCap - evDem)}</span></div>
             </div>
+        </div>`;
+}
+
+function renderConversionTrendCard() {
+    const container = document.getElementById('conv-trend-container');
+    if (!container) return;
+
+    const base = {
+        appToPsRate: FUNNEL.appToPsRate || 90,
+        psCompRate: FUNNEL.psCompRate || 76,
+        screenInRate: FUNNEL.screenInRate || 88,
+        evSchedRate: FUNNEL.evSchedRate || 83,
+        evCompRate: FUNNEL.evCompRate || 85,
+        enrollRate: FUNNEL.enrollRate || 80
+    };
+    const baseNetYield = (base.appToPsRate/100) * (base.psCompRate/100) * (base.screenInRate/100) * (base.evSchedRate/100) * (base.evCompRate/100) * (base.enrollRate/100) * 100;
+
+    // Collect all months with stamped conversions, plus active month (or recent 4 months if none stamped yet)
+    const stampedIndices = [];
+    ACTIVE_TIMELINE.forEach((m, idx) => {
+        if (LEDGER[m] && LEDGER[m].conversions && Object.keys(LEDGER[m].conversions).length > 0) {
+            stampedIndices.push(idx);
+        }
+    });
+
+    let displayIndices = [...stampedIndices];
+    if (!displayIndices.includes(activeMonthIdx)) displayIndices.push(activeMonthIdx);
+    if (stampedIndices.length === 0) {
+        const startIdx = Math.max(0, activeMonthIdx - 3);
+        displayIndices = [];
+        for (let i = startIdx; i <= activeMonthIdx; i++) displayIndices.push(i);
+    }
+    displayIndices = Array.from(new Set(displayIndices)).sort((a, b) => a - b);
+
+    const fmtStage = (val, ref, isStamped) => {
+        const v = Number(val) || 0;
+        let col = '#cbd5e1';
+        if (isStamped) {
+            if (v >= ref + 0.5) col = '#86efac';
+            else if (v <= ref - 0.5) col = '#fca5a5';
+            else col = '#e2e8f0';
+        } else {
+            col = '#64748b';
+        }
+        return `<span style="color:${col}; font-weight:${isStamped ? '700' : '500'};">${v.toFixed(1)}%</span>`;
+    };
+
+    const rowsHtml = displayIndices.map(idx => {
+        const m = ACTIVE_TIMELINE[idx];
+        const r = getEffectiveMonthRates(m);
+        const netYield = (r.appToPsRate/100) * (r.psCompRate/100) * (r.screenInRate/100) * (r.evSchedRate/100) * (r.evCompRate/100) * (r.enrollRate/100) * 100;
+        const isAct = idx === activeMonthIdx;
+        const badge = r.isStamped
+            ? `<span style="font-size:7.5px; color:#c4b5fd; background:rgba(139,92,246,0.18); border:1px solid rgba(139,92,246,0.4); padding:0px 4px; border-radius:3px; margin-left:4px;">📌</span>`
+            : `<span style="font-size:7.5px; color:#64748b; margin-left:4px;">GLOB</span>`;
+
+        return `<tr class="conv-row-clickable ${isAct ? 'conv-row-active' : ''}" onclick="selectActiveMonth(${idx})" title="Click to inspect ${m.split('_')[0]}">
+            <td><strong style="color:${isAct ? '#93c5fd' : '#f8fafc'};">${formatShortMonthTab(m)}</strong>${badge}</td>
+            <td>${fmtStage(r.appToPsRate, base.appToPsRate, r.isStamped)}</td>
+            <td>${fmtStage(r.psCompRate, base.psCompRate, r.isStamped)}</td>
+            <td>${fmtStage(r.screenInRate, base.screenInRate, r.isStamped)}</td>
+            <td>${fmtStage(r.evSchedRate, base.evSchedRate, r.isStamped)}</td>
+            <td>${fmtStage(r.evCompRate, base.evCompRate, r.isStamped)}</td>
+            <td>${fmtStage(r.enrollRate, base.enrollRate, r.isStamped)}</td>
+            <td style="font-weight:800; color:${netYield >= baseNetYield + 0.3 ? '#86efac' : (netYield <= baseNetYield - 0.3 ? '#fca5a5' : '#93c5fd')};">${netYield.toFixed(1)}%</td>
+        </tr>`;
+    }).join('');
+
+    let avgRowHtml = '';
+    if (stampedIndices.length >= 2) {
+        const sums = { appToPsRate:0, psCompRate:0, screenInRate:0, evSchedRate:0, evCompRate:0, enrollRate:0, net:0 };
+        stampedIndices.forEach(idx => {
+            const r = getEffectiveMonthRates(ACTIVE_TIMELINE[idx]);
+            sums.appToPsRate += r.appToPsRate;
+            sums.psCompRate += r.psCompRate;
+            sums.screenInRate += r.screenInRate;
+            sums.evSchedRate += r.evSchedRate;
+            sums.evCompRate += r.evCompRate;
+            sums.enrollRate += r.enrollRate;
+            sums.net += (r.appToPsRate/100) * (r.psCompRate/100) * (r.screenInRate/100) * (r.evSchedRate/100) * (r.evCompRate/100) * (r.enrollRate/100) * 100;
+        });
+        const cnt = stampedIndices.length;
+        avgRowHtml = `<tr style="background:#0f172a; border-top:1px solid #334155;">
+            <td><strong style="color:#86efac;">Stamped Avg (${cnt}m)</strong></td>
+            <td><strong style="color:#e2e8f0;">${(sums.appToPsRate/cnt).toFixed(1)}%</strong></td>
+            <td><strong style="color:#e2e8f0;">${(sums.psCompRate/cnt).toFixed(1)}%</strong></td>
+            <td><strong style="color:#e2e8f0;">${(sums.screenInRate/cnt).toFixed(1)}%</strong></td>
+            <td><strong style="color:#e2e8f0;">${(sums.evSchedRate/cnt).toFixed(1)}%</strong></td>
+            <td><strong style="color:#e2e8f0;">${(sums.evCompRate/cnt).toFixed(1)}%</strong></td>
+            <td><strong style="color:#e2e8f0;">${(sums.enrollRate/cnt).toFixed(1)}%</strong></td>
+            <td><strong style="color:#86efac;">${(sums.net/cnt).toFixed(1)}%</strong></td>
+        </tr>`;
+    }
+
+    container.innerHTML = `
+        <div class="conv-trend-title">
+            <span>📊 Historical & Stamped Funnel Conversion Trend</span>
+            <span style="font-size:8px; color:#94a3b8; font-weight:600;">${stampedIndices.length > 0 ? `${stampedIndices.length} Month(s) Stamped · Click row to jump` : 'Edit top funnel sliders to stamp monthly actuals'}</span>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="conv-trend-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>App→PS</th>
+                        <th>PS Comp</th>
+                        <th>Scr-In</th>
+                        <th>Ev Sched</th>
+                        <th>Ev Comp</th>
+                        <th>Enroll</th>
+                        <th style="color:#86efac;">Net Yield</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}${avgRowHtml}</tbody>
+            </table>
         </div>`;
 }
 
