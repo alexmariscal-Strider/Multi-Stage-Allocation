@@ -165,6 +165,11 @@ body { background: #0b0f19; color: #e2e8f0; padding: 12px; font-size: 11px; line
 .telemetry-bar-row { display: flex; align-items: center; gap: 6px; font-size: 8.5px; color: #cbd5e1; }
 .telemetry-bar-bg { flex: 1; height: 3px; background: #0f1117; border-radius: 2px; overflow: hidden; position: relative; }
 .telemetry-bar-fill { height: 100%; border-radius: 2px; position: absolute; top: 0; left: 0; transition: width 0.3s; }
+.hypo-pto-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; padding-top: 5px; border-top: 1px dashed #2d3748; font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; flex-wrap: wrap; }
+.hypo-pto-inputs { display: inline-flex; align-items: center; gap: 8px; }
+.hypo-pto-grp { display: inline-flex; align-items: center; gap: 3px; color: #cbd5e1; }
+.hypo-pto-inp { width: 38px; padding: 1px 3px; font-size: 9.5px; font-weight: 700; color: #fda4af; background: #0b0f19; border: 1px solid #475569; border-radius: 3px; text-align: center; }
+.hypo-pto-inp:focus { border-color: #f43f5e; outline: none; }
 .progress-bg { width: 100%; max-width: 60px; height: 4px; background: #0f172a; border-radius: 2px; overflow: hidden; }
 .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
 
@@ -1336,6 +1341,67 @@ function getEffectiveMonthRates(mName) {
     };
 }
 
+function getMonthHypoPto(mName) {
+    const ldg = LEDGER[mName] || ARCHIVED_LEDGER[mName] || {};
+    return {
+        ce: Math.max(0, parseFloat(ldg.hypoPtoCe) || 0),
+        pfa: Math.max(0, parseFloat(ldg.hypoPtoPfa) || 0)
+    };
+}
+
+function getRoleNetDayFactors(mName, wd) {
+    const hypo = getMonthHypoPto(mName);
+    let totalCeNetDays = 0, totalPfaNetDays = 0;
+    let activeCeCount = 0, activePfaCount = 0;
+
+    Object.keys(ROSTER).forEach(n => {
+        const p = ROSTER[n];
+        const pto = parseFloat(p.pto[mName]) || 0;
+        const net = Math.max(0, wd - pto);
+        const qPs = parseFloat(p.qPs[mName]) || 0;
+        const qEv = parseFloat(p.qEv[mName]) || 0;
+        if (p.role === 'PFA') {
+            if (qPs > 0) {
+                activePfaCount++;
+                totalPfaNetDays += net;
+            }
+        } else {
+            if (qEv > 0 || qPs > 0) {
+                activeCeCount++;
+                totalCeNetDays += net;
+            }
+        }
+    });
+
+    const ceScale = totalCeNetDays > 0 ? Math.max(0, 1 - (hypo.ce / totalCeNetDays)) : 1;
+    const pfaScale = totalPfaNetDays > 0 ? Math.max(0, 1 - (hypo.pfa / totalPfaNetDays)) : 1;
+    const effHypoCe = Math.min(hypo.ce, totalCeNetDays);
+    const effHypoPfa = Math.min(hypo.pfa, totalPfaNetDays);
+
+    return {
+        hypoCe: hypo.ce,
+        hypoPfa: hypo.pfa,
+        effHypoCe,
+        effHypoPfa,
+        ceScale,
+        pfaScale,
+        activeCeCount,
+        activePfaCount,
+        totalCeNetDays,
+        totalPfaNetDays
+    };
+}
+
+function updateHypoPto(role, val) {
+    const activeMonth = ACTIVE_TIMELINE[activeMonthIdx];
+    if (!activeMonth || !LEDGER[activeMonth]) return;
+    const parsed = Math.max(0, parseFloat(val) || 0);
+    if (role === 'ce') LEDGER[activeMonth].hypoPtoCe = parsed;
+    else if (role === 'pfa') LEDGER[activeMonth].hypoPtoPfa = parsed;
+    saveState();
+    recalculateDashboardMetrics();
+}
+
 function getMonthEvMetrics(mName) {
     const ldg = LEDGER[mName] || ARCHIVED_LEDGER[mName] || { wd: 21, apps: {}, conv: {} };
     const r = getEffectiveMonthRates(mName);
@@ -1358,16 +1424,19 @@ function getMonthEvMetrics(mName) {
 
     // Physical capacity for that month (Dynamic Fluid Time)
     const wd = parseFloat(ldg.wd) || 21;
+    const hypoFactors = getRoleNetDayFactors(mName, wd);
     let pfaPsCap = 0, ceStrictPsCap = 0, ceStrictEvCap = 0, ceTotalHours = 0;
     Object.keys(ROSTER).forEach(n => {
         const p = ROSTER[n];
         const pto = parseFloat(p.pto[mName]) || 0;
-        const net = Math.max(0, wd - pto);
+        const rawNet = Math.max(0, wd - pto);
         const qPs = parseFloat(p.qPs[mName]) || 0;
         const qEv = parseFloat(p.qEv[mName]) || 0;
         if (p.role === 'PFA') {
+            const net = rawNet * hypoFactors.pfaScale;
             pfaPsCap += net * qPs;
         } else {
+            const net = rawNet * hypoFactors.ceScale;
             ceStrictPsCap += net * qPs;
             ceStrictEvCap += net * qEv;
             ceTotalHours += net * (qPs * PS_HANDLE + qEv * EV_HANDLE);
@@ -1604,6 +1673,7 @@ function recalculateDashboardMetrics() {
     document.getElementById('final-enroll-lock-badge').style.display = (activeDemandMode === 'cohort' && savedActuals) ? 'inline-block' : 'none';
 
     // 2. Roster Supply & Dynamic Fluid-Time Arbitrage
+    const hypoFactors = getRoleNetDayFactors(activeMonth, wd);
     let totalPfaPsCap = 0, totalCeStrictPsCap = 0, totalCeStrictEvCap = 0, totalCeTotalHours = 0;
     let totalPtoCe = 0, totalPtoPfa = 0, producingCeCount = 0, activePfaCount = 0;
     const stateAlloc = {};
@@ -1612,16 +1682,18 @@ function recalculateDashboardMetrics() {
     Object.keys(ROSTER).forEach(n => {
         const p = ROSTER[n];
         const pto = parseFloat(p.pto[activeMonth]) || 0;
-        const net = Math.max(0, wd - pto);
+        const rawNet = Math.max(0, wd - pto);
         const qPs = parseFloat(p.qPs[activeMonth]) || 0;
         const qEv = parseFloat(p.qEv[activeMonth]) || 0;
 
         if (p.role === 'PFA') {
             totalPtoPfa += pto;
+            const net = rawNet * hypoFactors.pfaScale;
             totalPfaPsCap += net * qPs;
             if (qPs > 0) activePfaCount++;
         } else {
             totalPtoCe += pto;
+            const net = rawNet * hypoFactors.ceScale;
             const myPsCap = net * qPs;
             const myEvCap = net * qEv;
             const myHours = net * (qPs * PS_HANDLE + qEv * EV_HANDLE);
@@ -1827,18 +1899,33 @@ function recalculateDashboardMetrics() {
     const pfaUtil = totalPfaPsCap > 0 ? (pfaPsAbsorbed / totalPfaPsCap) * 100 : 0;
     const cePsUtil = totalCeStrictPsCap > 0 ? (remCePsDem / totalCeStrictPsCap) * 100 : 0;
 
-    renderTopTelemetry(activeMonth, wd, d_apps, totalPtoCe, totalPtoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, d_psSched, totalSysPsCap, totalPfaPsCap, totalCeStrictPsCap, d_evDem, fluidEvCap);
+    renderTopTelemetry(activeMonth, wd, d_apps, totalPtoCe, totalPtoPfa, hypoFactors, producingCeCount, activePfaCount, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, d_psSched, totalSysPsCap, totalPfaPsCap, totalCeStrictPsCap, d_evDem, fluidEvCap);
     renderExecutiveInsight(activeMonth, d_apps, d_psSched, totalSysPsCap, d_evDem, fluidEvCap, sysPsUtil, ceEvUtil, effPfaSharePct, mktHeadroom, mktBottleneck, pfaPoolDeployed, pfaDirectivesList);
-    renderCohortWaterfall(showCohort, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, [enM0, enM1, enM2, enM3], evM0Split, evM1Split);
     renderConversionTrendCard();
-
-    renderHeatmap();
+    renderCohortWaterfall(showCohort, activeMonth, m0, m1Name, m1, m2Name, m2, m3Name, m3, [enM0, enM1, enM2, enM3], evM0Split, evM1Split);
     renderStaffingModeler();
+    renderHeatmap();
 }
 
-function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, psDem, psCap, pfaPsCap, cePsCap, evDem, evCap) {
+function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, hypoFactors, activeCeCount, activePfaCount, sysPsUtil, pfaUtil, cePsUtil, ceEvUtil, psDem, psCap, pfaPsCap, cePsCap, evDem, evCap) {
     const psColor = sysPsUtil > 100 ? '#f87171' : (sysPsUtil >= 90 ? '#86efac' : '#93c5fd');
     const evColor = ceEvUtil > 90 ? '#f87171' : (ceEvUtil >= 80 ? '#86efac' : '#fde047');
+
+    const hypoCe = hypoFactors ? hypoFactors.hypoCe : 0;
+    const hypoPfa = hypoFactors ? hypoFactors.hypoPfa : 0;
+    const effPtoCe = ptoCe + (hypoFactors ? hypoFactors.effHypoCe : 0);
+    const effPtoPfa = ptoPfa + (hypoFactors ? hypoFactors.effHypoPfa : 0);
+    const totSchedPto = ptoCe + ptoPfa;
+    const totHypoPto = hypoCe + hypoPfa;
+    const totEffPto = effPtoCe + effPtoPfa;
+
+    const totalRosterStaffDays = (activeCeCount + activePfaCount) * wd;
+    const shrinkagePct = totalRosterStaffDays > 0 ? (totEffPto / totalRosterStaffDays) * 100 : 0;
+    const ceMaxDays = Math.max(1, activeCeCount * wd);
+    const pfaMaxDays = Math.max(1, activePfaCount * wd);
+    const ceBarPct = Math.min(100, (effPtoCe / ceMaxDays) * 100);
+    const pfaBarPct = Math.min(100, (effPtoPfa / pfaMaxDays) * 100);
+    const fmtPto = (v) => Number((Number(v) || 0).toFixed(1));
 
     document.getElementById('top-stats-container').innerHTML = `
         <div class="telemetry-card theme-app">
@@ -1849,11 +1936,24 @@ function renderTopTelemetry(month, wd, apps, ptoCe, ptoPfa, sysPsUtil, pfaUtil, 
             </div>
         </div>
         <div class="telemetry-card theme-pto">
-            <div class="telemetry-hdr"><span>Scheduled PTO Shrinkage</span><span>${Math.round(ptoCe + ptoPfa)} Total Days</span></div>
-            <div class="telemetry-main"><span class="telemetry-val">${Math.round(ptoCe)}</span><span class="telemetry-sub">CE PTO · ${Math.round(ptoPfa)} PFA</span></div>
+            <div class="telemetry-hdr">
+                <span>Scheduled PTO Shrinkage</span>
+                <span style="color:${shrinkagePct >= 10 ? '#fda4af' : '#cbd5e1'};">${shrinkagePct.toFixed(1)}% SHRINKAGE</span>
+            </div>
+            <div class="telemetry-main">
+                <span class="telemetry-val">${fmtPto(totEffPto)}</span>
+                <span class="telemetry-sub">SCHED ${fmtPto(totSchedPto)} · HYPO ${fmtPto(totHypoPto)}</span>
+            </div>
             <div class="telemetry-bars-wrap">
-                <div class="telemetry-bar-row"><span style="width:42px;">CEs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, ptoCe * 2)}%; background:#f43f5e;"></div></div><span>${Math.round(ptoCe)}</span></div>
-                <div class="telemetry-bar-row"><span style="width:42px;">PFAs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${Math.min(100, ptoPfa * 4)}%; background:#fb7185;"></div></div><span>${Math.round(ptoPfa)}</span></div>
+                <div class="telemetry-bar-row"><span style="width:36px;">CEs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${ceBarPct.toFixed(1)}%; background:#f43f5e;"></div></div><span style="min-width:26px; text-align:right;">${fmtPto(effPtoCe)}</span></div>
+                <div class="telemetry-bar-row"><span style="width:36px;">PFAs</span><div class="telemetry-bar-bg"><div class="telemetry-bar-fill" style="width:${pfaBarPct.toFixed(1)}%; background:#fb7185;"></div></div><span style="min-width:26px; text-align:right;">${fmtPto(effPtoPfa)}</span></div>
+            </div>
+            <div class="hypo-pto-row">
+                <span>Hypo PTO Buffer:</span>
+                <div class="hypo-pto-inputs">
+                    <label class="hypo-pto-grp">CEs <input type="number" class="hypo-pto-inp" min="0" step="0.5" value="${fmtPto(hypoCe)}" onchange="updateHypoPto('ce', this.value)"> d</label>
+                    <label class="hypo-pto-grp">PFAs <input type="number" class="hypo-pto-inp" min="0" step="0.5" value="${fmtPto(hypoPfa)}" onchange="updateHypoPto('pfa', this.value)"> d</label>
+                </div>
             </div>
         </div>
         <div class="telemetry-card theme-ps">
@@ -2081,22 +2181,24 @@ function renderStaffingModeler() {
     ACTIVE_TIMELINE.forEach((m, idx) => {
         const metrics = getMonthEvMetrics(m);
         const wd = metrics.wd;
+        const hypoFactors = getRoleNetDayFactors(m, wd);
         let ceCount = 0, totalRosterCe = 0, pfaCount = 0;
         let totCeEvCap = 0, totCePsCap = 0, totPfaCap = 0;
 
         Object.keys(ROSTER).forEach(n => {
             const p = ROSTER[n];
-            const net = Math.max(0, wd - (parseFloat(p.pto[m]) || 0));
+            const rawNet = Math.max(0, wd - (parseFloat(p.pto[m]) || 0));
             const qPs = parseFloat(p.qPs[m]) || 0;
             const qEv = parseFloat(p.qEv[m]) || 0;
             if (p.role === 'PFA') {
                 if (qPs > 0) pfaCount++;
-                totPfaCap += net * pfaDailyQ;
+                totPfaCap += (rawNet * hypoFactors.pfaScale) * pfaDailyQ;
             } else {
                 totalRosterCe++;
                 if (qEv > 0) ceCount++;
-                totCeEvCap += net * qEv;
-                totCePsCap += net * qPs;
+                const netCe = rawNet * hypoFactors.ceScale;
+                totCeEvCap += netCe * qEv;
+                totCePsCap += netCe * qPs;
             }
         });
 
@@ -2941,12 +3043,13 @@ function exportMatrixToClipboard() {
    ============================================================================ */
 function scoreMatrixState(mixMap, activeMonth) {
     const wd = LEDGER[activeMonth].wd || 21;
+    const hypoFactors = getRoleNetDayFactors(activeMonth, wd);
     const allocH = {};
     MASTER_STATES.forEach(s => allocH[s] = 0);
     Object.keys(ROSTER).forEach(n => {
         const p = ROSTER[n];
         if (p.role === 'PFA') return;
-        const net = Math.max(0, wd - (parseFloat(p.pto[activeMonth]) || 0));
+        const net = Math.max(0, wd - (parseFloat(p.pto[activeMonth]) || 0)) * hypoFactors.ceScale;
         const h = net * ((parseFloat(p.qPs[activeMonth]) || 0) * PS_HANDLE + (parseFloat(p.qEv[activeMonth]) || 0) * EV_HANDLE);
         const sts = MASTER_STATES.filter(s => mixMap[n] && mixMap[n][s]);
         if (sts.length > 0) {
